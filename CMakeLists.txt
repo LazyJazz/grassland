@@ -14,7 +14,10 @@ else()
     message(FATAL_ERROR "Vulkan SDK not found!")
 endif()
 
+
+set(FT_DISABLE_HARFBUZZ ON)
 add_subdirectory(external)
+
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${GLFW_SOURCE_DIR}/include)
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external/glm)
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external/spdlog/include)
