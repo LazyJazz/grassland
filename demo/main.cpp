@@ -1,4 +1,6 @@
 
+#include <grassland/logging/logging.h>
+
 #include <iostream>
 
 int main() {

@@ -4,3 +4,9 @@
 [submodule "external/glm"]
 	path = external/glm
 	url = git@github.com:g-truc/glm.git
+[submodule "external/spdlog"]
+	path = external/spdlog
+	url = git@github.com:gabime/spdlog.git
+[submodule "external/freetype"]
+	path = external/freetype
+	url = git@github.com:freetype/freetype.git
