@@ -14,8 +14,8 @@ else()
     message(FATAL_ERROR "Vulkan SDK not found!")
 endif()
 
+set(FT_DISABLE_HARFBUZZ ON CACHE INTERNAL "" FORCE)
 
-set(FT_DISABLE_HARFBUZZ ON)
 add_subdirectory(external)
 
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${GLFW_SOURCE_DIR}/include)
