@@ -8,5 +8,8 @@ set(GRASSLAND_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(GRASSLAND_INCLUDE_DIR ${GRASSLAND_SOURCE_DIR}/include)
 
 add_subdirectory(external)
+list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${GLFW_SOURCE_DIR}/include)
+list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external/glm)
+
 add_subdirectory(src)
 add_subdirectory(demo)
