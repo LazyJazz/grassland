@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+#include "app.h"
+
 int main() {
-  std::cout << "Hello, World!" << std::endl;
+  App app(1280, 720, "Grassland App");
+  app.Run();
 }
