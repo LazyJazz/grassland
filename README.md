@@ -4,6 +4,13 @@ Grassland is a universal library designed for
 common usage in graphics applications.
 Using Vulkan and Direct3D 12 as its backend. (Working in Progress)
 
+## Build
+
+1. Clone project `git clone git@github.com:LazyJazz/grassland.git`
+2. Enter directory `cd grassland`
+3. Pull submodules `git submodule update --init --recursive`
+4. Use CMake build the project.
+
 ## Vulkan SDK Installation
 
 ### Windows
@@ -15,7 +22,7 @@ Using Vulkan and Direct3D 12 as its backend. (Working in Progress)
 ### Ubuntu
 
 1. Install dependencies:
-`sudo apt install xorg-dev libwayland-dev wayland-protocols python3 python-is-python3 python3-pip ninja-build git -y`
+`sudo apt install xorg-dev libwayland-dev wayland-protocols python3 python-is-python3 python3-pip ninja-build git libqt5widgets5 -y`
 2. Download Vulkan SDK package for Linux from [Vulkan SDK Download page](https://vulkan.lunarg.com/sdk/home).
 3. Extract files from the package and save to a proper path, e.g. `~/vulkan_sdk/`.
 4. Run `./vulkansdk` under your vulkan sdk directory.
@@ -23,7 +30,7 @@ Using Vulkan and Direct3D 12 as its backend. (Working in Progress)
 ```
 export VULKAN_SDK=/your_path_to_vulkan_sdk/x86_64
 export PATH=$PATH:$VULKAN_SDK/bin
-export LD_LIBRARY_PATH=$VULKAN_SDK/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VULKAN_SDK/lib
 export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
 ```
 6. Reboot your system.
@@ -39,4 +46,3 @@ This works with both Intel and Apple Silicon.
 1. Download Vulkan SDK Installer image for macOS from [Vulkan SDK Download page](https://vulkan.lunarg.com/sdk/home).
 2. Run the installer (It may require Rosetta 2 on Apple Silicon devices, however, the generated library will be on native Apple Silicon architecture).
 3. Reboot your system.
-
