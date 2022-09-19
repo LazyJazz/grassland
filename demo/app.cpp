@@ -40,13 +40,21 @@ void App::OnCreate() {
 }
 
 void App::OnInit() {
-  instance_ = std::make_unique<grassland::vulkan::Instance>();
+  instance_ = std::make_unique<vulkan::Instance>();
+  surface_ = std::make_unique<vulkan::Surface>(instance_.get(), window_);
+
+  auto physical_devices = vulkan::GetPhysicalDevices(instance_.get());
+  spdlog::info("Vulkan physical devices:");
+  for (auto &physical_device : physical_devices) {
+    spdlog::info("  {}", physical_device.DeviceName());
+  }
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  surface_.reset();
   instance_.reset();
 }
 

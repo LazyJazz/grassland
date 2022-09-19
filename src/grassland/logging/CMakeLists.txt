@@ -1,4 +1,4 @@
-file(GLOB_RECURSE source_files *.cpp)
+file(GLOB_RECURSE source_files *.cpp *.h)
 
 file(RELATIVE_PATH dirname ${CMAKE_CURRENT_SOURCE_DIR}/../ ${CMAKE_CURRENT_SOURCE_DIR} )
 set(CURRENT_LIB_NAME grassland_${dirname}_lib)

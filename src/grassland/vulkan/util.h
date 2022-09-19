@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+
 #define VK_HANDLE(type)    \
   type handle_;            \
                            \

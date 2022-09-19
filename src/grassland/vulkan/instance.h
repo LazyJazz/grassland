@@ -10,5 +10,6 @@ class Instance {
 
  private:
   VK_HANDLE(VkInstance)
+  VkDebugUtilsMessengerEXT debug_messenger_;
 };
 }  // namespace grassland::vulkan

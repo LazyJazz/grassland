@@ -4,6 +4,8 @@
 
 #include <memory>
 
+using namespace grassland;
+
 class App {
  public:
   App(int width, int height, const char *title);
@@ -17,5 +19,6 @@ class App {
   void OnClose();
   void OnDestroy();
   GLFWwindow *window_;
-  std::unique_ptr<grassland::vulkan::Instance> instance_;
+  std::unique_ptr<vulkan::Instance> instance_;
+  std::unique_ptr<vulkan::Surface> surface_;
 };
