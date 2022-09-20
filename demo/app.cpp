@@ -61,12 +61,15 @@ void App::OnInit() {
   present_queue_ = std::make_unique<vulkan::Queue>(
       device_.get(), physical_device_->PresentFamilyIndex(surface_.get()));
   swap_chain_ = std::make_unique<vulkan::SwapChain>(window_, device_.get());
+  render_pass_ = std::make_unique<vulkan::RenderPass>(device_.get(),
+                                                      swap_chain_->GetFormat());
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  render_pass_.reset();
   swap_chain_.reset();
   device_.reset();
   physical_device_.reset();
