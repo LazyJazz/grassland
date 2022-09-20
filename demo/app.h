@@ -30,4 +30,5 @@ class App {
   std::unique_ptr<vulkan::PipelineLayout> pipeline_layout_;
   std::unique_ptr<vulkan::Pipeline> pipeline_graphics_;
   std::vector<std::unique_ptr<vulkan::FrameBuffer>> frame_buffers_;
+  std::unique_ptr<vulkan::CommandPool> command_pool_;
 };

@@ -75,12 +75,14 @@ void App::OnInit() {
         swap_chain_->GetExtent().height, render_pass_.get(),
         std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
   }
+  command_pool_ = std::make_unique<vulkan::CommandPool>(device_.get());
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  command_pool_.reset();
   frame_buffers_.clear();
   pipeline_graphics_.reset();
   pipeline_layout_.reset();
