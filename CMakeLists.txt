@@ -26,5 +26,6 @@ list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external/spdlog/include)
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external/freetype/include)
 
+add_subdirectory(assets)
 add_subdirectory(src)
 add_subdirectory(demo)
