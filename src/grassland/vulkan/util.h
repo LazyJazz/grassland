@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <memory>
 #include <vector>
 
 #define VK_HANDLE(type)    \

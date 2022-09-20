@@ -169,7 +169,7 @@ std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance) {
   return physical_devices;
 }
 
-PhysicalDevice vulkan::PickPhysicalDevice(
+PhysicalDevice PickPhysicalDevice(
     const std::vector<PhysicalDevice> &device_list,
     const std::function<int(PhysicalDevice)> &rate_function) {
   if (device_list.empty()) {
