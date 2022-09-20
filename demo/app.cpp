@@ -46,7 +46,8 @@ void App::OnInit() {
   auto physical_devices = vulkan::GetPhysicalDevices(instance_.get());
   spdlog::info("Vulkan physical devices:");
   for (auto &physical_device : physical_devices) {
-    spdlog::info("  {}", physical_device.DeviceName());
+    physical_device.PrintDeviceProperties();
+    physical_device.PrintDeviceFeatures();
   }
 }
 

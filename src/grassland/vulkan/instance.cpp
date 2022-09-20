@@ -14,44 +14,44 @@ const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
+const bool kEnableValidationLayers = false;
 #else
-const bool enableValidationLayers = true;
+const bool kEnableValidationLayers = true;
 #endif
 
-std::vector<const char *> getRequiredExtensions() {
-  uint32_t glfwExtensionCount = 0;
-  const char **glfwExtensions;
-  glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+std::vector<const char *> GetRequiredExtensions() {
+  uint32_t glfw_extension_count = 0;
+  const char **glfw_extensions;
+  glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
-  std::vector<const char *> extensions(glfwExtensions,
-                                       glfwExtensions + glfwExtensionCount);
+  std::vector<const char *> extensions(glfw_extensions,
+                                       glfw_extensions + glfw_extension_count);
 
-  if (enableValidationLayers) {
+  if (kEnableValidationLayers) {
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
 
   return extensions;
 }
 
-bool checkValidationLayerSupport() {
-  uint32_t layerCount;
-  vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+bool CheckValidationLayerSupport() {
+  uint32_t layer_count;
+  vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
 
-  std::vector<VkLayerProperties> availableLayers(layerCount);
-  vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+  std::vector<VkLayerProperties> available_layers(layer_count);
+  vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
 
   for (const char *layerName : validationLayers) {
-    bool layerFound = false;
+    bool layer_found = false;
 
-    for (const auto &layerProperties : availableLayers) {
+    for (const auto &layerProperties : available_layers) {
       if (std::strcmp(layerName, layerProperties.layerName) == 0) {
-        layerFound = true;
+        layer_found = true;
         break;
       }
     }
 
-    if (!layerFound) {
+    if (!layer_found) {
       return false;
     }
   }
@@ -60,11 +60,11 @@ bool checkValidationLayerSupport() {
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL
-debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-              VkDebugUtilsMessageTypeFlagsEXT messageType,
-              const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-              void *pUserData) {
-  if (messageSeverity <= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
+DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
+              VkDebugUtilsMessageTypeFlagsEXT message_type,
+              const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+              void *user_data) {
+  if (message_severity <= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
     return VK_FALSE;
   std::string message_tag;
   auto add_tag = [&message_tag](const char *tag) {
@@ -73,35 +73,36 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     }
     message_tag += tag;
   };
-  if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+  if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
     add_tag("ERROR");
   }
-  if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+  if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
     add_tag("WARNING");
   }
-  if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+  if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
     add_tag("INFO");
   }
-  if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+  if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
     add_tag("VERBOSE");
   }
   std::cerr << fmt::format("validation layer ({}): {}", message_tag,
-                           pCallbackData->pMessage)
+                           callback_data->pMessage)
             << std::endl;
   return VK_FALSE;
 }
 
-void populateDebugMessengerCreateInfo(
-    VkDebugUtilsMessengerCreateInfoEXT &createInfo) {
-  createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-  createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-  createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                           VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                           VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-  createInfo.pfnUserCallback = debugCallback;
+void PopulateDebugMessengerCreateInfo(
+    VkDebugUtilsMessengerCreateInfoEXT &create_info) {
+  create_info = {};
+  create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  create_info.messageSeverity =
+      VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+      VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+  create_info.pfnUserCallback = DebugCallback;
 }
 
 VkResult CreateDebugUtilsMessengerEXT(
@@ -131,69 +132,79 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance,
 }  // namespace
 
 Instance::Instance() {
-  {
-    if (enableValidationLayers && !checkValidationLayerSupport()) {
-      LAND_ERROR("Vulkan validation layer is required, but not supported.");
-    }
-
-    VkApplicationInfo appInfo{};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Hello Triangle";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_2;
-
-    VkInstanceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
-
-    auto extensions = getRequiredExtensions();
-#ifdef __APPLE__
-    extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-#endif
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-    createInfo.ppEnabledExtensionNames = extensions.data();
-
-    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-    if (enableValidationLayers) {
-      createInfo.enabledLayerCount =
-          static_cast<uint32_t>(validationLayers.size());
-      createInfo.ppEnabledLayerNames = validationLayers.data();
-
-      populateDebugMessengerCreateInfo(debugCreateInfo);
-      createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
-    } else {
-      createInfo.enabledLayerCount = 0;
-
-      createInfo.pNext = nullptr;
-    }
-
-#ifdef __APPLE__
-    createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-#endif
-
-    if (vkCreateInstance(&createInfo, nullptr, &handle_) != VK_SUCCESS) {
-      LAND_ERROR("Vulkan failed to create instance!");
-    }
-  }
-
-  {
-    if (!enableValidationLayers)
-      return;
-    VkDebugUtilsMessengerCreateInfoEXT createInfo;
-    populateDebugMessengerCreateInfo(createInfo);
-
-    if (CreateDebugUtilsMessengerEXT(handle_, &createInfo, nullptr,
-                                     &debug_messenger_) != VK_SUCCESS) {
-      LAND_ERROR("[Vulkan] failed to set up debug messenger!");
-    }
-  }
+  CreateInstance();
+  CreateDebugMessenger();
 }
 
 Instance::~Instance() {
   DestroyDebugUtilsMessengerEXT(handle_, debug_messenger_, nullptr);
   vkDestroyInstance(handle_, nullptr);
+}
+
+void Instance::CreateInstance() {
+  if (kEnableValidationLayers && !CheckValidationLayerSupport()) {
+    LAND_ERROR("Vulkan validation layer is required, but not supported.");
+  }
+
+  VkApplicationInfo app_info{};
+  app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  app_info.pApplicationName = "Hello Triangle";
+  app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  app_info.pEngineName = "No Engine";
+  app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  app_info.apiVersion = VK_API_VERSION_1_2;
+
+  VkInstanceCreateInfo create_info{};
+  create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  create_info.pApplicationInfo = &app_info;
+
+  auto extensions = GetRequiredExtensions();
+#ifdef __APPLE__
+  extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+#endif
+
+  spdlog::info("Instance extensions:");
+  for (auto extension : extensions) {
+    spdlog::info("  {}", extension);
+  }
+
+  create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+  create_info.ppEnabledExtensionNames = extensions.data();
+
+  VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
+  if (kEnableValidationLayers) {
+    create_info.enabledLayerCount =
+        static_cast<uint32_t>(validationLayers.size());
+    create_info.ppEnabledLayerNames = validationLayers.data();
+
+    PopulateDebugMessengerCreateInfo(debug_create_info);
+    create_info.pNext =
+        (VkDebugUtilsMessengerCreateInfoEXT *)&debug_create_info;
+  } else {
+    create_info.enabledLayerCount = 0;
+
+    create_info.pNext = nullptr;
+  }
+
+#ifdef __APPLE__
+  create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+
+  if (vkCreateInstance(&create_info, nullptr, &handle_) != VK_SUCCESS) {
+    LAND_ERROR("Vulkan failed to create instance!");
+  }
+}
+
+void Instance::CreateDebugMessenger() {
+  if (!kEnableValidationLayers)
+    return;
+  VkDebugUtilsMessengerCreateInfoEXT create_info;
+  PopulateDebugMessengerCreateInfo(create_info);
+
+  if (CreateDebugUtilsMessengerEXT(handle_, &create_info, nullptr,
+                                   &debug_messenger_) != VK_SUCCESS) {
+    LAND_ERROR("[Vulkan] failed to set up debug messenger!");
+  }
 }
 
 }  // namespace grassland::vulkan

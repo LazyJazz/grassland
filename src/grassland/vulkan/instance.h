@@ -9,6 +9,8 @@ class Instance {
   ~Instance();
 
  private:
+  void CreateInstance();
+  void CreateDebugMessenger();
   VK_HANDLE(VkInstance)
   VkDebugUtilsMessengerEXT debug_messenger_;
 };
