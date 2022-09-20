@@ -21,4 +21,5 @@ class App {
   GLFWwindow *window_;
   std::unique_ptr<vulkan::Instance> instance_;
   std::unique_ptr<vulkan::Surface> surface_;
+  std::unique_ptr<vulkan::PhysicalDevice> physical_device_;
 };

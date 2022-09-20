@@ -42,19 +42,25 @@ void App::OnCreate() {
 void App::OnInit() {
   instance_ = std::make_unique<vulkan::Instance>();
   surface_ = std::make_unique<vulkan::Surface>(instance_.get(), window_);
-
-  auto physical_devices = vulkan::GetPhysicalDevices(instance_.get());
-  spdlog::info("Vulkan physical devices:");
-  for (auto &physical_device : physical_devices) {
-    physical_device.PrintDeviceProperties();
-    physical_device.PrintDeviceFeatures();
-  }
+  physical_device_ = std::make_unique<vulkan::PhysicalDevice>(
+      vulkan::PickPhysicalDevice(instance_.get(), [](vulkan::PhysicalDevice
+                                                         physical_device) {
+        int score = 0;
+        if (physical_device.IsDiscreteGPU())
+          score += 1000;
+        score +=
+            int(physical_device.GetProperties().limits.maxImageDimension2D);
+        return score;
+      }).GetHandle());
+  spdlog::info("Picked device:");
+  physical_device_->PrintDeviceProperties();
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  physical_device_.reset();
   surface_.reset();
   instance_.reset();
 }
