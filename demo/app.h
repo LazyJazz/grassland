@@ -22,4 +22,7 @@ class App {
   std::unique_ptr<vulkan::Instance> instance_;
   std::unique_ptr<vulkan::Surface> surface_;
   std::unique_ptr<vulkan::PhysicalDevice> physical_device_;
+  std::unique_ptr<vulkan::Device> device_;
+  std::unique_ptr<vulkan::Queue> graphics_queue_;
+  std::unique_ptr<vulkan::Queue> queue_queue_;
 };

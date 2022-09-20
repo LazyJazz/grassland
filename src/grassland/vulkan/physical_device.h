@@ -12,8 +12,8 @@ class PhysicalDevice {
  public:
   explicit PhysicalDevice(VkPhysicalDevice handle);
   [[nodiscard]] std::string DeviceName() const;
-  [[nodiscard]] int HasGraphicsFamily() const;
-  int HasPresentFamily(Surface *surface) const;
+  [[nodiscard]] int GraphicsFamilyIndex() const;
+  int PresentFamilyIndex(Surface *surface) const;
   [[nodiscard]] bool HasPresentationSupport() const;
   [[nodiscard]] bool IsDiscreteGPU() const;
   [[nodiscard]] bool HasGeometryShader() const;

@@ -10,15 +10,6 @@ namespace grassland::vulkan {
 
 namespace {
 
-const std::vector<const char *> validationLayers = {
-    "VK_LAYER_KHRONOS_validation"};
-
-#ifdef NDEBUG
-const bool kEnableValidationLayers = false;
-#else
-const bool kEnableValidationLayers = true;
-#endif
-
 std::vector<const char *> GetRequiredExtensions() {
   uint32_t glfw_extension_count = 0;
   const char **glfw_extensions;
