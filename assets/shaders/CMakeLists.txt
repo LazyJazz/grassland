@@ -3,6 +3,12 @@ file(GLOB shader_files ./*.vert ./*.frag ./*.comp ./*.rgen ./*.rchit ./*.rint ./
 
 file(GLOB shader_extra_files ./*.glsl)
 
+if (APPLE)
+    set(spv_version vulkan1.1)
+else()
+    set(spv_version vulkan1.2)
+endif()
+
 foreach (shader ${shader_files})
     get_filename_component(file_name ${shader} NAME)
     get_filename_component(full_path ${shader} ABSOLUTE)
@@ -15,10 +21,14 @@ foreach (shader ${shader_files})
     add_custom_command(
             OUTPUT ${output_file}
             COMMAND ${CMAKE_COMMAND} -E make_directory ${output_dir}
-            COMMAND ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} --target-env vulkan1.2 -V ${full_path} -o ${output_file}
+            COMMAND ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} --target-env ${spv_version} -V ${full_path} -o ${output_file}
             DEPENDS ${full_path}
     )
 endforeach ()
+
+message(
+        "${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}"
+)
 
 
 source_group("Shaders" FILES ${shader_files} ${shader_extra_files})

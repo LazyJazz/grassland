@@ -5,7 +5,7 @@
 
 namespace grassland::vulkan {
 
-Device::Device(PhysicalDevice *physical_device, Surface *surface) {
+Device::Device(PhysicalDevice *physical_device, Surface *surface): handle_{} {
   physical_device_ = physical_device;
   surface_ = surface;
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -17,6 +17,9 @@ Device::Device(PhysicalDevice *physical_device, Surface *surface) {
     uniqueQueueFamilies.insert(physical_device->PresentFamilyIndex(surface));
     device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
   }
+#ifdef __APPLE__
+  device_extensions.push_back("VK_KHR_portability_subset");
+#endif
 
   float queuePriority = 1.0f;
   for (uint32_t queueFamily : uniqueQueueFamilies) {
