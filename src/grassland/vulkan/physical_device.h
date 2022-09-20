@@ -8,6 +8,13 @@
 #include <vector>
 
 namespace grassland::vulkan {
+
+struct SwapChainSupportDetails {
+  VkSurfaceCapabilitiesKHR capabilities;
+  std::vector<VkSurfaceFormatKHR> formats;
+  std::vector<VkPresentModeKHR> presentModes;
+};
+
 class PhysicalDevice {
  public:
   explicit PhysicalDevice(VkPhysicalDevice handle);
@@ -17,16 +24,18 @@ class PhysicalDevice {
   [[nodiscard]] bool HasPresentationSupport() const;
   [[nodiscard]] bool IsDiscreteGPU() const;
   [[nodiscard]] bool HasGeometryShader() const;
+  bool SwapChainAdequate(Surface *surface) const;
   void PrintDeviceProperties() const;
   void PrintDeviceFeatures() const;
+  SwapChainSupportDetails GetSwapChainSupportDetails(Surface *surface) const;
 
   [[nodiscard]] VkPhysicalDeviceFeatures GetFeatures() const;
   [[nodiscard]] VkPhysicalDeviceProperties GetProperties() const;
 
  private:
   VK_HANDLE(VkPhysicalDevice)
-  VkPhysicalDeviceProperties properties_;
-  VkPhysicalDeviceFeatures features_;
+  VkPhysicalDeviceProperties properties_{};
+  VkPhysicalDeviceFeatures features_{};
 };
 
 std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance);

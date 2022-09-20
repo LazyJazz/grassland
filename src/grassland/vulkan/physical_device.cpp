@@ -2,9 +2,37 @@
 #include <grassland/vulkan/physical_device.h>
 #include <grassland/vulkan/surface.h>
 
+#include <set>
 #include <utility>
 
 namespace grassland::vulkan {
+
+namespace {
+SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device,
+                                              VkSurfaceKHR surface) {
+  SwapChainSupportDetails details;
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
+                                            &details.capabilities);
+  uint32_t formatCount;
+  vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+  if (formatCount != 0) {
+    details.formats.resize(formatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+                                         details.formats.data());
+  }
+  uint32_t presentModeCount;
+  vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount,
+                                            nullptr);
+
+  if (presentModeCount != 0) {
+    details.presentModes.resize(presentModeCount);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        device, surface, &presentModeCount, details.presentModes.data());
+  }
+  return details;
+}
+}  // namespace
 
 PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
   handle_ = handle;
@@ -15,6 +43,7 @@ PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
 std::string PhysicalDevice::DeviceName() const {
   return properties_.deviceName;
 }
+
 uint32_t PhysicalDevice::GraphicsFamilyIndex() const {
   uint32_t queue_family_count = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(handle_, &queue_family_count,
@@ -58,7 +87,21 @@ uint32_t PhysicalDevice::PresentFamilyIndex(Surface *surface) const {
 }
 
 bool PhysicalDevice::HasPresentationSupport() const {
-  return false;
+  uint32_t extensionCount;
+  vkEnumerateDeviceExtensionProperties(handle_, nullptr, &extensionCount,
+                                       nullptr);
+
+  std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+  vkEnumerateDeviceExtensionProperties(handle_, nullptr, &extensionCount,
+                                       availableExtensions.data());
+
+  std::set<std::string> requiredExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+  for (const auto &extension : availableExtensions) {
+    requiredExtensions.erase(extension.extensionName);
+  }
+
+  return requiredExtensions.empty();
 }
 
 void PhysicalDevice::PrintDeviceProperties() const {
@@ -98,6 +141,17 @@ VkPhysicalDeviceFeatures PhysicalDevice::GetFeatures() const {
 
 VkPhysicalDeviceProperties PhysicalDevice::GetProperties() const {
   return properties_;
+}
+
+bool PhysicalDevice::SwapChainAdequate(Surface *surface) const {
+  auto swap_chain_support = GetSwapChainSupportDetails(surface);
+  return !swap_chain_support.formats.empty() &&
+         !swap_chain_support.presentModes.empty();
+}
+
+SwapChainSupportDetails PhysicalDevice::GetSwapChainSupportDetails(
+    Surface *surface) const {
+  return QuerySwapChainSupport(GetHandle(), surface->GetHandle());
 }
 
 std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance) {

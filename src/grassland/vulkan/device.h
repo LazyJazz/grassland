@@ -7,8 +7,12 @@ class Device {
  public:
   Device(PhysicalDevice *physical_device, Surface *surface);
   ~Device();
+  PhysicalDevice *GetPhysicalDevice();
+  Surface *GetSurface();
 
  private:
   VK_HANDLE(VkDevice)
+  PhysicalDevice *physical_device_{nullptr};
+  Surface *surface_{nullptr};
 };
 }  // namespace grassland::vulkan
