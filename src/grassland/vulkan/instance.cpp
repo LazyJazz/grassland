@@ -134,7 +134,7 @@ Instance::~Instance() {
 
 void Instance::CreateInstance() {
   if (kEnableValidationLayers && !CheckValidationLayerSupport()) {
-    LAND_ERROR("Vulkan validation layer is required, but not supported.");
+    LAND_ERROR("[Vulkan] validation layer is required, but not supported.");
   }
 
   VkApplicationInfo app_info{};
@@ -182,7 +182,7 @@ void Instance::CreateInstance() {
 #endif
 
   if (vkCreateInstance(&create_info, nullptr, &handle_) != VK_SUCCESS) {
-    LAND_ERROR("Vulkan failed to create instance!");
+    LAND_ERROR("[Vulkan] failed to create instance!");
   }
 }
 

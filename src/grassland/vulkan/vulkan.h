@@ -1,5 +1,6 @@
 #pragma once
 #include <grassland/vulkan/device.h>
+#include <grassland/vulkan/frame_buffer.h>
 #include <grassland/vulkan/instance.h>
 #include <grassland/vulkan/physical_device.h>
 #include <grassland/vulkan/pipeline.h>

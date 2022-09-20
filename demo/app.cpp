@@ -68,12 +68,20 @@ void App::OnInit() {
       device_.get(), render_pass_.get(), pipeline_layout_.get(),
       "../shaders/shader_base.vert.spv", "../shaders/shader_base.frag.spv",
       (const char *)nullptr);
+  frame_buffers_.resize(swap_chain_->GetImageCount());
+  for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
+    frame_buffers_[i] = std::make_unique<vulkan::FrameBuffer>(
+        device_.get(), swap_chain_->GetExtent().width,
+        swap_chain_->GetExtent().height, render_pass_.get(),
+        std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
+  }
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  frame_buffers_.clear();
   pipeline_graphics_.reset();
   pipeline_layout_.reset();
   render_pass_.reset();

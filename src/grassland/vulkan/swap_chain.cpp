@@ -114,9 +114,7 @@ SwapChain::SwapChain(GLFWwindow *window, Device *device) : handle_() {
 }
 
 SwapChain::~SwapChain() {
-  for (const auto &image_view : image_views_) {
-    vkDestroyImageView(device_->GetHandle(), image_view.GetHandle(), nullptr);
-  }
+  image_views_.clear();
   vkDestroySwapchainKHR(device_->GetHandle(), GetHandle(), nullptr);
 }
 
@@ -132,8 +130,8 @@ uint32_t SwapChain::GetImageCount() const {
   return image_count_;
 }
 
-Image SwapChain::GetImage(uint32_t image_index) const {
-  return Image(images_[image_index].GetHandle());
+VkImage SwapChain::GetImage(uint32_t image_index) const {
+  return images_[image_index];
 }
 
 void SwapChain::CreateImages() {
@@ -149,31 +147,15 @@ void SwapChain::CreateImages() {
 }
 
 void SwapChain::CreateImageViews() {
-  std::vector<VkImageView> swapChainImageViews;
-  swapChainImageViews.resize(images_.size());
+  image_views_.resize(images_.size());
   for (size_t i = 0; i < images_.size(); i++) {
-    VkImageViewCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    createInfo.image = images_[i].GetHandle();
-    createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    createInfo.format = swap_chain_image_format_;
-    createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    createInfo.subresourceRange.baseMipLevel = 0;
-    createInfo.subresourceRange.levelCount = 1;
-    createInfo.subresourceRange.baseArrayLayer = 0;
-    createInfo.subresourceRange.layerCount = 1;
-    if (vkCreateImageView(device_->GetHandle(), &createInfo, nullptr,
-                          &swapChainImageViews[i]) != VK_SUCCESS) {
-      LAND_ERROR("Vulkan failed to create image views!");
-    }
+    image_views_[i] = std::make_unique<ImageView>(device_, images_[i],
+                                                  swap_chain_image_format_);
   }
-  for (auto image_view : swapChainImageViews) {
-    image_views_.emplace_back(image_view);
-  }
+}
+
+ImageView *SwapChain::GetImageView(uint32_t image_index) const {
+  return image_views_[image_index].get();
 }
 
 }  // namespace grassland::vulkan

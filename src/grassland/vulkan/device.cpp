@@ -51,7 +51,7 @@ Device::Device(PhysicalDevice *physical_device, Surface *surface) {
 
   if (vkCreateDevice(physical_device->GetHandle(), &createInfo, nullptr,
                      &handle_) != VK_SUCCESS) {
-    LAND_ERROR("Vulkan failed to create logical device!");
+    LAND_ERROR("[Vulkan] failed to create logical device!");
   }
 }
 

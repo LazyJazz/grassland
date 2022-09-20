@@ -11,7 +11,8 @@ class SwapChain {
   [[nodiscard]] VkFormat GetFormat() const;
   [[nodiscard]] VkExtent2D GetExtent() const;
   [[nodiscard]] uint32_t GetImageCount() const;
-  [[nodiscard]] Image GetImage(uint32_t image_index) const;
+  [[nodiscard]] VkImage GetImage(uint32_t image_index) const;
+  [[nodiscard]] ImageView *GetImageView(uint32_t image_index) const;
 
  private:
   void CreateImages();
@@ -22,8 +23,8 @@ class SwapChain {
   GLFWwindow *window_{nullptr};
   VkFormat swap_chain_image_format_{};
   VkExtent2D swap_chain_extent_{};
-  std::vector<Image> images_;
-  std::vector<ImageView> image_views_;
+  std::vector<VkImage> images_;
+  std::vector<std::unique_ptr<ImageView>> image_views_;
   uint32_t image_count_{0};
 };
 }  // namespace grassland::vulkan
