@@ -5,7 +5,7 @@
 namespace grassland::vulkan {
 class Device {
  public:
-  Device(PhysicalDevice *physical_device);
+  Device(PhysicalDevice *physical_device, Surface *surface);
   ~Device();
 
  private:

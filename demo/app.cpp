@@ -54,9 +54,12 @@ void App::OnInit() {
       }).GetHandle());
   spdlog::info("Picked device:");
   physical_device_->PrintDeviceProperties();
-  device_ = std::make_unique<vulkan::Device>(physical_device_.get());
+  device_ =
+      std::make_unique<vulkan::Device>(physical_device_.get(), surface_.get());
   graphics_queue_ = std::make_unique<vulkan::Queue>(
       device_.get(), physical_device_->GraphicsFamilyIndex());
+  present_queue_ = std::make_unique<vulkan::Queue>(
+      device_.get(), physical_device_->PresentFamilyIndex(surface_.get()));
 }
 
 void App::OnLoop() {

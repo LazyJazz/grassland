@@ -15,7 +15,7 @@ PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
 std::string PhysicalDevice::DeviceName() const {
   return properties_.deviceName;
 }
-int PhysicalDevice::GraphicsFamilyIndex() const {
+uint32_t PhysicalDevice::GraphicsFamilyIndex() const {
   uint32_t queue_family_count = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(handle_, &queue_family_count,
                                            nullptr);
@@ -35,7 +35,7 @@ int PhysicalDevice::GraphicsFamilyIndex() const {
   return -1;
 }
 
-int PhysicalDevice::PresentFamilyIndex(Surface *surface) const {
+uint32_t PhysicalDevice::PresentFamilyIndex(Surface *surface) const {
   uint32_t queue_family_count = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(handle_, &queue_family_count,
                                            nullptr);
