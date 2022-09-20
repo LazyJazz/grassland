@@ -63,12 +63,14 @@ void App::OnInit() {
   swap_chain_ = std::make_unique<vulkan::SwapChain>(window_, device_.get());
   render_pass_ = std::make_unique<vulkan::RenderPass>(device_.get(),
                                                       swap_chain_->GetFormat());
+  pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(device_.get());
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  pipeline_layout_.reset();
   render_pass_.reset();
   swap_chain_.reset();
   device_.reset();
