@@ -7,7 +7,7 @@ namespace grassland::vulkan {
 
 namespace {
 
-VkSurfaceFormatKHR chooseSwapSurfaceFormat(
+VkSurfaceFormatKHR ChooseSwapSurfaceFormat(
     const std::vector<VkSurfaceFormatKHR> &availableFormats) {
   for (const auto &availableFormat : availableFormats) {
     if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
@@ -19,7 +19,7 @@ VkSurfaceFormatKHR chooseSwapSurfaceFormat(
   return availableFormats[0];
 }
 
-VkPresentModeKHR chooseSwapPresentMode(
+VkPresentModeKHR ChooseSwapPresentMode(
     const std::vector<VkPresentModeKHR> &availablePresentModes) {
   for (const auto &availablePresentMode : availablePresentModes) {
     if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
@@ -31,7 +31,7 @@ VkPresentModeKHR chooseSwapPresentMode(
   return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities,
+VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities,
                             GLFWwindow *window) {
   if (capabilities.currentExtent.width !=
       std::numeric_limits<uint32_t>::max()) {
@@ -55,7 +55,7 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities,
 }
 }  // namespace
 
-SwapChain::SwapChain(GLFWwindow *window, Device *device) {
+SwapChain::SwapChain(GLFWwindow *window, Device *device) : handle_() {
   window_ = window;
   device_ = device;
   SwapChainSupportDetails swapChainSupport =
@@ -63,10 +63,10 @@ SwapChain::SwapChain(GLFWwindow *window, Device *device) {
           device_->GetSurface());
 
   VkSurfaceFormatKHR surfaceFormat =
-      chooseSwapSurfaceFormat(swapChainSupport.formats);
+      ChooseSwapSurfaceFormat(swapChainSupport.formats);
   VkPresentModeKHR presentMode =
-      chooseSwapPresentMode(swapChainSupport.presentModes);
-  VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window_);
+      ChooseSwapPresentMode(swapChainSupport.presentModes);
+  VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, window_);
   ;
   uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
   if (swapChainSupport.capabilities.maxImageCount > 0 &&
@@ -105,10 +105,75 @@ SwapChain::SwapChain(GLFWwindow *window, Device *device) {
                            &handle_) != VK_SUCCESS) {
     LAND_ERROR("Vulkan failed to create swap chain!");
   }
+
+  swap_chain_extent_ = extent;
+  swap_chain_image_format_ = surfaceFormat.format;
+  image_count_ = imageCount;
+  CreateImages();
+  CreateImageViews();
 }
 
 SwapChain::~SwapChain() {
+  for (const auto &image_view : image_views_) {
+    vkDestroyImageView(device_->GetHandle(), image_view.GetHandle(), nullptr);
+  }
   vkDestroySwapchainKHR(device_->GetHandle(), GetHandle(), nullptr);
+}
+
+VkFormat SwapChain::GetFormat() const {
+  return swap_chain_image_format_;
+}
+
+VkExtent2D SwapChain::GetExtent() const {
+  return swap_chain_extent_;
+}
+
+uint32_t SwapChain::GetImageCount() const {
+  return image_count_;
+}
+
+Image SwapChain::GetImage(uint32_t image_index) const {
+  return Image(images_[image_index].GetHandle());
+}
+
+void SwapChain::CreateImages() {
+  std::vector<VkImage> swapChainImages;
+  vkGetSwapchainImagesKHR(device_->GetHandle(), GetHandle(), &image_count_,
+                          nullptr);
+  swapChainImages.resize(image_count_);
+  vkGetSwapchainImagesKHR(device_->GetHandle(), GetHandle(), &image_count_,
+                          swapChainImages.data());
+  for (int i = 0; i < image_count_; i++) {
+    images_.emplace_back(swapChainImages[i]);
+  }
+}
+
+void SwapChain::CreateImageViews() {
+  std::vector<VkImageView> swapChainImageViews;
+  swapChainImageViews.resize(images_.size());
+  for (size_t i = 0; i < images_.size(); i++) {
+    VkImageViewCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    createInfo.image = images_[i].GetHandle();
+    createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    createInfo.format = swap_chain_image_format_;
+    createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    createInfo.subresourceRange.baseMipLevel = 0;
+    createInfo.subresourceRange.levelCount = 1;
+    createInfo.subresourceRange.baseArrayLayer = 0;
+    createInfo.subresourceRange.layerCount = 1;
+    if (vkCreateImageView(device_->GetHandle(), &createInfo, nullptr,
+                          &swapChainImageViews[i]) != VK_SUCCESS) {
+      LAND_ERROR("Vulkan failed to create image views!");
+    }
+  }
+  for (auto image_view : swapChainImageViews) {
+    image_views_.emplace_back(image_view);
+  }
 }
 
 }  // namespace grassland::vulkan
