@@ -64,12 +64,17 @@ void App::OnInit() {
   render_pass_ = std::make_unique<vulkan::RenderPass>(device_.get(),
                                                       swap_chain_->GetFormat());
   pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(device_.get());
+  pipeline_graphics_ = std::make_unique<vulkan::Pipeline>(
+      device_.get(), render_pass_.get(), pipeline_layout_.get(),
+      "../shaders/shader_base.vert.spv", "../shaders/shader_base.frag.spv",
+      (const char *)nullptr);
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  pipeline_graphics_.reset();
   pipeline_layout_.reset();
   render_pass_.reset();
   swap_chain_.reset();

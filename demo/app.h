@@ -28,4 +28,5 @@ class App {
   std::unique_ptr<vulkan::SwapChain> swap_chain_;
   std::unique_ptr<vulkan::RenderPass> render_pass_;
   std::unique_ptr<vulkan::PipelineLayout> pipeline_layout_;
+  std::unique_ptr<vulkan::Pipeline> pipeline_graphics_;
 };
