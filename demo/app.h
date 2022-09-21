@@ -20,6 +20,13 @@ class App {
   void OnLoop();
   void OnClose();
   void OnDestroy();
+
+  void OnUpdate();
+  void OnRender();
+
+  void recreateSwapChain();
+  void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
   GLFWwindow *window_;
   std::unique_ptr<vulkan::Instance> instance_;
   std::unique_ptr<vulkan::Surface> surface_;
@@ -38,4 +45,6 @@ class App {
   std::vector<std::unique_ptr<vulkan::Semaphore>> image_available_semaphores_;
   std::vector<std::unique_ptr<vulkan::Semaphore>> render_finished_semaphores_;
   std::vector<std::unique_ptr<vulkan::Fence>> in_flight_fence_;
+
+  bool framebufferResized{false};
 };

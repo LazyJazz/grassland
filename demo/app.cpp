@@ -92,9 +92,13 @@ void App::OnInit() {
 }
 
 void App::OnLoop() {
+  OnUpdate();
+  OnRender();
 }
 
 void App::OnClose() {
+  vkDeviceWaitIdle(device_->GetHandle());
+
   for (int i = 0; i < kMaxFramesInFlight; i++) {
     in_flight_fence_[i].reset();
     image_available_semaphores_[i].reset();
@@ -114,4 +118,154 @@ void App::OnClose() {
 }
 
 void App::OnDestroy() {
+}
+
+void App::OnUpdate() {
+}
+
+void App::OnRender() {
+  static int currentFrame = 0;
+  vkWaitForFences(device_->GetHandle(), 1,
+                  &in_flight_fence_[currentFrame]->GetHandle(), VK_TRUE,
+                  UINT64_MAX);
+
+  uint32_t imageIndex;
+  VkResult result = vkAcquireNextImageKHR(
+      device_->GetHandle(), swap_chain_->GetHandle(), UINT64_MAX,
+      image_available_semaphores_[currentFrame]->GetHandle(), VK_NULL_HANDLE,
+      &imageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    recreateSwapChain();
+    return;
+  } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    LAND_ERROR("failed to acquire swap chain image!");
+  }
+
+  vkResetFences(device_->GetHandle(), 1,
+                &in_flight_fence_[currentFrame]->GetHandle());
+
+  vkResetCommandBuffer((*command_buffers_)[currentFrame],
+                       /*VkCommandBufferResetFlagBits*/ 0);
+  recordCommandBuffer((*command_buffers_)[currentFrame], imageIndex);
+
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkSemaphore waitSemaphores[] = {
+      image_available_semaphores_[currentFrame]->GetHandle()};
+  VkPipelineStageFlags waitStages[] = {
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &(*command_buffers_)[currentFrame];
+
+  VkSemaphore signalSemaphores[] = {
+      render_finished_semaphores_[currentFrame]->GetHandle()};
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+
+  if (vkQueueSubmit(graphics_queue_->GetHandle(), 1, &submitInfo,
+                    in_flight_fence_[currentFrame]->GetHandle()) !=
+      VK_SUCCESS) {
+    LAND_ERROR("failed to submit draw command buffer!");
+  }
+
+  VkPresentInfoKHR presentInfo{};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = signalSemaphores;
+
+  VkSwapchainKHR swapChains[] = {swap_chain_->GetHandle()};
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapChains;
+
+  presentInfo.pImageIndices = &imageIndex;
+
+  result = vkQueuePresentKHR(present_queue_->GetHandle(), &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
+      framebufferResized) {
+    framebufferResized = false;
+    recreateSwapChain();
+  } else if (result != VK_SUCCESS) {
+    throw std::runtime_error("failed to present swap chain image!");
+  }
+
+  currentFrame = (currentFrame + 1) % kMaxFramesInFlight;
+}
+
+void App::recreateSwapChain() {
+  int width = 0, height = 0;
+  glfwGetFramebufferSize(window_, &width, &height);
+  while (width == 0 || height == 0) {
+    glfwGetFramebufferSize(window_, &width, &height);
+    glfwWaitEvents();
+  }
+
+  vkDeviceWaitIdle(device_->GetHandle());
+
+  frame_buffers_.clear();
+  swap_chain_.reset();
+
+  swap_chain_ = std::make_unique<vulkan::SwapChain>(window_, device_.get());
+  frame_buffers_.resize(swap_chain_->GetImageCount());
+  for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
+    frame_buffers_[i] = std::make_unique<vulkan::FrameBuffer>(
+        device_.get(), swap_chain_->GetExtent().width,
+        swap_chain_->GetExtent().height, render_pass_.get(),
+        std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
+  }
+}
+void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
+                              uint32_t imageIndex) {
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+  if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+    throw std::runtime_error("failed to begin recording command buffer!");
+  }
+
+  VkRenderPassBeginInfo renderPassInfo{};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassInfo.renderPass = render_pass_->GetHandle();
+  renderPassInfo.framebuffer = frame_buffers_[imageIndex]->GetHandle();
+  renderPassInfo.renderArea.offset = {0, 0};
+  renderPassInfo.renderArea.extent = swap_chain_->GetExtent();
+
+  VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+  renderPassInfo.clearValueCount = 1;
+  renderPassInfo.pClearValues = &clearColor;
+
+  vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
+
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    pipeline_graphics_->GetHandle());
+
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = (float)swap_chain_->GetExtent().width;
+  viewport.height = (float)swap_chain_->GetExtent().height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = swap_chain_->GetExtent();
+  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+  vkCmdEndRenderPass(commandBuffer);
+
+  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+    LAND_ERROR("failed to record command buffer!");
+  }
 }

@@ -9,7 +9,10 @@
   type handle_;                       \
                                       \
  public:                              \
-  type GetHandle() const {            \
+  type &GetHandle() {                 \
+    return handle_;                   \
+  }                                   \
+  const type &GetHandle() const {     \
     return handle_;                   \
   }                                   \
                                       \
