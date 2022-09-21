@@ -27,6 +27,6 @@ class FrameBuffer {
 
  private:
   VK_HANDLE(VkFramebuffer)
-  Device *device_{nullptr};
+  VK_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

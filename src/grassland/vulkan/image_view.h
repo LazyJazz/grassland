@@ -10,6 +10,6 @@ class ImageView {
 
  private:
   VK_HANDLE(VkImageView)
-  Device *device_{nullptr};
+  VK_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

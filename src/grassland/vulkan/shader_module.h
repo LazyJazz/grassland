@@ -11,6 +11,6 @@ class ShaderModule {
 
  private:
   VK_HANDLE(VkShaderModule)
-  Device *device_{nullptr};
+  VK_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

@@ -21,8 +21,4 @@ CommandPool::~CommandPool() {
   vkDestroyCommandPool(device_->GetHandle(), GetHandle(), nullptr);
 }
 
-Device *CommandPool::GetDevice() {
-  return device_;
-}
-
 }  // namespace grassland::vulkan

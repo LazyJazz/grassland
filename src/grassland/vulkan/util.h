@@ -15,6 +15,16 @@
                            \
  private:
 
+#define VK_DEVICE_PTR         \
+  Device *device_{nullptr};   \
+                              \
+ public:                      \
+  Device *GetDevice() const { \
+    return device_;           \
+  }                           \
+                              \
+ private:
+
 namespace grassland::vulkan {
 const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};

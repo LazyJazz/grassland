@@ -10,6 +10,6 @@ class RenderPass {
 
  private:
   VK_HANDLE(VkRenderPass)
-  Device *device_{nullptr};
+  VK_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

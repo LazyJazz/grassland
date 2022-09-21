@@ -10,6 +10,6 @@ class Image {
 
  private:
   VK_HANDLE(VkImage)
-  Device *device_{nullptr};
+  VK_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

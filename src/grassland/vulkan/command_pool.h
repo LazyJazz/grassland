@@ -8,10 +8,9 @@ class CommandPool {
  public:
   explicit CommandPool(Device *device);
   ~CommandPool();
-  Device *GetDevice();
 
  private:
   VK_HANDLE(VkCommandPool)
-  Device *device_{nullptr};
+  VK_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

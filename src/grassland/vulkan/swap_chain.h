@@ -19,7 +19,7 @@ class SwapChain {
   void CreateImageViews();
 
   VK_HANDLE(VkSwapchainKHR)
-  Device *device_{nullptr};
+  VK_DEVICE_PTR
   GLFWwindow *window_{nullptr};
   VkFormat swap_chain_image_format_{};
   VkExtent2D swap_chain_extent_{};

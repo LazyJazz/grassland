@@ -10,6 +10,6 @@ class PipelineLayout {
 
  private:
   VK_HANDLE(VkPipelineLayout)
-  Device *device_{nullptr};
+  VK_DEVICE_PTR
 };
 }  // namespace grassland::vulkan
