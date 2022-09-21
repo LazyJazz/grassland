@@ -76,12 +76,15 @@ void App::OnInit() {
         std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
   }
   command_pool_ = std::make_unique<vulkan::CommandPool>(device_.get());
+  command_buffers_ = std::make_unique<vulkan::CommandBuffers>(
+      command_pool_.get(), kMaxFramesInFlight);
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  command_buffers_.reset();
   command_pool_.reset();
   frame_buffers_.clear();
   pipeline_graphics_.reset();

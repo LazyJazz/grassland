@@ -6,6 +6,8 @@
 
 using namespace grassland;
 
+constexpr int kMaxFramesInFlight = 3;
+
 class App {
  public:
   App(int width, int height, const char *title);
@@ -31,4 +33,5 @@ class App {
   std::unique_ptr<vulkan::Pipeline> pipeline_graphics_;
   std::vector<std::unique_ptr<vulkan::FrameBuffer>> frame_buffers_;
   std::unique_ptr<vulkan::CommandPool> command_pool_;
+  std::unique_ptr<vulkan::CommandBuffers> command_buffers_;
 };

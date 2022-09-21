@@ -8,6 +8,7 @@ class CommandPool {
  public:
   explicit CommandPool(Device *device);
   ~CommandPool();
+  Device *GetDevice();
 
  private:
   VK_HANDLE(VkCommandPool)
