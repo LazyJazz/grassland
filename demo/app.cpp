@@ -78,12 +78,28 @@ void App::OnInit() {
   command_pool_ = std::make_unique<vulkan::CommandPool>(device_.get());
   command_buffers_ = std::make_unique<vulkan::CommandBuffers>(
       command_pool_.get(), kMaxFramesInFlight);
+
+  in_flight_fence_.resize(kMaxFramesInFlight);
+  image_available_semaphores_.resize(kMaxFramesInFlight);
+  render_finished_semaphores_.resize(kMaxFramesInFlight);
+  for (int i = 0; i < kMaxFramesInFlight; i++) {
+    in_flight_fence_[i] = std::make_unique<vulkan::Fence>(device_.get());
+    image_available_semaphores_[i] =
+        std::make_unique<vulkan::Semaphore>(device_.get());
+    render_finished_semaphores_[i] =
+        std::make_unique<vulkan::Semaphore>(device_.get());
+  }
 }
 
 void App::OnLoop() {
 }
 
 void App::OnClose() {
+  for (int i = 0; i < kMaxFramesInFlight; i++) {
+    in_flight_fence_[i].reset();
+    image_available_semaphores_[i].reset();
+    render_finished_semaphores_[i].reset();
+  }
   command_buffers_.reset();
   command_pool_.reset();
   frame_buffers_.clear();

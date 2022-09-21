@@ -34,4 +34,8 @@ class App {
   std::vector<std::unique_ptr<vulkan::FrameBuffer>> frame_buffers_;
   std::unique_ptr<vulkan::CommandPool> command_pool_;
   std::unique_ptr<vulkan::CommandBuffers> command_buffers_;
+
+  std::vector<std::unique_ptr<vulkan::Semaphore>> image_available_semaphores_;
+  std::vector<std::unique_ptr<vulkan::Semaphore>> render_finished_semaphores_;
+  std::vector<std::unique_ptr<vulkan::Fence>> in_flight_fence_;
 };
