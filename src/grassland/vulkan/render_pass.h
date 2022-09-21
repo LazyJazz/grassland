@@ -9,7 +9,7 @@ class RenderPass {
   ~RenderPass();
 
  private:
-  VK_HANDLE(VkRenderPass)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkRenderPass)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

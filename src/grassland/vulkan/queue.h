@@ -9,6 +9,6 @@ class Queue {
   ~Queue();
 
  private:
-  VK_HANDLE(VkQueue)
+  GRASSLAND_VULKAN_HANDLE(VkQueue)
 };
 }  // namespace grassland::vulkan

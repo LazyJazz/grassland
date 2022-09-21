@@ -9,7 +9,7 @@ class ImageView {
   ~ImageView();
 
  private:
-  VK_HANDLE(VkImageView)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkImageView)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

@@ -10,7 +10,7 @@ class ShaderModule {
   ~ShaderModule();
 
  private:
-  VK_HANDLE(VkShaderModule)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkShaderModule)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

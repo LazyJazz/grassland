@@ -34,7 +34,7 @@ class Pipeline {
                          ShaderModule *vertex_shader,
                          ShaderModule *fragment_shader,
                          ShaderModule *geometry_shader);
-  VK_HANDLE(VkPipeline)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkPipeline)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

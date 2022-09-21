@@ -10,7 +10,7 @@ class CommandPool {
   ~CommandPool();
 
  private:
-  VK_HANDLE(VkCommandPool)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkCommandPool)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

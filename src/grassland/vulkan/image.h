@@ -9,7 +9,7 @@ class Image {
   ~Image();
 
  private:
-  VK_HANDLE(VkImage)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkImage)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

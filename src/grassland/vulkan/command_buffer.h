@@ -8,7 +8,7 @@ class CommandBuffer {
   ~CommandBuffer();
 
  private:
-  VK_HANDLE(VkCommandBuffer)
+  GRASSLAND_VULKAN_HANDLE(VkCommandBuffer)
   CommandPool *command_pool_{nullptr};
 };
 

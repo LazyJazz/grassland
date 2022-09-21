@@ -33,7 +33,7 @@ class PhysicalDevice {
   [[nodiscard]] VkPhysicalDeviceProperties GetProperties() const;
 
  private:
-  VK_HANDLE(VkPhysicalDevice)
+  GRASSLAND_VULKAN_HANDLE(VkPhysicalDevice)
   VkPhysicalDeviceProperties properties_{};
   VkPhysicalDeviceFeatures features_{};
 };

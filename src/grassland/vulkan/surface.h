@@ -11,7 +11,7 @@ class Surface {
   ~Surface();
 
  private:
-  VK_HANDLE(VkSurfaceKHR)
+  GRASSLAND_VULKAN_HANDLE(VkSurfaceKHR)
   Instance *instance_;
 };
 }  // namespace grassland::vulkan

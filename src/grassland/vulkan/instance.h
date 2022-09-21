@@ -11,7 +11,7 @@ class Instance {
  private:
   void CreateInstance();
   void CreateDebugMessenger();
-  VK_HANDLE(VkInstance)
+  GRASSLAND_VULKAN_HANDLE(VkInstance)
   VkDebugUtilsMessengerEXT debug_messenger_;
 };
 }  // namespace grassland::vulkan

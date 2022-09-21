@@ -18,8 +18,8 @@ class SwapChain {
   void CreateImages();
   void CreateImageViews();
 
-  VK_HANDLE(VkSwapchainKHR)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkSwapchainKHR)
+  GRASSLAND_VULKAN_DEVICE_PTR
   GLFWwindow *window_{nullptr};
   VkFormat swap_chain_image_format_{};
   VkExtent2D swap_chain_extent_{};

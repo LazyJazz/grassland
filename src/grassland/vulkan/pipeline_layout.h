@@ -9,7 +9,7 @@ class PipelineLayout {
   ~PipelineLayout();
 
  private:
-  VK_HANDLE(VkPipelineLayout)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkPipelineLayout)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

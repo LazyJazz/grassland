@@ -11,7 +11,7 @@ class Device {
   Surface *GetSurface();
 
  private:
-  VK_HANDLE(VkDevice)
+  GRASSLAND_VULKAN_HANDLE(VkDevice)
   PhysicalDevice *physical_device_{nullptr};
   Surface *surface_{nullptr};
 };

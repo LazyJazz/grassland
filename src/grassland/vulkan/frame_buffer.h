@@ -26,7 +26,7 @@ class FrameBuffer {
   ~FrameBuffer();
 
  private:
-  VK_HANDLE(VkFramebuffer)
-  VK_DEVICE_PTR
+  GRASSLAND_VULKAN_HANDLE(VkFramebuffer)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

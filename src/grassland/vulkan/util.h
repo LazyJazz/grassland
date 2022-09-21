@@ -5,24 +5,24 @@
 #include <memory>
 #include <vector>
 
-#define VK_HANDLE(type)    \
-  type handle_;            \
-                           \
- public:                   \
-  type GetHandle() const { \
-    return handle_;        \
-  }                        \
-                           \
+#define GRASSLAND_VULKAN_HANDLE(type) \
+  type handle_;                       \
+                                      \
+ public:                              \
+  type GetHandle() const {            \
+    return handle_;                   \
+  }                                   \
+                                      \
  private:
 
-#define VK_DEVICE_PTR         \
-  Device *device_{nullptr};   \
-                              \
- public:                      \
-  Device *GetDevice() const { \
-    return device_;           \
-  }                           \
-                              \
+#define GRASSLAND_VULKAN_DEVICE_PTR \
+  Device *device_{nullptr};         \
+                                    \
+ public:                            \
+  Device *GetDevice() const {       \
+    return device_;                 \
+  }                                 \
+                                    \
  private:
 
 namespace grassland::vulkan {

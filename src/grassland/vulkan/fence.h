@@ -7,6 +7,6 @@ class Fence {
   Fence();
 
  private:
-  VK_HANDLE(VkFence)
+  GRASSLAND_VULKAN_HANDLE(VkFence)
 };
 }  // namespace grassland::vulkan
