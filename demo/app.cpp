@@ -64,10 +64,15 @@ void App::OnInit() {
   render_pass_ = std::make_unique<vulkan::RenderPass>(device_.get(),
                                                       swap_chain_->GetFormat());
   pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(device_.get());
+  vulkan::ShaderModule vert_shader(device_.get(),
+                                   "../shaders/shader_base.vert.spv");
+  vulkan::ShaderModule frag_shader(device_.get(),
+                                   "../shaders/shader_base.frag.spv");
+  vulkan::helper::ShaderStages shader_stages;
+  shader_stages.AddShaderModule(&vert_shader, VK_SHADER_STAGE_VERTEX_BIT);
+  shader_stages.AddShaderModule(&frag_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
   pipeline_graphics_ = std::make_unique<vulkan::Pipeline>(
-      device_.get(), render_pass_.get(), pipeline_layout_.get(),
-      "../shaders/shader_base.vert.spv", "../shaders/shader_base.frag.spv",
-      (const char *)nullptr);
+      device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages);
   frame_buffers_.resize(swap_chain_->GetImageCount());
   for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
     frame_buffers_[i] = std::make_unique<vulkan::FrameBuffer>(
