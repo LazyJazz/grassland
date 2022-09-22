@@ -55,8 +55,9 @@ DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
               VkDebugUtilsMessageTypeFlagsEXT message_type,
               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
               void *user_data) {
-  if (message_severity <= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
+  if (message_severity <= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
     return VK_FALSE;
+  }
   std::string message_tag;
   auto add_tag = [&message_tag](const char *tag) {
     if (!message_tag.empty()) {

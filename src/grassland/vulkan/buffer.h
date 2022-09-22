@@ -22,6 +22,11 @@ class Buffer {
                   const void *src_data,
                   VkDeviceSize size = 0xffffffffffffffffull,
                   VkDeviceSize offset = 0);
+  void RetrieveData(Queue *graphics_queue,
+                    CommandPool *command_pool,
+                    void *dst_data,
+                    VkDeviceSize size = 0xffffffffffffffffull,
+                    VkDeviceSize offset = 0);
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkBuffer)

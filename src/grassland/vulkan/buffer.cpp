@@ -97,6 +97,23 @@ void Buffer::UploadData(Queue *graphics_queue,
              size, 0, offset);
 }
 
+void Buffer::RetrieveData(Queue *graphics_queue,
+                          CommandPool *command_pool,
+                          void *dst_data,
+                          VkDeviceSize size,
+                          VkDeviceSize offset) {
+  size = std::min(size, size_ - offset);
+  Buffer host_buffer(device_, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
+                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+  CopyBuffer(graphics_queue, command_pool, GetHandle(), host_buffer.GetHandle(),
+             size, 0, offset);
+
+  auto host_mapped_buffer = host_buffer.Map(size, offset);
+  std::memcpy(dst_data, host_mapped_buffer, size);
+  host_buffer.Unmap();
+}
+
 void CopyBuffer(Queue *graphics_queue,
                 CommandPool *command_pool,
                 VkBuffer src_buffer,
