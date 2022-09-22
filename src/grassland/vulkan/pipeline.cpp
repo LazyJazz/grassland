@@ -7,17 +7,29 @@ namespace grassland::vulkan {
 Pipeline::~Pipeline() {
   vkDestroyPipeline(device_->GetHandle(), handle_, nullptr);
 }
-Pipeline::Pipeline(Device *device,
-                   RenderPass *render_pass,
-                   PipelineLayout *pipeline_layout,
-                   const helper::ShaderStages &shader_stages)
+Pipeline::Pipeline(
+    Device *device,
+    RenderPass *render_pass,
+    PipelineLayout *pipeline_layout,
+    const helper::ShaderStages &shader_stages,
+    const helper::VertexInputDescriptions &vertex_input_descriptions)
     : handle_{} {
   device_ = device;
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputInfo.vertexBindingDescriptionCount = 0;
-  vertexInputInfo.vertexAttributeDescriptionCount = 0;
+  vertexInputInfo.vertexBindingDescriptionCount =
+      vertex_input_descriptions.GetBindingDescriptions().size();
+  if (vertexInputInfo.vertexBindingDescriptionCount) {
+    vertexInputInfo.pVertexBindingDescriptions =
+        vertex_input_descriptions.GetBindingDescriptions().data();
+  }
+  vertexInputInfo.vertexAttributeDescriptionCount =
+      vertex_input_descriptions.GetAttributeDescription().size();
+  if (vertexInputInfo.vertexAttributeDescriptionCount) {
+    vertexInputInfo.pVertexAttributeDescriptions =
+        vertex_input_descriptions.GetAttributeDescription().data();
+  }
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
   inputAssembly.sType =

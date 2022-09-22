@@ -1,5 +1,6 @@
 #pragma once
 #include <grassland/vulkan/helper/shader_stages.h>
+#include <grassland/vulkan/helper/vertex_input_descriptions.h>
 #include <grassland/vulkan/pipeline_layout.h>
 #include <grassland/vulkan/render_pass.h>
 #include <grassland/vulkan/shader_module.h>
@@ -8,10 +9,12 @@
 namespace grassland::vulkan {
 class Pipeline {
  public:
-  explicit Pipeline(Device *device,
-                    RenderPass *render_pass,
-                    PipelineLayout *pipeline_layout,
-                    const helper::ShaderStages &shader_stages);
+  explicit Pipeline(
+      Device *device,
+      RenderPass *render_pass,
+      PipelineLayout *pipeline_layout,
+      const helper::ShaderStages &shader_stages,
+      const helper::VertexInputDescriptions &vertex_input_descriptions);
   ~Pipeline();
 
  private:

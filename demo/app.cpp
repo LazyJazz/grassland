@@ -115,8 +115,15 @@ void App::OnInit() {
   vulkan::helper::ShaderStages shader_stages;
   shader_stages.AddShaderModule(&vert_shader, VK_SHADER_STAGE_VERTEX_BIT);
   shader_stages.AddShaderModule(&frag_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
+  vulkan::helper::VertexInputDescriptions vertex_input_descriptions;
+  vertex_input_descriptions.AddBinding(0, sizeof(Vertex));
+  vertex_input_descriptions.AddAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT,
+                                         offsetof(Vertex, pos));
+  vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
+                                         offsetof(Vertex, color));
   pipeline_graphics_ = std::make_unique<vulkan::Pipeline>(
-      device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages);
+      device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages,
+      vertex_input_descriptions);
   frame_buffers_.resize(swap_chain_->GetImageCount());
   for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
     frame_buffers_[i] = std::make_unique<vulkan::FrameBuffer>(
@@ -324,7 +331,13 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   scissor.extent = swap_chain_->GetExtent();
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+  VkDeviceSize offsets = 0;
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertex_buffer->GetHandle(),
+                         &offsets);
+  vkCmdBindIndexBuffer(commandBuffer, index_buffer->GetHandle(), 0,
+                       VK_INDEX_TYPE_UINT16);
+  // vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 
   vkCmdEndRenderPass(commandBuffer);
 
