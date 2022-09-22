@@ -2,6 +2,50 @@
 
 #include <grassland/logging/logging.h>
 
+#include <glm/glm.hpp>
+
+namespace {
+
+struct Vertex {
+  glm::vec2 pos;
+  glm::vec3 color;
+
+  static VkVertexInputBindingDescription getBindingDescription() {
+    VkVertexInputBindingDescription bindingDescription{};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(Vertex);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    return bindingDescription;
+  }
+
+  static std::array<VkVertexInputAttributeDescription, 2>
+  getAttributeDescriptions() {
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+    return attributeDescriptions;
+  }
+};
+
+const std::vector<Vertex> vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                                      {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+                                      {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+                                      {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
+
+const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+
+}  // namespace
+
 App::App(int width, int height, const char *title) {
   if (!glfwInit()) {
     LAND_ERROR("GLFW Init failed!");
@@ -64,10 +108,22 @@ void App::OnInit() {
   render_pass_ = std::make_unique<vulkan::RenderPass>(device_.get(),
                                                       swap_chain_->GetFormat());
   pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(device_.get());
+  vulkan::ShaderModule vert_shader(device_.get(),
+                                   "../shaders/shader_base.vert.spv");
+  vulkan::ShaderModule frag_shader(device_.get(),
+                                   "../shaders/shader_base.frag.spv");
+  vulkan::helper::ShaderStages shader_stages;
+  shader_stages.AddShaderModule(&vert_shader, VK_SHADER_STAGE_VERTEX_BIT);
+  shader_stages.AddShaderModule(&frag_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
+  vulkan::helper::VertexInputDescriptions vertex_input_descriptions;
+  vertex_input_descriptions.AddBinding(0, sizeof(Vertex));
+  vertex_input_descriptions.AddAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT,
+                                         offsetof(Vertex, pos));
+  vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
+                                         offsetof(Vertex, color));
   pipeline_graphics_ = std::make_unique<vulkan::Pipeline>(
-      device_.get(), render_pass_.get(), pipeline_layout_.get(),
-      "../shaders/shader_base.vert.spv", "../shaders/shader_base.frag.spv",
-      (const char *)nullptr);
+      device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages,
+      vertex_input_descriptions);
   frame_buffers_.resize(swap_chain_->GetImageCount());
   for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
     frame_buffers_[i] = std::make_unique<vulkan::FrameBuffer>(
@@ -89,6 +145,17 @@ void App::OnInit() {
     render_finished_semaphores_[i] =
         std::make_unique<vulkan::Semaphore>(device_.get());
   }
+
+  vertex_buffer = std::make_unique<vulkan::Buffer>(
+      device_.get(), vertices.size() * sizeof(Vertex),
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  index_buffer = std::make_unique<vulkan::Buffer>(
+      device_.get(), indices.size() * sizeof(uint16_t),
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  vertex_buffer->UploadData(graphics_queue_.get(), command_pool_.get(),
+                            reinterpret_cast<const void *>(vertices.data()));
+  index_buffer->UploadData(graphics_queue_.get(), command_pool_.get(),
+                           reinterpret_cast<const void *>(indices.data()));
 }
 
 void App::OnLoop() {
@@ -98,6 +165,9 @@ void App::OnLoop() {
 
 void App::OnClose() {
   vkDeviceWaitIdle(device_->GetHandle());
+
+  vertex_buffer.reset();
+  index_buffer.reset();
 
   for (int i = 0; i < kMaxFramesInFlight; i++) {
     in_flight_fence_[i].reset();
@@ -261,7 +331,13 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   scissor.extent = swap_chain_->GetExtent();
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+  VkDeviceSize offsets = 0;
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertex_buffer->GetHandle(),
+                         &offsets);
+  vkCmdBindIndexBuffer(commandBuffer, index_buffer->GetHandle(), 0,
+                       VK_INDEX_TYPE_UINT16);
+  // vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 
   vkCmdEndRenderPass(commandBuffer);
 
