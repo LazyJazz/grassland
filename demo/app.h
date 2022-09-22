@@ -46,5 +46,8 @@ class App {
   std::vector<std::unique_ptr<vulkan::Semaphore>> render_finished_semaphores_;
   std::vector<std::unique_ptr<vulkan::Fence>> in_flight_fence_;
 
+  std::unique_ptr<vulkan::Buffer> index_buffer;
+  std::unique_ptr<vulkan::Buffer> vertex_buffer;
+
   bool framebufferResized{false};
 };
