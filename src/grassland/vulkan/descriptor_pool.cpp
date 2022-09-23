@@ -15,6 +15,7 @@ DescriptorPool::DescriptorPool(
     pool_size.type = binding.descriptorType;
     pool_size.descriptorCount =
         static_cast<uint32_t>(max_sets * binding.descriptorCount);
+    pool_sizes.push_back(pool_size);
   }
 
   VkDescriptorPoolCreateInfo poolInfo{};
