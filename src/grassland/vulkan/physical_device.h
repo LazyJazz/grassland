@@ -36,6 +36,7 @@ class PhysicalDevice {
   GRASSLAND_VULKAN_HANDLE(VkPhysicalDevice)
   VkPhysicalDeviceProperties properties_{};
   VkPhysicalDeviceFeatures features_{};
+  VkPhysicalDeviceMemoryProperties memory_properties_{};
 };
 
 std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance);

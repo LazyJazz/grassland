@@ -38,6 +38,7 @@ PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
   handle_ = handle;
   vkGetPhysicalDeviceProperties(handle_, &properties_);
   vkGetPhysicalDeviceFeatures(handle_, &features_);
+  vkGetPhysicalDeviceMemoryProperties(handle_, &memory_properties_);
 }
 
 std::string PhysicalDevice::DeviceName() const {
@@ -120,6 +121,15 @@ void PhysicalDevice::PrintDeviceProperties() const {
       return "Other";
     return "Unknown";
   }(properties_.deviceType));
+  uint64_t memory_size = 0;
+  for (int i = 0; i < memory_properties_.memoryHeapCount; i++) {
+    memory_size += (memory_properties_.memoryHeaps[i].flags &
+                    VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                       ? uint64_t(memory_properties_.memoryHeaps[i].size)
+                       : 0ull;
+  }
+  spdlog::info("    Memory Size: {:#.03}GB",
+               double(memory_size) / 1024.0 / 1024.0 / 1024.0);
 }
 
 void PhysicalDevice::PrintDeviceFeatures() const {
@@ -173,7 +183,7 @@ PhysicalDevice PickPhysicalDevice(
     const std::vector<PhysicalDevice> &device_list,
     const std::function<int(PhysicalDevice)> &rate_function) {
   if (device_list.empty()) {
-    LAND_ERROR("Vulkan: No device found!");
+    LAND_ERROR("[Vulkan] no device found!");
   }
   PhysicalDevice result = device_list[0];
   int res_score = rate_function(result);

@@ -36,6 +36,9 @@ class App {
   std::unique_ptr<vulkan::Queue> present_queue_;
   std::unique_ptr<vulkan::SwapChain> swap_chain_;
   std::unique_ptr<vulkan::RenderPass> render_pass_;
+
+  std::unique_ptr<vulkan::DescriptorSetLayout> descriptor_set_layout_;
+
   std::unique_ptr<vulkan::PipelineLayout> pipeline_layout_;
   std::unique_ptr<vulkan::Pipeline> pipeline_graphics_;
   std::vector<std::unique_ptr<vulkan::FrameBuffer>> frame_buffers_;
@@ -49,5 +52,10 @@ class App {
   std::unique_ptr<vulkan::Buffer> index_buffer;
   std::unique_ptr<vulkan::Buffer> vertex_buffer;
 
+  std::vector<std::unique_ptr<vulkan::Buffer>> uniform_buffers;
+  std::unique_ptr<vulkan::DescriptorPool> descriptor_pool_;
+  std::unique_ptr<vulkan::DescriptorSets> descriptor_sets_;
+
   bool framebufferResized{false};
+  int currentFrame{0};
 };
