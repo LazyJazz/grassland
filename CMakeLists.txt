@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.22)
 
 project(grassland)
 
+if (${MSVC} AND ${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
+    message("Using msvc-clang compiler")
+    add_compile_options(/EHsc)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 
 set(GRASSLAND_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
