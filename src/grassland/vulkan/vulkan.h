@@ -2,6 +2,7 @@
 #include <grassland/vulkan/buffer.h>
 #include <grassland/vulkan/command_buffer.h>
 #include <grassland/vulkan/command_pool.h>
+#include <grassland/vulkan/descriptor_set.h>
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/fence.h>
 #include <grassland/vulkan/frame_buffer.h>

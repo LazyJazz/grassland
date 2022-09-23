@@ -3,46 +3,36 @@
 #include <grassland/logging/logging.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace {
 
 struct Vertex {
-  glm::vec2 pos;
+  glm::vec3 pos;
   glm::vec3 color;
-
-  static VkVertexInputBindingDescription getBindingDescription() {
-    VkVertexInputBindingDescription bindingDescription{};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    return bindingDescription;
-  }
-
-  static std::array<VkVertexInputAttributeDescription, 2>
-  getAttributeDescriptions() {
-    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
-
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-    return attributeDescriptions;
-  }
 };
 
-const std::vector<Vertex> vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                                      {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-                                      {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-                                      {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
+struct UniformBufferObject {
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 proj;
+};
 
-const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+const std::vector<Vertex> vertices = {
+    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
+    {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+    {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
+    {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+    {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
+    {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}},
+    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 0.0f}},
+    {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}}};
+
+const std::vector<uint16_t> indices = {
+    0b000, 0b010, 0b001, 0b011, 0b001, 0b010, 0b100, 0b101, 0b110,
+    0b111, 0b110, 0b101, 0b000, 0b100, 0b010, 0b110, 0b010, 0b100,
+    0b001, 0b011, 0b101, 0b111, 0b101, 0b011, 0b000, 0b001, 0b100,
+    0b001, 0b101, 0b100, 0b010, 0b110, 0b011, 0b111, 0b011, 0b110};
 
 }  // namespace
 
@@ -107,7 +97,15 @@ void App::OnInit() {
   swap_chain_ = std::make_unique<vulkan::SwapChain>(window_, device_.get());
   render_pass_ = std::make_unique<vulkan::RenderPass>(device_.get(),
                                                       swap_chain_->GetFormat());
-  pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(device_.get());
+
+  vulkan::helper::DescriptorSetLayoutBindings descriptorSetLayoutBindings;
+  descriptorSetLayoutBindings.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                         1, VK_SHADER_STAGE_VERTEX_BIT);
+  descriptor_set_layout_ = std::make_unique<vulkan::DescriptorSetLayout>(
+      device_.get(), descriptorSetLayoutBindings);
+
+  pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(
+      device_.get(), descriptor_set_layout_.get());
   vulkan::ShaderModule vert_shader(device_.get(),
                                    "../shaders/shader_base.vert.spv");
   vulkan::ShaderModule frag_shader(device_.get(),
@@ -117,7 +115,7 @@ void App::OnInit() {
   shader_stages.AddShaderModule(&frag_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
   vulkan::helper::VertexInputDescriptions vertex_input_descriptions;
   vertex_input_descriptions.AddBinding(0, sizeof(Vertex));
-  vertex_input_descriptions.AddAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT,
+  vertex_input_descriptions.AddAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
                                          offsetof(Vertex, pos));
   vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
                                          offsetof(Vertex, color));
@@ -131,6 +129,12 @@ void App::OnInit() {
         swap_chain_->GetExtent().height, render_pass_.get(),
         std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
   }
+  descriptor_pool_ = std::make_unique<vulkan::DescriptorPool>(
+      device_.get(), descriptorSetLayoutBindings, kMaxFramesInFlight);
+  descriptor_sets_ = std::make_unique<vulkan::DescriptorSets>(
+      device_.get(), descriptor_set_layout_.get(), descriptor_pool_.get(),
+      kMaxFramesInFlight);
+
   command_pool_ = std::make_unique<vulkan::CommandPool>(device_.get());
   command_buffers_ = std::make_unique<vulkan::CommandBuffers>(
       command_pool_.get(), kMaxFramesInFlight);
@@ -156,6 +160,33 @@ void App::OnInit() {
                             reinterpret_cast<const void *>(vertices.data()));
   index_buffer->UploadData(graphics_queue_.get(), command_pool_.get(),
                            reinterpret_cast<const void *>(indices.data()));
+
+  for (size_t i = 0; i < kMaxFramesInFlight; i++) {
+    uniform_buffers.push_back(std::make_unique<vulkan::Buffer>(
+        device_.get(), sizeof(UniformBufferObject),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
+  }
+
+  for (size_t i = 0; i < kMaxFramesInFlight; i++) {
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = uniform_buffers[i]->GetHandle();
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(UniformBufferObject);
+
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = descriptor_sets_->GetHandle(i);
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+
+    vkUpdateDescriptorSets(device_->GetHandle(), 1, &descriptorWrite, 0,
+                           nullptr);
+  }
 }
 
 void App::OnLoop() {
@@ -169,6 +200,8 @@ void App::OnClose() {
   vertex_buffer.reset();
   index_buffer.reset();
 
+  uniform_buffers.clear();
+
   for (int i = 0; i < kMaxFramesInFlight; i++) {
     in_flight_fence_[i].reset();
     image_available_semaphores_[i].reset();
@@ -176,9 +209,12 @@ void App::OnClose() {
   }
   command_buffers_.reset();
   command_pool_.reset();
+  descriptor_sets_.reset();
+  descriptor_pool_.reset();
   frame_buffers_.clear();
   pipeline_graphics_.reset();
   pipeline_layout_.reset();
+  descriptor_set_layout_.reset();
   render_pass_.reset();
   swap_chain_.reset();
   device_.reset();
@@ -194,7 +230,6 @@ void App::OnUpdate() {
 }
 
 void App::OnRender() {
-  static int currentFrame = 0;
   vkWaitForFences(device_->GetHandle(), 1,
                   &in_flight_fence_[currentFrame]->GetHandle(), VK_TRUE,
                   UINT64_MAX);
@@ -211,6 +246,30 @@ void App::OnRender() {
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     LAND_ERROR("failed to acquire swap chain image!");
   }
+
+  [&]() {
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(
+                     currentTime - startTime)
+                     .count();
+
+    UniformBufferObject ubo{};
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
+                            glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view =
+        glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(glm::radians(45.0f),
+                                (float)swap_chain_->GetExtent().width /
+                                    (float)swap_chain_->GetExtent().height,
+                                0.1f, 10.0f);
+    ubo.proj[1][1] *= -1;
+
+    memcpy(uniform_buffers[currentFrame]->Map(), &ubo, sizeof(ubo));
+    uniform_buffers[currentFrame]->Unmap();
+  }();
 
   vkResetFences(device_->GetHandle(), 1,
                 &in_flight_fence_[currentFrame]->GetHandle());
@@ -336,8 +395,12 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
                          &offsets);
   vkCmdBindIndexBuffer(commandBuffer, index_buffer->GetHandle(), 0,
                        VK_INDEX_TYPE_UINT16);
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          pipeline_layout_->GetHandle(), 0, 1,
+                          &descriptor_sets_->GetHandle(currentFrame), 0,
+                          nullptr);
   // vkCmdDraw(commandBuffer, 3, 1, 0, 0);
-  vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
   vkCmdEndRenderPass(commandBuffer);
 

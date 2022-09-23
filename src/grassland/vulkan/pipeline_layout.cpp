@@ -2,11 +2,26 @@
 #include <grassland/vulkan/pipeline_layout.h>
 
 namespace grassland::vulkan {
-PipelineLayout::PipelineLayout(Device *device) : handle_{} {
+PipelineLayout::PipelineLayout(Device *device)
+    : PipelineLayout(device, std::vector<VkDescriptorSetLayout>{}) {
+}
+
+PipelineLayout::PipelineLayout(Device *device,
+                               DescriptorSetLayout *descriptor_set_layout)
+    : PipelineLayout(device, {descriptor_set_layout->GetHandle()}) {
+}
+
+PipelineLayout::PipelineLayout(
+    Device *device,
+    const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts)
+    : handle_{} {
   device_ = device;
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = 0;
+  pipelineLayoutInfo.setLayoutCount = descriptor_set_layouts.size();
+  if (pipelineLayoutInfo.setLayoutCount) {
+    pipelineLayoutInfo.pSetLayouts = descriptor_set_layouts.data();
+  }
   pipelineLayoutInfo.pushConstantRangeCount = 0;
 
   if (vkCreatePipelineLayout(device->GetHandle(), &pipelineLayoutInfo, nullptr,
