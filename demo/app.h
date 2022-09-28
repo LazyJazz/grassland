@@ -55,6 +55,7 @@ class App {
   std::vector<std::unique_ptr<vulkan::Buffer>> uniform_buffers;
   std::unique_ptr<vulkan::DescriptorPool> descriptor_pool_;
   std::unique_ptr<vulkan::DescriptorSets> descriptor_sets_;
+  std::unique_ptr<vulkan::Image> image_;
 
   bool framebufferResized{false};
   int currentFrame{0};

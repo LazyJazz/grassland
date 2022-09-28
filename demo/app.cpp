@@ -187,6 +187,8 @@ void App::OnInit() {
     vkUpdateDescriptorSets(device_->GetHandle(), 1, &descriptorWrite, 0,
                            nullptr);
   }
+
+  image_ = std::make_unique<vulkan::Image>(device_.get(), 800, 600);
 }
 
 void App::OnLoop() {
@@ -197,6 +199,7 @@ void App::OnLoop() {
 void App::OnClose() {
   vkDeviceWaitIdle(device_->GetHandle());
 
+  image_.reset();
   vertex_buffer.reset();
   index_buffer.reset();
 
