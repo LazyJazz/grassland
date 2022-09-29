@@ -46,6 +46,7 @@ PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
   ray_tracing_features_.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
   vkGetPhysicalDeviceFeatures2(handle_, &features_);
+  vkGetPhysicalDeviceMemoryProperties(handle_, &memory_properties_);
 }
 
 std::string PhysicalDevice::DeviceName() const {
