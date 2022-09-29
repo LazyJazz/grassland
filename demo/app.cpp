@@ -402,7 +402,7 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
                           pipeline_layout_->GetHandle(), 0, 1,
                           &descriptor_sets_->GetHandle(currentFrame), 0,
                           nullptr);
-  // vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
   vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
   vkCmdEndRenderPass(commandBuffer);

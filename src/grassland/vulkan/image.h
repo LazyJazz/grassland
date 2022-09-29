@@ -1,6 +1,8 @@
 #pragma once
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/util.h>
+#include <stb_image.h>
+#include <stb_image_write.h>
 namespace grassland::vulkan {
 class Image {
  public:
