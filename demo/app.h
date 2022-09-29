@@ -49,13 +49,16 @@ class App {
   std::vector<std::unique_ptr<vulkan::Semaphore>> render_finished_semaphores_;
   std::vector<std::unique_ptr<vulkan::Fence>> in_flight_fence_;
 
-  std::unique_ptr<vulkan::Buffer> index_buffer;
-  std::unique_ptr<vulkan::Buffer> vertex_buffer;
+  std::unique_ptr<vulkan::Buffer> index_buffer_;
+  std::unique_ptr<vulkan::Buffer> vertex_buffer_;
 
-  std::vector<std::unique_ptr<vulkan::Buffer>> uniform_buffers;
+  std::vector<std::unique_ptr<vulkan::Buffer>> uniform_buffers_;
   std::unique_ptr<vulkan::DescriptorPool> descriptor_pool_;
   std::unique_ptr<vulkan::DescriptorSets> descriptor_sets_;
+
   std::unique_ptr<vulkan::Image> image_;
+  std::unique_ptr<vulkan::ImageView> image_view_;
+  std::unique_ptr<vulkan::Sampler> sampler_;
 
   bool framebufferResized{false};
   int currentFrame{0};

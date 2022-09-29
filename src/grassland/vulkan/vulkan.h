@@ -12,6 +12,7 @@
 #include <grassland/vulkan/pipeline.h>
 #include <grassland/vulkan/queue.h>
 #include <grassland/vulkan/render_pass.h>
+#include <grassland/vulkan/sampler.h>
 #include <grassland/vulkan/semaphore.h>
 #include <grassland/vulkan/shader_module.h>
 #include <grassland/vulkan/surface.h>

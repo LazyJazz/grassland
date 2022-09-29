@@ -36,13 +36,20 @@ SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device,
 
 PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
   handle_ = handle;
-  vkGetPhysicalDeviceProperties(handle_, &properties_);
-  vkGetPhysicalDeviceFeatures(handle_, &features_);
-  vkGetPhysicalDeviceMemoryProperties(handle_, &memory_properties_);
+  properties_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+  properties_.pNext = &ray_tracing_properties;
+  ray_tracing_properties.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+  vkGetPhysicalDeviceProperties2(handle_, &properties_);
+  features_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+  features_.pNext = &ray_tracing_features_;
+  ray_tracing_features_.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+  vkGetPhysicalDeviceFeatures2(handle_, &features_);
 }
 
 std::string PhysicalDevice::DeviceName() const {
-  return properties_.deviceName;
+  return properties_.properties.deviceName;
 }
 
 uint32_t PhysicalDevice::GraphicsFamilyIndex() const {
@@ -106,8 +113,8 @@ bool PhysicalDevice::HasPresentationSupport() const {
 }
 
 void PhysicalDevice::PrintDeviceProperties() const {
-  spdlog::info("  {}", properties_.deviceName);
-  spdlog::info("    Vendor ID  : {:#X}", properties_.vendorID);
+  spdlog::info("  {}", properties_.properties.deviceName);
+  spdlog::info("    Vendor ID  : {:#X}", properties_.properties.vendorID);
   spdlog::info("    Device Type: {}", [](VkPhysicalDeviceType device_type) {
     if (device_type == VK_PHYSICAL_DEVICE_TYPE_CPU)
       return "CPU";
@@ -120,7 +127,7 @@ void PhysicalDevice::PrintDeviceProperties() const {
     else if (device_type == VK_PHYSICAL_DEVICE_TYPE_OTHER)
       return "Other";
     return "Unknown";
-  }(properties_.deviceType));
+  }(properties_.properties.deviceType));
   uint64_t memory_size = 0;
   for (int i = 0; i < memory_properties_.memoryHeapCount; i++) {
     memory_size += (memory_properties_.memoryHeaps[i].flags &
@@ -130,27 +137,30 @@ void PhysicalDevice::PrintDeviceProperties() const {
   }
   spdlog::info("    Memory Size: {:#.03}GB",
                double(memory_size) / 1024.0 / 1024.0 / 1024.0);
+  spdlog::info("    Ray Tracing Support: {}",
+               ray_tracing_features_.rayTracingPipeline ? "YES" : "NO");
 }
 
 void PhysicalDevice::PrintDeviceFeatures() const {
   spdlog::info("Geometry shader: {}",
-               features_.geometryShader ? "True" : "False");
+               features_.features.geometryShader ? "True" : "False");
 }
 
 bool PhysicalDevice::IsDiscreteGPU() const {
-  return properties_.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+  return properties_.properties.deviceType ==
+         VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 }
 
 bool PhysicalDevice::HasGeometryShader() const {
-  return features_.geometryShader;
+  return features_.features.geometryShader;
 }
 
 VkPhysicalDeviceFeatures PhysicalDevice::GetFeatures() const {
-  return features_;
+  return features_.features;
 }
 
 VkPhysicalDeviceProperties PhysicalDevice::GetProperties() const {
-  return properties_;
+  return properties_.properties;
 }
 
 bool PhysicalDevice::SwapChainAdequate(Surface *surface) const {

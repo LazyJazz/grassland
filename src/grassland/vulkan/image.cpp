@@ -1,9 +1,5 @@
 #include <grassland/logging/logging.h>
 #include <grassland/vulkan/image.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
 
 namespace grassland::vulkan {
 
@@ -77,6 +73,7 @@ Image::Image(Device *device,
 }
 
 Image::~Image() {
+  vkFreeMemory(device_->GetHandle(), device_memory_, nullptr);
   vkDestroyImage(device_->GetHandle(), handle_, nullptr);
 }
 
@@ -90,4 +87,81 @@ uint32_t Image::GetHeight() const {
   return height_;
 }
 
+void Image::TransitImageLayout(CommandBuffer *command_buffer,
+                               VkImageLayout new_layout,
+                               VkPipelineStageFlags new_stage_flags,
+                               VkAccessFlags new_access_flags) {
+  VkImageMemoryBarrier barrier{};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = image_layout_;
+  barrier.newLayout = new_layout;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = handle_;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+
+  barrier.srcAccessMask = access_flags_;
+  barrier.dstAccessMask = new_access_flags;
+
+  vkCmdPipelineBarrier(command_buffer->GetHandle(), pipeline_stage_flags_,
+                       new_stage_flags, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+  image_layout_ = new_layout;
+  pipeline_stage_flags_ = new_stage_flags;
+  access_flags_ = new_access_flags;
+}
+
+void Image::Update(CommandBuffer *command_buffer, Buffer *buffer) {
+  VkBufferImageCopy region{};
+  region.bufferOffset = 0;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+  region.imageOffset = {0, 0, 0};
+  region.imageExtent = {width_, height_, 1};
+
+  vkCmdCopyBufferToImage(command_buffer->GetHandle(), buffer->GetHandle(),
+                         GetHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+                         &region);
+}
+
+void UploadImage(Queue *graphics_queue,
+                 CommandPool *command_pool,
+                 Image *image,
+                 Buffer *buffer) {
+  auto command_buffer = std::make_unique<CommandBuffer>(command_pool);
+
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  vkBeginCommandBuffer(command_buffer->GetHandle(), &beginInfo);
+
+  image->TransitImageLayout(
+      command_buffer.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+
+  image->Update(command_buffer.get(), buffer);
+
+  image->TransitImageLayout(command_buffer.get(), VK_IMAGE_LAYOUT_GENERAL,
+                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                            VK_ACCESS_SHADER_READ_BIT);
+
+  vkEndCommandBuffer(command_buffer->GetHandle());
+
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &command_buffer->GetHandle();
+
+  vkQueueSubmit(graphics_queue->GetHandle(), 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(graphics_queue->GetHandle());
+}
 }  // namespace grassland::vulkan
