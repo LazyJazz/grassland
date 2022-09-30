@@ -14,7 +14,8 @@ class Pipeline {
       RenderPass *render_pass,
       PipelineLayout *pipeline_layout,
       const helper::ShaderStages &shader_stages,
-      const helper::VertexInputDescriptions &vertex_input_descriptions);
+      const helper::VertexInputDescriptions &vertex_input_descriptions,
+      bool depth_test = false);
   ~Pipeline();
 
  private:

@@ -100,8 +100,18 @@ void App::OnInit() {
   present_queue_ = std::make_unique<vulkan::Queue>(
       device_.get(), physical_device_->PresentFamilyIndex(surface_.get()));
   swap_chain_ = std::make_unique<vulkan::SwapChain>(window_, device_.get());
-  render_pass_ = std::make_unique<vulkan::RenderPass>(device_.get(),
-                                                      swap_chain_->GetFormat());
+
+  depth_buffer_image_ = std::make_unique<vulkan::Image>(
+      device_.get(), swap_chain_->GetExtent().width,
+      swap_chain_->GetExtent().height,
+      vulkan::helper::FindDepthFormat(physical_device_.get()),
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+  depth_buffer_image_view_ =
+      std::make_unique<vulkan::ImageView>(depth_buffer_image_.get());
+
+  render_pass_ = std::make_unique<vulkan::RenderPass>(
+      device_.get(), swap_chain_->GetFormat(),
+      depth_buffer_image_->GetFormat());
 
   vulkan::helper::DescriptorSetLayoutBindings descriptorSetLayoutBindings;
   descriptorSetLayoutBindings.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -127,15 +137,16 @@ void App::OnInit() {
                                          offsetof(Vertex, pos));
   vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
                                          offsetof(Vertex, color));
-  pipeline_graphics_ = std::make_unique<vulkan::Pipeline>(
+  graphics_pipeline_ = std::make_unique<vulkan::Pipeline>(
       device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages,
-      vertex_input_descriptions);
+      vertex_input_descriptions, true);
   framebuffers_.resize(swap_chain_->GetImageCount());
   for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
     framebuffers_[i] = std::make_unique<vulkan::Framebuffer>(
         device_.get(), swap_chain_->GetExtent().width,
         swap_chain_->GetExtent().height, render_pass_.get(),
-        std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
+        std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i),
+                                         depth_buffer_image_view_.get()});
   }
   descriptor_pool_ = std::make_unique<vulkan::DescriptorPool>(
       device_.get(), descriptorSetLayoutBindings, kMaxFramesInFlight);
@@ -229,11 +240,13 @@ void App::OnClose() {
   descriptor_sets_.reset();
   descriptor_pool_.reset();
   framebuffers_.clear();
-  pipeline_graphics_.reset();
+  graphics_pipeline_.reset();
   pipeline_layout_.reset();
   descriptor_set_layout_.reset();
   render_pass_.reset();
   swap_chain_.reset();
+  depth_buffer_image_view_.reset();
+  depth_buffer_image_.reset();
   device_.reset();
   physical_device_.reset();
   surface_.reset();
@@ -383,15 +396,16 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = swap_chain_->GetExtent();
 
-  VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-  renderPassInfo.clearValueCount = 1;
-  renderPassInfo.pClearValues = &clearColor;
+  VkClearValue clearColor[2] = {{{{0.0f, 0.0f, 0.0f, 1.0f}}}};
+  clearColor[1].depthStencil.depth = 1.0f;
+  renderPassInfo.clearValueCount = 2;
+  renderPassInfo.pClearValues = clearColor;
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipeline_graphics_->GetHandle());
+                    graphics_pipeline_->GetHandle());
 
   VkViewport viewport{};
   viewport.x = 0.0f;

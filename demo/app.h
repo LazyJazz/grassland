@@ -40,7 +40,7 @@ class App {
   std::unique_ptr<vulkan::DescriptorSetLayout> descriptor_set_layout_;
 
   std::unique_ptr<vulkan::PipelineLayout> pipeline_layout_;
-  std::unique_ptr<vulkan::Pipeline> pipeline_graphics_;
+  std::unique_ptr<vulkan::Pipeline> graphics_pipeline_;
   std::vector<std::unique_ptr<vulkan::Framebuffer>> framebuffers_;
   std::unique_ptr<vulkan::CommandPool> command_pool_;
   std::unique_ptr<vulkan::CommandBuffers> command_buffers_;
@@ -59,6 +59,9 @@ class App {
   std::unique_ptr<vulkan::Image> image_;
   std::unique_ptr<vulkan::ImageView> image_view_;
   std::unique_ptr<vulkan::Sampler> sampler_;
+
+  std::unique_ptr<vulkan::Image> depth_buffer_image_;
+  std::unique_ptr<vulkan::ImageView> depth_buffer_image_view_;
 
   bool framebufferResized{false};
   int currentFrame{0};

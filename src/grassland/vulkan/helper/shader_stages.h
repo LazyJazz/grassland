@@ -1,3 +1,4 @@
+#pragma once
 #include <grassland/vulkan/shader_module.h>
 #include <grassland/vulkan/util.h>
 

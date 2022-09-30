@@ -3,26 +3,48 @@
 
 namespace grassland::vulkan {
 
-RenderPass::RenderPass(Device *device, VkFormat color_format) : handle_{} {
-  device_ = device;
-  VkAttachmentDescription colorAttachment{};
-  colorAttachment.format = color_format;
-  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+RenderPass::RenderPass(Device *device, VkFormat color_format) {
+  helper::AttachmentParameters attachment_parameters;
+  attachment_parameters.AddColorAttachment(color_format);
+  ConstructorCommon(device, attachment_parameters);
+}
 
-  VkAttachmentReference colorAttachmentRef{};
-  colorAttachmentRef.attachment = 0;
-  colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+RenderPass::RenderPass(Device *device,
+                       VkFormat color_format,
+                       VkFormat depth_format) {
+  helper::AttachmentParameters attachment_parameters;
+  attachment_parameters.AddColorAttachment(color_format);
+  attachment_parameters.AddDepthStencilAttachment(depth_format);
+  ConstructorCommon(device, attachment_parameters);
+}
+
+RenderPass::RenderPass(
+    Device *device,
+    const helper::AttachmentParameters &attachment_parameters) {
+  ConstructorCommon(device, attachment_parameters);
+}
+
+RenderPass::~RenderPass() {
+  vkDestroyRenderPass(device_->GetHandle(), handle_, nullptr);
+}
+
+void RenderPass::ConstructorCommon(
+    Device *device,
+    const helper::AttachmentParameters &attachment_parameters) {
+  handle_ = {};
+  device_ = device;
+
+  auto &attachment_references =
+      attachment_parameters.GetColorAttachmentReferences();
+  auto &attachment_descriptions =
+      attachment_parameters.GetAttachmentDescriptions();
 
   VkSubpassDescription subpass{};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.colorAttachmentCount = 1;
-  subpass.pColorAttachments = &colorAttachmentRef;
+  subpass.colorAttachmentCount = attachment_references.size();
+  subpass.pColorAttachments = attachment_references.data();
+  subpass.pDepthStencilAttachment =
+      &attachment_parameters.GetDepthAttachmentReference();
 
   VkSubpassDependency dependency{};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -34,8 +56,8 @@ RenderPass::RenderPass(Device *device, VkFormat color_format) : handle_{} {
 
   VkRenderPassCreateInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount = 1;
-  renderPassInfo.pAttachments = &colorAttachment;
+  renderPassInfo.attachmentCount = attachment_descriptions.size();
+  renderPassInfo.pAttachments = attachment_descriptions.data();
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpass;
   renderPassInfo.dependencyCount = 1;
@@ -45,9 +67,5 @@ RenderPass::RenderPass(Device *device, VkFormat color_format) : handle_{} {
                          &handle_) != VK_SUCCESS) {
     LAND_ERROR("failed to create render pass!");
   }
-}
-
-RenderPass::~RenderPass() {
-  vkDestroyRenderPass(device_->GetHandle(), handle_, nullptr);
 }
 }  // namespace grassland::vulkan
