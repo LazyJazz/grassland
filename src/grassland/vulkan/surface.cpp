@@ -3,7 +3,7 @@
 
 namespace grassland::vulkan {
 
-Surface::Surface(Instance *instance, GLFWwindow *window) {
+Surface::Surface(Instance *instance, GLFWwindow *window) : handle_{} {
   instance_ = instance;
   if (glfwCreateWindowSurface(instance->GetHandle(), window, nullptr,
                               &handle_) != VK_SUCCESS) {

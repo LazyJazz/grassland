@@ -130,9 +130,9 @@ void App::OnInit() {
   pipeline_graphics_ = std::make_unique<vulkan::Pipeline>(
       device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages,
       vertex_input_descriptions);
-  frame_buffers_.resize(swap_chain_->GetImageCount());
+  framebuffers_.resize(swap_chain_->GetImageCount());
   for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
-    frame_buffers_[i] = std::make_unique<vulkan::FrameBuffer>(
+    framebuffers_[i] = std::make_unique<vulkan::Framebuffer>(
         device_.get(), swap_chain_->GetExtent().width,
         swap_chain_->GetExtent().height, render_pass_.get(),
         std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
@@ -228,7 +228,7 @@ void App::OnClose() {
   command_pool_.reset();
   descriptor_sets_.reset();
   descriptor_pool_.reset();
-  frame_buffers_.clear();
+  framebuffers_.clear();
   pipeline_graphics_.reset();
   pipeline_layout_.reset();
   descriptor_set_layout_.reset();
@@ -355,13 +355,13 @@ void App::recreateSwapChain() {
 
   vkDeviceWaitIdle(device_->GetHandle());
 
-  frame_buffers_.clear();
+  framebuffers_.clear();
   swap_chain_.reset();
 
   swap_chain_ = std::make_unique<vulkan::SwapChain>(window_, device_.get());
-  frame_buffers_.resize(swap_chain_->GetImageCount());
+  framebuffers_.resize(swap_chain_->GetImageCount());
   for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
-    frame_buffers_[i] = std::make_unique<vulkan::FrameBuffer>(
+    framebuffers_[i] = std::make_unique<vulkan::Framebuffer>(
         device_.get(), swap_chain_->GetExtent().width,
         swap_chain_->GetExtent().height, render_pass_.get(),
         std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
@@ -379,7 +379,7 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   renderPassInfo.renderPass = render_pass_->GetHandle();
-  renderPassInfo.framebuffer = frame_buffers_[imageIndex]->GetHandle();
+  renderPassInfo.framebuffer = framebuffers_[imageIndex]->GetHandle();
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = swap_chain_->GetExtent();
 

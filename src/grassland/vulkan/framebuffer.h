@@ -5,25 +5,25 @@
 #include <grassland/vulkan/util.h>
 
 namespace grassland::vulkan {
-class FrameBuffer {
+class Framebuffer {
  public:
-  FrameBuffer(Device *device,
+  Framebuffer(Device *device,
               int width,
               int height,
               RenderPass *render_pass,
               ImageView *color_image_view);
-  FrameBuffer(Device *device,
+  Framebuffer(Device *device,
               int width,
               int height,
               RenderPass *render_pass,
               ImageView *color_image_view,
               ImageView *depth_image_view);
-  FrameBuffer(Device *device,
+  Framebuffer(Device *device,
               int width,
               int height,
               RenderPass *render_pass,
               const std::vector<ImageView *> &image_views);
-  ~FrameBuffer();
+  ~Framebuffer();
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkFramebuffer)
