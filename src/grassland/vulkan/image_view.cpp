@@ -3,6 +3,10 @@
 
 namespace grassland::vulkan {
 
+ImageView::ImageView(Image *image)
+    : ImageView(image->GetDevice(), image->GetHandle(), image->GetFormat()) {
+}
+
 ImageView::ImageView(Device *device, VkImage image, VkFormat format)
     : handle_{} {
   device_ = device;

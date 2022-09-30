@@ -5,6 +5,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 namespace {
 
 struct Vertex {
@@ -101,6 +106,9 @@ void App::OnInit() {
   vulkan::helper::DescriptorSetLayoutBindings descriptorSetLayoutBindings;
   descriptorSetLayoutBindings.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                          1, VK_SHADER_STAGE_VERTEX_BIT);
+  descriptorSetLayoutBindings.AddBinding(
+      1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+      VK_SHADER_STAGE_FRAGMENT_BIT);
   descriptor_set_layout_ = std::make_unique<vulkan::DescriptorSetLayout>(
       device_.get(), descriptorSetLayoutBindings);
 
@@ -150,30 +158,51 @@ void App::OnInit() {
         std::make_unique<vulkan::Semaphore>(device_.get());
   }
 
-  vertex_buffer = std::make_unique<vulkan::Buffer>(
+  vertex_buffer_ = std::make_unique<vulkan::Buffer>(
       device_.get(), vertices.size() * sizeof(Vertex),
       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-  index_buffer = std::make_unique<vulkan::Buffer>(
+  index_buffer_ = std::make_unique<vulkan::Buffer>(
       device_.get(), indices.size() * sizeof(uint16_t),
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-  vertex_buffer->UploadData(graphics_queue_.get(), command_pool_.get(),
-                            reinterpret_cast<const void *>(vertices.data()));
-  index_buffer->UploadData(graphics_queue_.get(), command_pool_.get(),
-                           reinterpret_cast<const void *>(indices.data()));
+  vertex_buffer_->UploadData(graphics_queue_.get(), command_pool_.get(),
+                             reinterpret_cast<const void *>(vertices.data()));
+  index_buffer_->UploadData(graphics_queue_.get(), command_pool_.get(),
+                            reinterpret_cast<const void *>(indices.data()));
 
   for (size_t i = 0; i < kMaxFramesInFlight; i++) {
-    uniform_buffers.push_back(std::make_unique<vulkan::Buffer>(
+    uniform_buffers_.push_back(std::make_unique<vulkan::Buffer>(
         device_.get(), sizeof(UniformBufferObject),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
   }
 
+  int x, y, c;
+  auto image_data = stbi_load("../textures/xor_grid.png", &x, &y, &c, 4);
+  auto image_buffer = std::make_unique<vulkan::Buffer>(
+      device_.get(), x * y * 4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
+          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+  std::memcpy(image_buffer->Map(), image_data, x * y * 4);
+  image_buffer->Unmap();
+  stbi_image_free(image_data);
+  image_ = std::make_unique<vulkan::Image>(device_.get(), x, y,
+                                           VK_FORMAT_R8G8B8A8_SRGB);
+  image_view_ = std::make_unique<vulkan::ImageView>(image_.get());
+  sampler_ = std::make_unique<vulkan::Sampler>(device_.get());
+  vulkan::UploadImage(graphics_queue_.get(), command_pool_.get(), image_.get(),
+                      image_buffer.get());
+
   for (size_t i = 0; i < kMaxFramesInFlight; i++) {
     VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = uniform_buffers[i]->GetHandle();
+    bufferInfo.buffer = uniform_buffers_[i]->GetHandle();
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(UniformBufferObject);
+
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    imageInfo.imageView = image_view_->GetHandle();
+    imageInfo.sampler = sampler_->GetHandle();
 
     VkWriteDescriptorSet descriptorWrite{};
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -183,9 +212,28 @@ void App::OnInit() {
     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pBufferInfo = &bufferInfo;
+    std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
-    vkUpdateDescriptorSets(device_->GetHandle(), 1, &descriptorWrite, 0,
-                           nullptr);
+    descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[0].dstSet = descriptor_sets_->GetHandle(i);
+    descriptorWrites[0].dstBinding = 0;
+    descriptorWrites[0].dstArrayElement = 0;
+    descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrites[0].descriptorCount = 1;
+    descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+    descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[1].dstSet = descriptor_sets_->GetHandle(i);
+    descriptorWrites[1].dstBinding = 1;
+    descriptorWrites[1].dstArrayElement = 0;
+    descriptorWrites[1].descriptorType =
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrites[1].descriptorCount = 1;
+    descriptorWrites[1].pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets(device_->GetHandle(),
+                           static_cast<uint32_t>(descriptorWrites.size()),
+                           descriptorWrites.data(), 0, nullptr);
   }
 }
 
@@ -197,10 +245,13 @@ void App::OnLoop() {
 void App::OnClose() {
   vkDeviceWaitIdle(device_->GetHandle());
 
-  vertex_buffer.reset();
-  index_buffer.reset();
+  sampler_.reset();
+  image_view_.reset();
+  image_.reset();
+  vertex_buffer_.reset();
+  index_buffer_.reset();
 
-  uniform_buffers.clear();
+  uniform_buffers_.clear();
 
   for (int i = 0; i < kMaxFramesInFlight; i++) {
     in_flight_fence_[i].reset();
@@ -267,8 +318,8 @@ void App::OnRender() {
                                 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
-    memcpy(uniform_buffers[currentFrame]->Map(), &ubo, sizeof(ubo));
-    uniform_buffers[currentFrame]->Unmap();
+    memcpy(uniform_buffers_[currentFrame]->Map(), &ubo, sizeof(ubo));
+    uniform_buffers_[currentFrame]->Unmap();
   }();
 
   vkResetFences(device_->GetHandle(), 1,
@@ -391,15 +442,15 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
   VkDeviceSize offsets = 0;
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertex_buffer->GetHandle(),
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertex_buffer_->GetHandle(),
                          &offsets);
-  vkCmdBindIndexBuffer(commandBuffer, index_buffer->GetHandle(), 0,
+  vkCmdBindIndexBuffer(commandBuffer, index_buffer_->GetHandle(), 0,
                        VK_INDEX_TYPE_UINT16);
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           pipeline_layout_->GetHandle(), 0, 1,
                           &descriptor_sets_->GetHandle(currentFrame), 0,
                           nullptr);
-  // vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
   vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
   vkCmdEndRenderPass(commandBuffer);

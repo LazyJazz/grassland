@@ -34,9 +34,11 @@ class PhysicalDevice {
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkPhysicalDevice)
-  VkPhysicalDeviceProperties properties_{};
-  VkPhysicalDeviceFeatures features_{};
+  VkPhysicalDeviceProperties2 properties_{};
+  VkPhysicalDeviceFeatures2 features_{};
   VkPhysicalDeviceMemoryProperties memory_properties_{};
+  VkPhysicalDeviceRayTracingPipelinePropertiesKHR ray_tracing_properties{};
+  VkPhysicalDeviceRayTracingPipelineFeaturesKHR ray_tracing_features_{};
 };
 
 std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance);

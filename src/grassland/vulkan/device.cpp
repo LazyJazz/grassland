@@ -5,7 +5,7 @@
 
 namespace grassland::vulkan {
 
-Device::Device(PhysicalDevice *physical_device, Surface *surface): handle_{} {
+Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
   physical_device_ = physical_device;
   surface_ = surface;
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -30,13 +30,12 @@ Device::Device(PhysicalDevice *physical_device, Surface *surface): handle_{} {
     queueCreateInfo.pQueuePriorities = &queuePriority;
     queueCreateInfos.push_back(queueCreateInfo);
   }
-  VkPhysicalDeviceFeatures deviceFeatures{};
+  VkPhysicalDeviceFeatures deviceFeatures = physical_device_->GetFeatures();
   VkDeviceCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   createInfo.queueCreateInfoCount =
       static_cast<uint32_t>(queueCreateInfos.size());
   createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
   createInfo.pEnabledFeatures = &deviceFeatures;
   createInfo.enabledExtensionCount =
       static_cast<uint32_t>(device_extensions.size());

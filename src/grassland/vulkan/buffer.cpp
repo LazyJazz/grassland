@@ -18,7 +18,7 @@ uint32_t FindMemoryType(PhysicalDevice *physical_device,
     }
   }
 
-  throw std::runtime_error("[Vulkan] failed to find suitable memory type!");
+  LAND_ERROR("[Vulkan] failed to find suitable memory type!");
 }
 }  // namespace
 
