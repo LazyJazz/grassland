@@ -1,9 +1,9 @@
 #include <grassland/logging/logging.h>
-#include <grassland/vulkan/frame_buffer.h>
+#include <grassland/vulkan/framebuffer.h>
 
 namespace grassland::vulkan {
 
-FrameBuffer::FrameBuffer(Device *device,
+Framebuffer::Framebuffer(Device *device,
                          int width,
                          int height,
                          RenderPass *render_pass,
@@ -30,25 +30,25 @@ FrameBuffer::FrameBuffer(Device *device,
   }
 }
 
-FrameBuffer::FrameBuffer(Device *device,
+Framebuffer::Framebuffer(Device *device,
                          int width,
                          int height,
                          RenderPass *render_pass,
                          ImageView *color_image_view)
-    : FrameBuffer(device,
+    : Framebuffer(device,
                   width,
                   height,
                   render_pass,
                   std::vector<ImageView *>{color_image_view}) {
 }
 
-FrameBuffer::FrameBuffer(Device *device,
+Framebuffer::Framebuffer(Device *device,
                          int width,
                          int height,
                          RenderPass *render_pass,
                          ImageView *color_image_view,
                          ImageView *depth_image_view)
-    : FrameBuffer(
+    : Framebuffer(
           device,
           width,
           height,
@@ -56,7 +56,7 @@ FrameBuffer::FrameBuffer(Device *device,
           std::vector<ImageView *>{color_image_view, depth_image_view}) {
 }
 
-FrameBuffer::~FrameBuffer() {
+Framebuffer::~Framebuffer() {
   vkDestroyFramebuffer(device_->GetHandle(), GetHandle(), nullptr);
 }
 

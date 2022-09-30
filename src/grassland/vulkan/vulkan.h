@@ -5,8 +5,8 @@
 #include <grassland/vulkan/descriptor_set.h>
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/fence.h>
-#include <grassland/vulkan/frame_buffer.h>
-#include <grassland/vulkan/helper/descriptor_writes.h>
+#include <grassland/vulkan/framebuffer.h>
+#include <grassland/vulkan/helper/helper.h>
 #include <grassland/vulkan/image.h>
 #include <grassland/vulkan/instance.h>
 #include <grassland/vulkan/physical_device.h>
@@ -17,6 +17,6 @@
 #include <grassland/vulkan/semaphore.h>
 #include <grassland/vulkan/shader_module.h>
 #include <grassland/vulkan/surface.h>
-#include <grassland/vulkan/swap_chain.h>
+#include <grassland/vulkan/swapchain.h>
 
 namespace grassland::vulkan {}

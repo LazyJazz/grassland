@@ -1,5 +1,5 @@
 #include <grassland/logging/logging.h>
-#include <grassland/vulkan/swap_chain.h>
+#include <grassland/vulkan/swapchain.h>
 
 #include <algorithm>
 
@@ -55,7 +55,7 @@ VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities,
 }
 }  // namespace
 
-SwapChain::SwapChain(GLFWwindow *window, Device *device) : handle_() {
+Swapchain::Swapchain(GLFWwindow *window, Device *device) : handle_() {
   window_ = window;
   device_ = device;
   SwapChainSupportDetails swapChainSupport =
@@ -113,28 +113,28 @@ SwapChain::SwapChain(GLFWwindow *window, Device *device) : handle_() {
   CreateImageViews();
 }
 
-SwapChain::~SwapChain() {
+Swapchain::~Swapchain() {
   image_views_.clear();
   vkDestroySwapchainKHR(device_->GetHandle(), GetHandle(), nullptr);
 }
 
-VkFormat SwapChain::GetFormat() const {
+VkFormat Swapchain::GetFormat() const {
   return swap_chain_image_format_;
 }
 
-VkExtent2D SwapChain::GetExtent() const {
+VkExtent2D Swapchain::GetExtent() const {
   return swap_chain_extent_;
 }
 
-uint32_t SwapChain::GetImageCount() const {
+uint32_t Swapchain::GetImageCount() const {
   return image_count_;
 }
 
-VkImage SwapChain::GetImage(uint32_t image_index) const {
+VkImage Swapchain::GetImage(uint32_t image_index) const {
   return images_[image_index];
 }
 
-void SwapChain::CreateImages() {
+void Swapchain::CreateImages() {
   std::vector<VkImage> swapChainImages;
   vkGetSwapchainImagesKHR(device_->GetHandle(), GetHandle(), &image_count_,
                           nullptr);
@@ -146,7 +146,7 @@ void SwapChain::CreateImages() {
   }
 }
 
-void SwapChain::CreateImageViews() {
+void Swapchain::CreateImageViews() {
   image_views_.resize(images_.size());
   for (size_t i = 0; i < images_.size(); i++) {
     image_views_[i] = std::make_unique<ImageView>(device_, images_[i],
@@ -154,7 +154,7 @@ void SwapChain::CreateImageViews() {
   }
 }
 
-ImageView *SwapChain::GetImageView(uint32_t image_index) const {
+ImageView *Swapchain::GetImageView(uint32_t image_index) const {
   return image_views_[image_index].get();
 }
 

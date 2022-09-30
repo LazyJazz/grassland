@@ -4,10 +4,10 @@
 #include <grassland/vulkan/image_view.h>
 
 namespace grassland::vulkan {
-class SwapChain {
+class Swapchain {
  public:
-  SwapChain(GLFWwindow *window, Device *device);
-  ~SwapChain();
+  Swapchain(GLFWwindow *window, Device *device);
+  ~Swapchain();
   [[nodiscard]] VkFormat GetFormat() const;
   [[nodiscard]] VkExtent2D GetExtent() const;
   [[nodiscard]] uint32_t GetImageCount() const;
