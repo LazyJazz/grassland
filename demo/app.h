@@ -34,7 +34,7 @@ class App {
   std::unique_ptr<vulkan::Device> device_;
   std::unique_ptr<vulkan::Queue> graphics_queue_;
   std::unique_ptr<vulkan::Queue> present_queue_;
-  std::unique_ptr<vulkan::SwapChain> swap_chain_;
+  std::unique_ptr<vulkan::Swapchain> swapchain_;
   std::unique_ptr<vulkan::RenderPass> render_pass_;
 
   std::unique_ptr<vulkan::DescriptorSetLayout> descriptor_set_layout_;

@@ -99,19 +99,18 @@ void App::OnInit() {
       device_.get(), physical_device_->GraphicsFamilyIndex());
   present_queue_ = std::make_unique<vulkan::Queue>(
       device_.get(), physical_device_->PresentFamilyIndex(surface_.get()));
-  swap_chain_ = std::make_unique<vulkan::SwapChain>(window_, device_.get());
+  swapchain_ = std::make_unique<vulkan::Swapchain>(window_, device_.get());
 
   depth_buffer_image_ = std::make_unique<vulkan::Image>(
-      device_.get(), swap_chain_->GetExtent().width,
-      swap_chain_->GetExtent().height,
+      device_.get(), swapchain_->GetExtent().width,
+      swapchain_->GetExtent().height,
       vulkan::helper::FindDepthFormat(physical_device_.get()),
       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
   depth_buffer_image_view_ =
       std::make_unique<vulkan::ImageView>(depth_buffer_image_.get());
 
   render_pass_ = std::make_unique<vulkan::RenderPass>(
-      device_.get(), swap_chain_->GetFormat(),
-      depth_buffer_image_->GetFormat());
+      device_.get(), swapchain_->GetFormat(), depth_buffer_image_->GetFormat());
 
   vulkan::helper::DescriptorSetLayoutBindings descriptorSetLayoutBindings;
   descriptorSetLayoutBindings.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -140,12 +139,12 @@ void App::OnInit() {
   graphics_pipeline_ = std::make_unique<vulkan::Pipeline>(
       device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages,
       vertex_input_descriptions, true);
-  framebuffers_.resize(swap_chain_->GetImageCount());
-  for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
+  framebuffers_.resize(swapchain_->GetImageCount());
+  for (int i = 0; i < swapchain_->GetImageCount(); i++) {
     framebuffers_[i] = std::make_unique<vulkan::Framebuffer>(
-        device_.get(), swap_chain_->GetExtent().width,
-        swap_chain_->GetExtent().height, render_pass_.get(),
-        std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i),
+        device_.get(), swapchain_->GetExtent().width,
+        swapchain_->GetExtent().height, render_pass_.get(),
+        std::vector<vulkan::ImageView *>{swapchain_->GetImageView(i),
                                          depth_buffer_image_view_.get()});
   }
   descriptor_pool_ = std::make_unique<vulkan::DescriptorPool>(
@@ -244,7 +243,7 @@ void App::OnClose() {
   pipeline_layout_.reset();
   descriptor_set_layout_.reset();
   render_pass_.reset();
-  swap_chain_.reset();
+  swapchain_.reset();
   depth_buffer_image_view_.reset();
   depth_buffer_image_.reset();
   device_.reset();
@@ -266,7 +265,7 @@ void App::OnRender() {
 
   uint32_t imageIndex;
   VkResult result = vkAcquireNextImageKHR(
-      device_->GetHandle(), swap_chain_->GetHandle(), UINT64_MAX,
+      device_->GetHandle(), swapchain_->GetHandle(), UINT64_MAX,
       image_available_semaphores_[currentFrame]->GetHandle(), VK_NULL_HANDLE,
       &imageIndex);
 
@@ -292,8 +291,8 @@ void App::OnRender() {
         glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
                     glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f),
-                                (float)swap_chain_->GetExtent().width /
-                                    (float)swap_chain_->GetExtent().height,
+                                (float)swapchain_->GetExtent().width /
+                                    (float)swapchain_->GetExtent().height,
                                 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
@@ -339,7 +338,7 @@ void App::OnRender() {
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = signalSemaphores;
 
-  VkSwapchainKHR swapChains[] = {swap_chain_->GetHandle()};
+  VkSwapchainKHR swapChains[] = {swapchain_->GetHandle()};
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = swapChains;
 
@@ -369,15 +368,25 @@ void App::recreateSwapChain() {
   vkDeviceWaitIdle(device_->GetHandle());
 
   framebuffers_.clear();
-  swap_chain_.reset();
+  swapchain_.reset();
+  depth_buffer_image_view_.reset();
+  depth_buffer_image_.reset();
 
-  swap_chain_ = std::make_unique<vulkan::SwapChain>(window_, device_.get());
-  framebuffers_.resize(swap_chain_->GetImageCount());
-  for (int i = 0; i < swap_chain_->GetImageCount(); i++) {
+  swapchain_ = std::make_unique<vulkan::Swapchain>(window_, device_.get());
+  depth_buffer_image_ = std::make_unique<vulkan::Image>(
+      device_.get(), swapchain_->GetExtent().width,
+      swapchain_->GetExtent().height,
+      vulkan::helper::FindDepthFormat(physical_device_.get()),
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+  depth_buffer_image_view_ =
+      std::make_unique<vulkan::ImageView>(depth_buffer_image_.get());
+  framebuffers_.resize(swapchain_->GetImageCount());
+  for (int i = 0; i < swapchain_->GetImageCount(); i++) {
     framebuffers_[i] = std::make_unique<vulkan::Framebuffer>(
-        device_.get(), swap_chain_->GetExtent().width,
-        swap_chain_->GetExtent().height, render_pass_.get(),
-        std::vector<vulkan::ImageView *>{swap_chain_->GetImageView(i)});
+        device_.get(), swapchain_->GetExtent().width,
+        swapchain_->GetExtent().height, render_pass_.get(),
+        std::vector<vulkan::ImageView *>{swapchain_->GetImageView(i),
+                                         depth_buffer_image_view_.get()});
   }
 }
 void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
@@ -394,7 +403,7 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   renderPassInfo.renderPass = render_pass_->GetHandle();
   renderPassInfo.framebuffer = framebuffers_[imageIndex]->GetHandle();
   renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = swap_chain_->GetExtent();
+  renderPassInfo.renderArea.extent = swapchain_->GetExtent();
 
   VkClearValue clearColor[2] = {{{{0.0f, 0.0f, 0.0f, 1.0f}}}};
   clearColor[1].depthStencil.depth = 1.0f;
@@ -410,15 +419,15 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = (float)swap_chain_->GetExtent().width;
-  viewport.height = (float)swap_chain_->GetExtent().height;
+  viewport.width = (float)swapchain_->GetExtent().width;
+  viewport.height = (float)swapchain_->GetExtent().height;
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = swap_chain_->GetExtent();
+  scissor.extent = swapchain_->GetExtent();
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
   VkDeviceSize offsets = 0;
