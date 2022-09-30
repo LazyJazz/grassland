@@ -1,3 +1,4 @@
+#pragma once
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/util.h>
 
