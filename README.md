@@ -6,6 +6,9 @@ Using Vulkan and Direct3D 12 as its backend. (Working in Progress)
 
 ## Build
 
+![auto judge](../../actions/workflows/linux-build.yml/badge.svg)
+![auto judge](../../actions/workflows/windows-build.yml/badge.svg)
+
 1. Clone project `git clone git@github.com:LazyJazz/grassland.git`
 2. Enter directory `cd grassland`
 3. Pull submodules `git submodule update --init --recursive`
