@@ -22,7 +22,9 @@ Using Vulkan and Direct3D 12 as its backend. (Working in Progress)
 ### Ubuntu
 
 1. Install dependencies:
-`sudo apt install xorg-dev libwayland-dev wayland-protocols python3 python-is-python3 python3-pip ninja-build git libqt5widgets5 -y`
+```bash
+sudo apt install g++ cmake git xorg-dev libwayland-dev wayland-protocols python3 python-is-python3 python3-pip ninja-build libqt5widgets5 -y
+```
 2. Download Vulkan SDK package for Linux from [Vulkan SDK Download page](https://vulkan.lunarg.com/sdk/home).
 3. Extract files from the package and save to a proper path, e.g. `~/vulkan_sdk/`.
 4. Run `./vulkansdk` under your vulkan sdk directory.
