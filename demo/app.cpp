@@ -413,9 +413,16 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_->GetHandle());
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphics_pipeline_->GetHandle());
 
-  VkViewport viewport{}; viewport.x = 0.0f; viewport.y = 0.0f; viewport.width = (float)swapchain_->GetExtent().width; viewport.height = (float)swapchain_->GetExtent().height; viewport.minDepth = 0.0f; viewport.maxDepth = 1.0f;
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = (float)swapchain_->GetExtent().width;
+  viewport.height = (float)swapchain_->GetExtent().height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
   VkRect2D scissor{};
