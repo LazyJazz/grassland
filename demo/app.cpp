@@ -391,12 +391,7 @@ void App::recreateSwapChain() {
 }
 void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
                               uint32_t imageIndex) {
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-  if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-    throw std::runtime_error("failed to begin recording command buffer!");
-  }
+  vulkan::helper::CommandBegin(commandBuffer);
 
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -444,7 +439,5 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
 
   vkCmdEndRenderPass(commandBuffer);
 
-  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-    LAND_ERROR("failed to record command buffer!");
-  }
+  vulkan::helper::CommandEnd(commandBuffer);
 }
