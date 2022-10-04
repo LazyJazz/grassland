@@ -30,7 +30,7 @@ sudo apt install g++ cmake git xorg-dev libwayland-dev wayland-protocols python3
 ```
 2. Download Vulkan SDK package for Linux from [Vulkan SDK Download page](https://vulkan.lunarg.com/sdk/home).
 3. Extract files from the package and save to a proper path, e.g. `~/vulkan_sdk/`.
-4. Run `./vulkansdk` under your vulkan sdk directory.
+4. Run `./vulkansdk --maxjobs` under your vulkan sdk directory.
 5. Add the following contents to the end of `/etc/profile`, you may need to do this as super user, e.g., `sudo vim /etc/profile`.
 ```
 export VULKAN_SDK=/your_path_to_vulkan_sdk/x86_64
