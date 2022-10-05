@@ -36,6 +36,8 @@ list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external
 add_subdirectory(assets)
 add_subdirectory(src)
 
-if(${GRASSLAND_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+if(GRASSLAND_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     add_subdirectory(demo)
+else()
+    message("Grassland is included as subdirectory, not building demos.")
 endif()
