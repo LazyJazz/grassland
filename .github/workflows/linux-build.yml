@@ -5,6 +5,8 @@ on:
     branches: [ "main" ]
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
