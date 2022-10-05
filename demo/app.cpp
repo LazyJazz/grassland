@@ -14,7 +14,7 @@ namespace {
 
 struct Vertex {
   glm::vec3 pos;
-  glm::vec3 color;
+  glm::vec2 tex_coord;
 };
 
 struct UniformBufferObject {
@@ -24,14 +24,10 @@ struct UniformBufferObject {
 };
 
 const std::vector<Vertex> vertices = {
-    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
-    {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-    {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
-    {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
-    {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
-    {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}},
-    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 0.0f}},
-    {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}}};
+    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f}}, {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}},
+    {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f}},  {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+    {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}},  {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f}},
+    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f}},   {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
 
 const std::vector<uint16_t> indices = {
     0b000, 0b010, 0b001, 0b011, 0b001, 0b010, 0b100, 0b101, 0b110,
@@ -134,8 +130,8 @@ void App::OnInit() {
   vertex_input_descriptions.AddBinding(0, sizeof(Vertex));
   vertex_input_descriptions.AddAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
                                          offsetof(Vertex, pos));
-  vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
-                                         offsetof(Vertex, color));
+  vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32_SFLOAT,
+                                         offsetof(Vertex, tex_coord));
   graphics_pipeline_ = std::make_unique<vulkan::Pipeline>(
       device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages,
       vertex_input_descriptions, true);
