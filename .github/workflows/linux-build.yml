@@ -2,7 +2,7 @@ name: Linux Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "update-cmake-files"]
   pull_request:
     branches: [ "main" ]
 
