@@ -33,11 +33,14 @@ list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external/freetype/include)
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external/stb)
 
-add_subdirectory(assets)
 add_subdirectory(src)
 
 if(GRASSLAND_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    add_subdirectory(assets)
     add_subdirectory(demo)
 else()
     message("Grassland is included as subdirectory, not building demos.")
 endif()
+
+set(GRASSLAND_INCLUDE_DIRS ${GRASSLAND_INCLUDE_DIR} ${GRASSLAND_EXTERNAL_INCLUDE_DIRS} PARENT_SCOPE)
+
