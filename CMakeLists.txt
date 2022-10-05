@@ -35,4 +35,7 @@ list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/external
 
 add_subdirectory(assets)
 add_subdirectory(src)
-add_subdirectory(demo)
+
+if(${GRASSLAND_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+    add_subdirectory(demo)
+endif()
