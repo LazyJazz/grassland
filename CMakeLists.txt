@@ -39,8 +39,6 @@ if(GRASSLAND_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     add_subdirectory(assets)
     add_subdirectory(demo)
 else()
+    set(GRASSLAND_INCLUDE_DIRS ${GRASSLAND_INCLUDE_DIR} ${GRASSLAND_EXTERNAL_INCLUDE_DIRS} PARENT_SCOPE)
     message("Grassland is included as subdirectory, not building demos.")
 endif()
-
-set(GRASSLAND_INCLUDE_DIRS ${GRASSLAND_INCLUDE_DIR} ${GRASSLAND_EXTERNAL_INCLUDE_DIRS} PARENT_SCOPE)
-

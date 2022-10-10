@@ -1,5 +1,5 @@
 
-#include <grassland/logging/logging.h>
+#include <grassland/util/logging.h>
 
 #include <iostream>
 

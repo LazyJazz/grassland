@@ -1,4 +1,4 @@
-#include <grassland/logging/logging.h>
+#include <grassland/util/logging.h>
 #include <grassland/vulkan/image.h>
 
 namespace grassland::vulkan {

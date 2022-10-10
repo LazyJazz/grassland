@@ -1,9 +1,9 @@
-#include <grassland/logging/logging.h>
+#include <grassland/util/logging.h>
 
-namespace grassland::log {
+namespace grassland::util {
 void assert_handler(bool result, const char *code) {
   if (!result) {
     LAND_ERROR("Grassland assert: {}", code);
   }
 }
-}  // namespace grassland::log
+}  // namespace grassland::util

@@ -1,5 +1,5 @@
 #include <GLFW/glfw3.h>
-#include <grassland/logging/logging.h>
+#include <grassland/util/logging.h>
 #include <grassland/vulkan/instance.h>
 
 #include <cstring>
