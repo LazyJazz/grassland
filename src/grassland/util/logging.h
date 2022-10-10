@@ -17,8 +17,8 @@
     throw std::runtime_error(fmt::format(__VA_ARGS__)); \
   }
 
-namespace grassland::log {
+namespace grassland::util {
 void assert_handler(bool result, const char *code);
 }
 
-#define LAND_ASSERT(x) ::grassland::log::assert_handler(x, #x)
+#define LAND_ASSERT(x) ::grassland::util::assert_handler(x, #x)

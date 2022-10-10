@@ -1,6 +1,6 @@
 #include "app.h"
 
-#include <grassland/logging/logging.h>
+#include <grassland/util/logging.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
