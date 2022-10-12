@@ -10,5 +10,6 @@ class Queue {
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkQueue)
+  GRASSLAND_VULKAN_DEVICE_PTR
 };
 }  // namespace grassland::vulkan

@@ -6,6 +6,7 @@ class CommandBuffer {
  public:
   explicit CommandBuffer(CommandPool *command_pool);
   ~CommandBuffer();
+  [[nodiscard]] CommandPool *GetCommandPool() const;
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkCommandBuffer)
@@ -19,6 +20,7 @@ class CommandBuffers {
   VkCommandBuffer GetHandle(int buffer_index);
   VkCommandBuffer &operator[](int buffer_index);
   const VkCommandBuffer &operator[](int buffer_index) const;
+  [[nodiscard]] CommandPool *GetCommandPool() const;
 
  private:
   std::vector<VkCommandBuffer> command_buffers_{};

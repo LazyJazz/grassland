@@ -22,6 +22,10 @@ CommandBuffer::~CommandBuffer() {
                        command_pool_->GetHandle(), 1, &handle_);
 }
 
+CommandPool *CommandBuffer::GetCommandPool() const {
+  return command_pool_;
+}
+
 CommandBuffers::CommandBuffers(CommandPool *command_pool, uint32_t count) {
   command_pool_ = command_pool;
   count_ = count;
@@ -55,6 +59,10 @@ VkCommandBuffer &CommandBuffers::operator[](int buffer_index) {
 
 const VkCommandBuffer &CommandBuffers::operator[](int buffer_index) const {
   return command_buffers_[buffer_index];
+}
+
+CommandPool *CommandBuffers::GetCommandPool() const {
+  return command_pool_;
 }
 
 }  // namespace grassland::vulkan
