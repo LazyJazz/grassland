@@ -26,7 +26,7 @@ PipelineLayout::PipelineLayout(
 
   if (vkCreatePipelineLayout(device->GetHandle(), &pipelineLayoutInfo, nullptr,
                              &handle_) != VK_SUCCESS) {
-    LAND_ERROR("Vulkan failed to create pipeline layout!");
+    LAND_ERROR("[Vulkan] failed to create pipeline layout!");
   }
 }
 
