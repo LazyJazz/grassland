@@ -5,7 +5,7 @@
 namespace grassland::vulkan {
 class Instance {
  public:
-  Instance();
+  Instance(bool require_surface = true);
   ~Instance();
 
  private:
@@ -13,5 +13,6 @@ class Instance {
   void CreateDebugMessenger();
   GRASSLAND_VULKAN_HANDLE(VkInstance)
   VkDebugUtilsMessengerEXT debug_messenger_;
+  bool require_surface_;
 };
 }  // namespace grassland::vulkan

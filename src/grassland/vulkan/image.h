@@ -29,6 +29,7 @@ class Image {
                           VkPipelineStageFlags new_stage_flags,
                           VkAccessFlags new_access_flags);
   void Update(CommandBuffer *command_buffer, Buffer *buffer);
+  void Retrieve(CommandBuffer *command_buffer, Buffer *buffer);
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkImage)
@@ -46,4 +47,9 @@ void UploadImage(Queue *graphics_queue,
                  CommandPool *command_pool,
                  Image *image,
                  Buffer *buffer);
+
+void DownloadImage(Queue *graphics_queue,
+                   CommandPool *command_pool,
+                   Image *image,
+                   Buffer *buffer);
 }  // namespace grassland::vulkan

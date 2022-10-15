@@ -5,6 +5,7 @@
 namespace grassland::vulkan {
 class Device {
  public:
+  explicit Device(PhysicalDevice *physical_device);
   Device(PhysicalDevice *physical_device, Surface *surface);
   ~Device();
   PhysicalDevice *GetPhysicalDevice();

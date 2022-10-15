@@ -5,6 +5,10 @@
 
 namespace grassland::vulkan {
 
+Device::Device(PhysicalDevice *physical_device)
+    : Device(physical_device, nullptr) {
+}
+
 Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
   physical_device_ = physical_device;
   surface_ = surface;
