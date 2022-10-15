@@ -10,13 +10,18 @@ namespace grassland::vulkan {
 
 namespace {
 
-std::vector<const char *> GetRequiredExtensions() {
+std::vector<const char *> GetRequiredExtensions(bool require_surface) {
   uint32_t glfw_extension_count = 0;
-  const char **glfw_extensions;
-  glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+  const char **glfw_extensions = nullptr;
+  if (require_surface) {
+    glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+  }
 
-  std::vector<const char *> extensions(glfw_extensions,
-                                       glfw_extensions + glfw_extension_count);
+  std::vector<const char *> extensions;
+
+  for (uint32_t i = 0; i < glfw_extension_count; i++) {
+    extensions.push_back(glfw_extensions[i]);
+  }
 
   if (kEnableValidationLayers) {
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -123,7 +128,8 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance,
 
 }  // namespace
 
-Instance::Instance() {
+Instance::Instance(bool require_surface) {
+  require_surface_ = require_surface;
   CreateInstance();
   CreateDebugMessenger();
 }
@@ -150,7 +156,7 @@ void Instance::CreateInstance() {
   create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   create_info.pApplicationInfo = &app_info;
 
-  auto extensions = GetRequiredExtensions();
+  auto extensions = GetRequiredExtensions(require_surface_);
 #ifdef __APPLE__
   extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif

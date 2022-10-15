@@ -132,6 +132,23 @@ void Image::Update(CommandBuffer *command_buffer, Buffer *buffer) {
                          &region);
 }
 
+void Image::Retrieve(CommandBuffer *command_buffer, Buffer *buffer) {
+  VkBufferImageCopy region{};
+  region.bufferOffset = 0;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+  region.imageOffset = {0, 0, 0};
+  region.imageExtent = {width_, height_, 1};
+
+  vkCmdCopyImageToBuffer(command_buffer->GetHandle(), GetHandle(),
+                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                         buffer->GetHandle(), 1, &region);
+}
+
 void UploadImage(Queue *graphics_queue,
                  CommandPool *command_pool,
                  Image *image,
@@ -149,6 +166,39 @@ void UploadImage(Queue *graphics_queue,
       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
 
   image->Update(command_buffer.get(), buffer);
+
+  image->TransitImageLayout(command_buffer.get(), VK_IMAGE_LAYOUT_GENERAL,
+                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                            VK_ACCESS_SHADER_READ_BIT);
+
+  vkEndCommandBuffer(command_buffer->GetHandle());
+
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &command_buffer->GetHandle();
+
+  vkQueueSubmit(graphics_queue->GetHandle(), 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(graphics_queue->GetHandle());
+}
+
+void DownloadImage(Queue *graphics_queue,
+                   CommandPool *command_pool,
+                   Image *image,
+                   Buffer *buffer) {
+  auto command_buffer = std::make_unique<CommandBuffer>(command_pool);
+
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  vkBeginCommandBuffer(command_buffer->GetHandle(), &beginInfo);
+
+  image->TransitImageLayout(
+      command_buffer.get(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+
+  image->Retrieve(command_buffer.get(), buffer);
 
   image->TransitImageLayout(command_buffer.get(), VK_IMAGE_LAYOUT_GENERAL,
                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
