@@ -90,8 +90,6 @@ void App::OnInit() {
   physical_device_->PrintDeviceProperties();
   device_ =
       std::make_unique<vulkan::Device>(physical_device_.get(), surface_.get());
-  graphics_queue_ = std::make_unique<vulkan::Queue>(
-      device_.get(), physical_device_->GraphicsFamilyIndex());
   present_queue_ = std::make_unique<vulkan::Queue>(
       device_.get(), physical_device_->PresentFamilyIndex(surface_.get()));
   swapchain_ = std::make_unique<vulkan::Swapchain>(window_, device_.get());
@@ -169,9 +167,9 @@ void App::OnInit() {
   index_buffer_ = std::make_unique<vulkan::Buffer>(
       device_.get(), indices.size() * sizeof(uint16_t),
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-  vertex_buffer_->UploadData(graphics_queue_.get(), command_pool_.get(),
+  vertex_buffer_->UploadData(command_pool_.get(),
                              reinterpret_cast<const void *>(vertices.data()));
-  index_buffer_->UploadData(graphics_queue_.get(), command_pool_.get(),
+  index_buffer_->UploadData(command_pool_.get(),
                             reinterpret_cast<const void *>(indices.data()));
 
   for (size_t i = 0; i < kMaxFramesInFlight; i++) {
@@ -195,8 +193,7 @@ void App::OnInit() {
                                            VK_FORMAT_R8G8B8A8_SRGB);
   image_view_ = std::make_unique<vulkan::ImageView>(image_.get());
   sampler_ = std::make_unique<vulkan::Sampler>(device_.get());
-  vulkan::UploadImage(graphics_queue_.get(), command_pool_.get(), image_.get(),
-                      image_buffer.get());
+  vulkan::UploadImage(command_pool_.get(), image_.get(), image_buffer.get());
 
   for (size_t i = 0; i < kMaxFramesInFlight; i++) {
     vulkan::helper::UpdateDescriptorWrite(device_->GetHandle(),
@@ -214,7 +211,7 @@ void App::OnLoop() {
 }
 
 void App::OnClose() {
-  vkDeviceWaitIdle(device_->GetHandle());
+  device_->WaitIdle();
 
   sampler_.reset();
   image_view_.reset();
@@ -321,7 +318,7 @@ void App::OnRender() {
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
-  if (vkQueueSubmit(graphics_queue_->GetHandle(), 1, &submitInfo,
+  if (vkQueueSubmit(device_->GetGraphicsQueue()->GetHandle(), 1, &submitInfo,
                     in_flight_fence_[currentFrame]->GetHandle()) !=
       VK_SUCCESS) {
     LAND_ERROR("failed to submit draw command buffer!");
@@ -360,7 +357,7 @@ void App::recreateSwapChain() {
     glfwWaitEvents();
   }
 
-  vkDeviceWaitIdle(device_->GetHandle());
+  device_->WaitIdle();
 
   framebuffers_.clear();
   swapchain_.reset();

@@ -114,6 +114,22 @@ void Buffer::RetrieveData(Queue *graphics_queue,
   host_buffer.Unmap();
 }
 
+void Buffer::UploadData(CommandPool *command_pool,
+                        const void *src_data,
+                        VkDeviceSize size,
+                        VkDeviceSize offset) {
+  UploadData(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
+             src_data, size, offset);
+}
+
+void Buffer::RetrieveData(CommandPool *command_pool,
+                          void *dst_data,
+                          VkDeviceSize size,
+                          VkDeviceSize offset) {
+  RetrieveData(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
+               dst_data, size, offset);
+}
+
 void CopyBuffer(Queue *graphics_queue,
                 CommandPool *command_pool,
                 VkBuffer src_buffer,
@@ -155,5 +171,15 @@ void CopyBuffer(Queue *graphics_queue,
 
   vkFreeCommandBuffers(command_pool->GetDevice()->GetHandle(),
                        command_pool->GetHandle(), 1, &commandBuffer);
+}
+
+void vulkan::CopyBuffer(CommandPool *command_pool,
+                        VkBuffer src_buffer,
+                        VkBuffer dst_buffer,
+                        VkDeviceSize size,
+                        VkDeviceSize src_offset,
+                        VkDeviceSize dst_offset) {
+  CopyBuffer(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
+             src_buffer, dst_buffer, size, src_offset, dst_offset);
 }
 }  // namespace grassland::vulkan

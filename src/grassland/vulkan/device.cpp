@@ -1,5 +1,6 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/device.h>
+#include <grassland/vulkan/queue.h>
 
 #include <set>
 
@@ -59,9 +60,12 @@ Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
                      &handle_) != VK_SUCCESS) {
     LAND_ERROR("[Vulkan] failed to create logical device!");
   }
+
+  graphics_queue_ = new Queue(this, physical_device_->GraphicsFamilyIndex());
 }
 
 Device::~Device() {
+  delete graphics_queue_;
   vkDestroyDevice(handle_, nullptr);
 }
 
@@ -71,6 +75,14 @@ PhysicalDevice *Device::GetPhysicalDevice() {
 
 Surface *Device::GetSurface() {
   return surface_;
+}
+
+Queue *Device::GetGraphicsQueue() {
+  return graphics_queue_;
+}
+
+void Device::WaitIdle() {
+  vkDeviceWaitIdle(handle_);
 }
 
 }  // namespace grassland::vulkan

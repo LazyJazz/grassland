@@ -7,6 +7,7 @@ class Queue {
  public:
   Queue(Device *device, uint32_t queue_family_index);
   ~Queue();
+  void WaitIdle();
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkQueue)

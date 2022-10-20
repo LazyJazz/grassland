@@ -32,7 +32,6 @@ class App {
   std::unique_ptr<vulkan::Surface> surface_;
   std::unique_ptr<vulkan::PhysicalDevice> physical_device_;
   std::unique_ptr<vulkan::Device> device_;
-  std::unique_ptr<vulkan::Queue> graphics_queue_;
   std::unique_ptr<vulkan::Queue> present_queue_;
   std::unique_ptr<vulkan::Swapchain> swapchain_;
   std::unique_ptr<vulkan::RenderPass> render_pass_;

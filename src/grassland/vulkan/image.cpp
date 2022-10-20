@@ -214,4 +214,18 @@ void DownloadImage(Queue *graphics_queue,
   vkQueueSubmit(graphics_queue->GetHandle(), 1, &submitInfo, VK_NULL_HANDLE);
   vkQueueWaitIdle(graphics_queue->GetHandle());
 }
+
+void vulkan::UploadImage(CommandPool *command_pool,
+                         Image *image,
+                         Buffer *buffer) {
+  UploadImage(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
+              image, buffer);
+}
+
+void vulkan::DownloadImage(CommandPool *command_pool,
+                           Image *image,
+                           Buffer *buffer) {
+  DownloadImage(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
+                image, buffer);
+}
 }  // namespace grassland::vulkan
