@@ -175,6 +175,21 @@ SwapChainSupportDetails PhysicalDevice::GetSwapChainSupportDetails(
   return QuerySwapChainSupport(GetHandle(), surface->GetHandle());
 }
 
+std::vector<VkExtensionProperties> PhysicalDevice::GetExtensions() const {
+  uint32_t count = 0;
+  vkEnumerateDeviceExtensionProperties(handle_, nullptr, &count, nullptr);
+  std::vector<VkExtensionProperties> extensions(count);
+  vkEnumerateDeviceExtensionProperties(handle_, nullptr, &count,
+                                       extensions.data());
+  for (auto &extension : extensions) {
+    spdlog::info("- {} ({}.{}.{})", extension.extensionName,
+                 VK_VERSION_MAJOR(extension.specVersion),
+                 VK_VERSION_MINOR(extension.specVersion),
+                 VK_VERSION_PATCH(extension.specVersion));
+  }
+  return extensions;
+}
+
 std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance) {
   uint32_t device_count = 0;
   vkEnumeratePhysicalDevices(instance->GetHandle(), &device_count, nullptr);

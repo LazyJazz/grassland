@@ -27,6 +27,14 @@ class Buffer {
                     void *dst_data,
                     VkDeviceSize size = 0xffffffffffffffffull,
                     VkDeviceSize offset = 0);
+  void UploadData(CommandPool *command_pool,
+                  const void *src_data,
+                  VkDeviceSize size = 0xffffffffffffffffull,
+                  VkDeviceSize offset = 0);
+  void RetrieveData(CommandPool *command_pool,
+                    void *dst_data,
+                    VkDeviceSize size = 0xffffffffffffffffull,
+                    VkDeviceSize offset = 0);
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkBuffer)
@@ -37,6 +45,13 @@ class Buffer {
 
 void CopyBuffer(Queue *graphics_queue,
                 CommandPool *command_pool,
+                VkBuffer src_buffer,
+                VkBuffer dst_buffer,
+                VkDeviceSize size,
+                VkDeviceSize src_offset,
+                VkDeviceSize dst_offset);
+
+void CopyBuffer(CommandPool *command_pool,
                 VkBuffer src_buffer,
                 VkBuffer dst_buffer,
                 VkDeviceSize size,

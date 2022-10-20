@@ -28,6 +28,7 @@ class PhysicalDevice {
   void PrintDeviceProperties() const;
   void PrintDeviceFeatures() const;
   SwapChainSupportDetails GetSwapChainSupportDetails(Surface *surface) const;
+  [[nodiscard]] std::vector<VkExtensionProperties> GetExtensions() const;
 
   [[nodiscard]] VkPhysicalDeviceFeatures GetFeatures() const;
   [[nodiscard]] VkPhysicalDeviceProperties GetProperties() const;

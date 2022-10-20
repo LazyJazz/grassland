@@ -52,4 +52,8 @@ void DownloadImage(Queue *graphics_queue,
                    CommandPool *command_pool,
                    Image *image,
                    Buffer *buffer);
+
+void UploadImage(CommandPool *command_pool, Image *image, Buffer *buffer);
+
+void DownloadImage(CommandPool *command_pool, Image *image, Buffer *buffer);
 }  // namespace grassland::vulkan
