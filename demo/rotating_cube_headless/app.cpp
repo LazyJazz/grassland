@@ -65,6 +65,9 @@ void App::OnInit() {
         int score = 0;
         if (physical_device.IsDiscreteGPU())
           score += 1000;
+        spdlog::info(
+            "{} {}", physical_device.DeviceName(),
+            physical_device.IsDiscreteGPU() ? "(Discrete)" : "(Integrated)");
         score +=
             int(physical_device.GetProperties().limits.maxImageDimension2D);
         return score;

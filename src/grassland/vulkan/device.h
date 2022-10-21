@@ -8,8 +8,12 @@ class Queue;
 
 class Device {
  public:
-  explicit Device(PhysicalDevice *physical_device);
-  Device(PhysicalDevice *physical_device, Surface *surface);
+  explicit Device(
+      PhysicalDevice *physical_device,
+      const std::vector<const char *> &extra_device_extensions = {});
+  Device(PhysicalDevice *physical_device,
+         Surface *surface,
+         const std::vector<const char *> &extra_device_extensions = {});
   ~Device();
   PhysicalDevice *GetPhysicalDevice();
   Surface *GetSurface();

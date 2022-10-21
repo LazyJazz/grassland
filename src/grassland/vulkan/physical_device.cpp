@@ -34,6 +34,10 @@ SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device,
 }
 }  // namespace
 
+PhysicalDevice::PhysicalDevice() {
+  handle_ = nullptr;
+}
+
 PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
   handle_ = handle;
   properties_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
@@ -114,9 +118,9 @@ bool PhysicalDevice::HasPresentationSupport() const {
 }
 
 void PhysicalDevice::PrintDeviceProperties() const {
-  spdlog::info("  {}", properties_.properties.deviceName);
-  spdlog::info("    Vendor ID  : {:#X}", properties_.properties.vendorID);
-  spdlog::info("    Device Type: {}", [](VkPhysicalDeviceType device_type) {
+  spdlog::info("{}", properties_.properties.deviceName);
+  spdlog::info("- Vendor ID  : {:#X}", properties_.properties.vendorID);
+  spdlog::info("- Device Type: {}", [](VkPhysicalDeviceType device_type) {
     if (device_type == VK_PHYSICAL_DEVICE_TYPE_CPU)
       return "CPU";
     else if (device_type == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
@@ -136,9 +140,9 @@ void PhysicalDevice::PrintDeviceProperties() const {
                        ? uint64_t(memory_properties_.memoryHeaps[i].size)
                        : 0ull;
   }
-  spdlog::info("    Memory Size: {:#.03}GB",
+  spdlog::info("- Memory Size: {:#.03}GB",
                double(memory_size) / 1024.0 / 1024.0 / 1024.0);
-  spdlog::info("    Ray Tracing Support: {}",
+  spdlog::info("- Ray Tracing Support: {}",
                ray_tracing_features_.rayTracingPipeline ? "YES" : "NO");
 }
 
@@ -190,6 +194,21 @@ std::vector<VkExtensionProperties> PhysicalDevice::GetExtensions() const {
   return extensions;
 }
 
+bool PhysicalDevice::HasRayTracingPipeline() const {
+  return ray_tracing_features_.rayTracingPipeline;
+}
+
+uint64_t PhysicalDevice::DeviceMemorySize() const {
+  uint64_t memory_size = 0;
+  for (int i = 0; i < memory_properties_.memoryHeapCount; i++) {
+    memory_size += (memory_properties_.memoryHeaps[i].flags &
+                    VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                       ? uint64_t(memory_properties_.memoryHeaps[i].size)
+                       : 0ull;
+  }
+  return memory_size;
+}
+
 std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance) {
   uint32_t device_count = 0;
   vkEnumeratePhysicalDevices(instance->GetHandle(), &device_count, nullptr);
@@ -208,16 +227,15 @@ std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance) {
 PhysicalDevice PickPhysicalDevice(
     const std::vector<PhysicalDevice> &device_list,
     const std::function<int(PhysicalDevice)> &rate_function) {
-  if (device_list.empty()) {
-    LAND_ERROR("[Vulkan] no device found!");
-  }
-  PhysicalDevice result = device_list[0];
-  int res_score = rate_function(result);
-  for (size_t i = 1; i < device_list.size(); i++) {
-    int score = rate_function(device_list[i]);
-    if (score > res_score) {
-      res_score = score;
-      result = device_list[i];
+  PhysicalDevice result;
+  int res_score = -1;
+  if (!device_list.empty()) {
+    for (const auto &physical_device : device_list) {
+      int score = rate_function(physical_device);
+      if (score > res_score) {
+        res_score = score;
+        result = physical_device;
+      }
     }
   }
   return result;

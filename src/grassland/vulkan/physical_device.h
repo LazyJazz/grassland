@@ -17,6 +17,7 @@ struct SwapChainSupportDetails {
 
 class PhysicalDevice {
  public:
+  PhysicalDevice();
   explicit PhysicalDevice(VkPhysicalDevice handle);
   [[nodiscard]] std::string DeviceName() const;
   [[nodiscard]] uint32_t GraphicsFamilyIndex() const;
@@ -24,6 +25,8 @@ class PhysicalDevice {
   [[nodiscard]] bool HasPresentationSupport() const;
   [[nodiscard]] bool IsDiscreteGPU() const;
   [[nodiscard]] bool HasGeometryShader() const;
+  [[nodiscard]] bool HasRayTracingPipeline() const;
+  [[nodiscard]] uint64_t DeviceMemorySize() const;
   bool SwapChainAdequate(Surface *surface) const;
   void PrintDeviceProperties() const;
   void PrintDeviceFeatures() const;

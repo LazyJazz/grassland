@@ -30,6 +30,7 @@ class Image {
                           VkAccessFlags new_access_flags);
   void Update(CommandBuffer *command_buffer, Buffer *buffer);
   void Retrieve(CommandBuffer *command_buffer, Buffer *buffer);
+  VkImageLayout GetImageLayout();
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkImage)

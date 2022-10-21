@@ -13,3 +13,4 @@ endfunction()
 
 add_demo(rotating_cube)
 add_demo(rotating_cube_headless)
+add_demo(framework)

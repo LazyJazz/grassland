@@ -55,6 +55,10 @@ VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities,
 }
 }  // namespace
 
+Swapchain::Swapchain(Device *device, GLFWwindow *window)
+    : Swapchain(window, device) {
+}
+
 Swapchain::Swapchain(GLFWwindow *window, Device *device) : handle_() {
   window_ = window;
   device_ = device;
@@ -81,7 +85,8 @@ Swapchain::Swapchain(GLFWwindow *window, Device *device) : handle_() {
   createInfo.imageColorSpace = surfaceFormat.colorSpace;
   createInfo.imageExtent = extent;
   createInfo.imageArrayLayers = 1;
-  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  createInfo.imageUsage =
+      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   uint32_t queueFamilyIndices[] = {
       device_->GetPhysicalDevice()->GraphicsFamilyIndex(),
       device_->GetPhysicalDevice()->PresentFamilyIndex(device_->GetSurface())};

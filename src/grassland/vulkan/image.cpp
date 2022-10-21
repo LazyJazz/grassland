@@ -93,7 +93,7 @@ void Image::TransitImageLayout(CommandBuffer *command_buffer,
                                VkAccessFlags new_access_flags) {
   VkImageMemoryBarrier barrier{};
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.oldLayout = image_layout_;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   barrier.newLayout = new_layout;
   barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -147,6 +147,9 @@ void Image::Retrieve(CommandBuffer *command_buffer, Buffer *buffer) {
   vkCmdCopyImageToBuffer(command_buffer->GetHandle(), GetHandle(),
                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                          buffer->GetHandle(), 1, &region);
+}
+VkImageLayout Image::GetImageLayout() {
+  return image_layout_;
 }
 
 void UploadImage(Queue *graphics_queue,

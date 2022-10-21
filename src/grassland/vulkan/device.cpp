@@ -6,11 +6,15 @@
 
 namespace grassland::vulkan {
 
-Device::Device(PhysicalDevice *physical_device)
-    : Device(physical_device, nullptr) {
+Device::Device(PhysicalDevice *physical_device,
+               const std::vector<const char *> &extra_device_extensions)
+    : Device(physical_device, nullptr, extra_device_extensions) {
 }
 
-Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
+Device::Device(PhysicalDevice *physical_device,
+               Surface *surface,
+               const std::vector<const char *> &extra_device_extensions)
+    : handle_{} {
   physical_device_ = physical_device;
   surface_ = surface;
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -25,6 +29,11 @@ Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
 #ifdef __APPLE__
   device_extensions.push_back("VK_KHR_portability_subset");
 #endif
+  if (!extra_device_extensions.empty()) {
+    device_extensions.insert(device_extensions.end(),
+                             extra_device_extensions.begin(),
+                             extra_device_extensions.end());
+  }
 
   float queuePriority = 1.0f;
   for (uint32_t queueFamily : uniqueQueueFamilies) {
