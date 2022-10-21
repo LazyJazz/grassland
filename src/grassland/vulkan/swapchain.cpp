@@ -2,6 +2,7 @@
 #include <grassland/vulkan/swapchain.h>
 
 #include <algorithm>
+#include <cmath>
 
 namespace grassland::vulkan {
 
