@@ -15,7 +15,7 @@ namespace {
 
 struct Vertex {
   glm::vec3 pos;
-  glm::vec2 tex_coord;
+  glm::vec3 color;
 };
 
 struct UniformBufferObject {
@@ -25,10 +25,14 @@ struct UniformBufferObject {
 };
 
 const std::vector<Vertex> vertices = {
-    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f}}, {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}},
-    {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f}},  {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-    {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}},  {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f}},
-    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f}},   {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
+    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
+    {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+    {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
+    {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+    {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
+    {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}},
+    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 0.0f}},
+    {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}}};
 
 const std::vector<uint16_t> indices = {
     0b000, 0b010, 0b001, 0b011, 0b001, 0b010, 0b100, 0b101, 0b110,
@@ -117,18 +121,15 @@ void Application::OnInit() {
   vulkan::helper::DescriptorSetLayoutBindings descriptorSetLayoutBindings;
   descriptorSetLayoutBindings.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                          1, VK_SHADER_STAGE_VERTEX_BIT);
-  descriptorSetLayoutBindings.AddBinding(
-      1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
-      VK_SHADER_STAGE_FRAGMENT_BIT);
   descriptor_set_layout_ = std::make_unique<vulkan::DescriptorSetLayout>(
       device_.get(), descriptorSetLayoutBindings);
 
   pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(
       device_.get(), descriptor_set_layout_.get());
   vulkan::ShaderModule vert_shader(device_.get(),
-                                   "../shaders/shader_base.vert.spv");
+                                   "../shaders/color_shader.vert.spv");
   vulkan::ShaderModule frag_shader(device_.get(),
-                                   "../shaders/shader_base.frag.spv");
+                                   "../shaders/color_shader.frag.spv");
   vulkan::helper::ShaderStages shader_stages;
   shader_stages.AddShaderModule(&vert_shader, VK_SHADER_STAGE_VERTEX_BIT);
   shader_stages.AddShaderModule(&frag_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -136,8 +137,8 @@ void Application::OnInit() {
   vertex_input_descriptions.AddBinding(0, sizeof(Vertex));
   vertex_input_descriptions.AddAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
                                          offsetof(Vertex, pos));
-  vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32_SFLOAT,
-                                         offsetof(Vertex, tex_coord));
+  vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
+                                         offsetof(Vertex, color));
   graphics_pipeline_ = std::make_unique<vulkan::Pipeline>(
       device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages,
       vertex_input_descriptions, true);
@@ -191,28 +192,10 @@ void Application::OnInit() {
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
   }
 
-  int x, y, c;
-  auto image_data = stbi_load("../textures/xor_grid.png", &x, &y, &c, 4);
-  auto image_buffer = std::make_unique<vulkan::Buffer>(
-      device_.get(), x * y * 4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
-          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-  std::memcpy(image_buffer->Map(), image_data, x * y * 4);
-  image_buffer->Unmap();
-  stbi_image_free(image_data);
-  image_ = std::make_unique<vulkan::Image>(device_.get(), x, y,
-                                           VK_FORMAT_R8G8B8A8_SRGB);
-  image_view_ = std::make_unique<vulkan::ImageView>(image_.get());
-  sampler_ = std::make_unique<vulkan::Sampler>(device_.get());
-  vulkan::UploadImage(command_pool_.get(), image_.get(), image_buffer.get());
-
   for (size_t i = 0; i < kMaxFramesInFlight; i++) {
     vulkan::helper::UpdateDescriptorWrite(device_->GetHandle(),
                                           descriptor_sets_->GetHandle(i), 0,
                                           uniform_buffers_[i].get());
-    vulkan::helper::UpdateDescriptorWrite(device_->GetHandle(),
-                                          descriptor_sets_->GetHandle(i), 1,
-                                          image_view_.get(), sampler_.get());
   }
 }
 
@@ -224,9 +207,6 @@ void Application::OnLoop() {
 void Application::OnClose() {
   device_->WaitIdle();
 
-  sampler_.reset();
-  image_view_.reset();
-  image_.reset();
   vertex_buffer_.reset();
   index_buffer_.reset();
 

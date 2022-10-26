@@ -54,10 +54,6 @@ class Application {
   std::unique_ptr<vulkan::DescriptorPool> descriptor_pool_;
   std::unique_ptr<vulkan::DescriptorSets> descriptor_sets_;
 
-  std::unique_ptr<vulkan::Image> image_;
-  std::unique_ptr<vulkan::ImageView> image_view_;
-  std::unique_ptr<vulkan::Sampler> sampler_;
-
   std::unique_ptr<vulkan::Image> depth_buffer_image_;
   std::unique_ptr<vulkan::ImageView> depth_buffer_image_view_;
   std::unique_ptr<vulkan::Image> color_attachment_image_;
