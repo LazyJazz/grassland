@@ -57,4 +57,10 @@ void DownloadImage(Queue *graphics_queue,
 void UploadImage(CommandPool *command_pool, Image *image, Buffer *buffer);
 
 void DownloadImage(CommandPool *command_pool, Image *image, Buffer *buffer);
+
+void TransitImageLayout(VkCommandBuffer command_buffer,
+                        VkImage image,
+                        VkImageLayout new_layout,
+                        VkPipelineStageFlags new_stage_flags,
+                        VkAccessFlags new_access_flags);
 }  // namespace grassland::vulkan

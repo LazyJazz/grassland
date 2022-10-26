@@ -91,28 +91,13 @@ void Image::TransitImageLayout(CommandBuffer *command_buffer,
                                VkImageLayout new_layout,
                                VkPipelineStageFlags new_stage_flags,
                                VkAccessFlags new_access_flags) {
-  VkImageMemoryBarrier barrier{};
-  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  barrier.newLayout = new_layout;
-  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.image = handle_;
-  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier.subresourceRange.baseMipLevel = 0;
-  barrier.subresourceRange.levelCount = 1;
-  barrier.subresourceRange.baseArrayLayer = 0;
-  barrier.subresourceRange.layerCount = 1;
+  grassland::vulkan::TransitImageLayout(command_buffer->GetHandle(),
+                                        GetHandle(), new_layout,
+                                        new_stage_flags, new_access_flags);
 
-  barrier.srcAccessMask = access_flags_;
-  barrier.dstAccessMask = new_access_flags;
-
-  vkCmdPipelineBarrier(command_buffer->GetHandle(), pipeline_stage_flags_,
-                       new_stage_flags, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-  image_layout_ = new_layout;
-  pipeline_stage_flags_ = new_stage_flags;
-  access_flags_ = new_access_flags;
+  //  image_layout_ = new_layout;
+  //  pipeline_stage_flags_ = new_stage_flags;
+  //  access_flags_ = new_access_flags;
 }
 
 void Image::Update(CommandBuffer *command_buffer, Buffer *buffer) {
@@ -226,5 +211,29 @@ void UploadImage(CommandPool *command_pool, Image *image, Buffer *buffer) {
 void DownloadImage(CommandPool *command_pool, Image *image, Buffer *buffer) {
   DownloadImage(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
                 image, buffer);
+}
+void TransitImageLayout(VkCommandBuffer command_buffer,
+                        VkImage image,
+                        VkImageLayout new_layout,
+                        VkPipelineStageFlags new_stage_flags,
+                        VkAccessFlags new_access_flags) {
+  VkImageMemoryBarrier barrier{};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  barrier.newLayout = new_layout;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = image;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+
+  barrier.srcAccessMask = VK_ACCESS_NONE;
+  barrier.dstAccessMask = new_access_flags;
+
+  vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                       new_stage_flags, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 }  // namespace grassland::vulkan
