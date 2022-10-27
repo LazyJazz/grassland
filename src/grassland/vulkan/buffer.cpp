@@ -1,5 +1,6 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/buffer.h>
+#include <grassland/vulkan/helper/helper.h>
 
 namespace grassland::vulkan {
 
@@ -137,40 +138,8 @@ void CopyBuffer(Queue *graphics_queue,
                 VkDeviceSize size,
                 VkDeviceSize src_offset,
                 VkDeviceSize dst_offset) {
-  VkCommandBufferAllocateInfo allocInfo{};
-  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandPool = command_pool->GetHandle();
-  allocInfo.commandBufferCount = 1;
-
-  VkCommandBuffer commandBuffer;
-  vkAllocateCommandBuffers(command_pool->GetDevice()->GetHandle(), &allocInfo,
-                           &commandBuffer);
-
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-  vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-  VkBufferCopy copyRegion{};
-  copyRegion.size = size;
-  copyRegion.srcOffset = src_offset;
-  copyRegion.dstOffset = dst_offset;
-  vkCmdCopyBuffer(commandBuffer, src_buffer, dst_buffer, 1, &copyRegion);
-
-  vkEndCommandBuffer(commandBuffer);
-
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffer;
-
-  vkQueueSubmit(graphics_queue->GetHandle(), 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(graphics_queue->GetHandle());
-
-  vkFreeCommandBuffers(command_pool->GetDevice()->GetHandle(),
-                       command_pool->GetHandle(), 1, &commandBuffer);
+  CopyBuffer(command_pool, src_buffer, dst_buffer, size, src_offset,
+             dst_offset);
 }
 
 void CopyBuffer(CommandPool *command_pool,
@@ -179,7 +148,12 @@ void CopyBuffer(CommandPool *command_pool,
                 VkDeviceSize size,
                 VkDeviceSize src_offset,
                 VkDeviceSize dst_offset) {
-  CopyBuffer(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
-             src_buffer, dst_buffer, size, src_offset, dst_offset);
+  helper::SingleTimeCommands(command_pool, [&](VkCommandBuffer command_buffer) {
+    VkBufferCopy copyRegion{};
+    copyRegion.size = size;
+    copyRegion.srcOffset = src_offset;
+    copyRegion.dstOffset = dst_offset;
+    vkCmdCopyBuffer(command_buffer, src_buffer, dst_buffer, 1, &copyRegion);
+  });
 }
 }  // namespace grassland::vulkan

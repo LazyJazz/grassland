@@ -1,4 +1,5 @@
 #include <grassland/util/logging.h>
+#include <grassland/vulkan/helper/helper.h>
 #include <grassland/vulkan/image.h>
 
 namespace grassland::vulkan {
@@ -138,76 +139,42 @@ void UploadImage(Queue *graphics_queue,
                  CommandPool *command_pool,
                  Image *image,
                  Buffer *buffer) {
-  auto command_buffer = std::make_unique<CommandBuffer>(command_pool);
-
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-  vkBeginCommandBuffer(command_buffer->GetHandle(), &beginInfo);
-
-  image->TransitImageLayout(
-      command_buffer.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
-
-  image->Update(command_buffer.get(), buffer);
-
-  image->TransitImageLayout(command_buffer.get(), VK_IMAGE_LAYOUT_GENERAL,
-                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                            VK_ACCESS_SHADER_READ_BIT);
-
-  vkEndCommandBuffer(command_buffer->GetHandle());
-
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &command_buffer->GetHandle();
-
-  vkQueueSubmit(graphics_queue->GetHandle(), 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(graphics_queue->GetHandle());
+  UploadImage(command_pool, image, buffer);
 }
 
 void DownloadImage(Queue *graphics_queue,
                    CommandPool *command_pool,
                    Image *image,
                    Buffer *buffer) {
-  auto command_buffer = std::make_unique<CommandBuffer>(command_pool);
-
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-  vkBeginCommandBuffer(command_buffer->GetHandle(), &beginInfo);
-
-  image->TransitImageLayout(
-      command_buffer.get(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-
-  image->Retrieve(command_buffer.get(), buffer);
-
-  image->TransitImageLayout(command_buffer.get(), VK_IMAGE_LAYOUT_GENERAL,
-                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                            VK_ACCESS_SHADER_READ_BIT);
-
-  vkEndCommandBuffer(command_buffer->GetHandle());
-
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &command_buffer->GetHandle();
-
-  vkQueueSubmit(graphics_queue->GetHandle(), 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(graphics_queue->GetHandle());
+  DownloadImage(command_pool, image, buffer);
 }
 
 void UploadImage(CommandPool *command_pool, Image *image, Buffer *buffer) {
-  UploadImage(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
-              image, buffer);
+  helper::SingleTimeCommands(command_pool, [&](CommandBuffer *command_buffer) {
+    image->TransitImageLayout(
+        command_buffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+
+    image->Update(command_buffer, buffer);
+
+    image->TransitImageLayout(command_buffer, VK_IMAGE_LAYOUT_GENERAL,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_ACCESS_SHADER_READ_BIT);
+  });
 }
 
 void DownloadImage(CommandPool *command_pool, Image *image, Buffer *buffer) {
-  DownloadImage(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
-                image, buffer);
+  helper::SingleTimeCommands(command_pool, [&](CommandBuffer *command_buffer) {
+    image->TransitImageLayout(
+        command_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+
+    image->Retrieve(command_buffer, buffer);
+
+    image->TransitImageLayout(command_buffer, VK_IMAGE_LAYOUT_GENERAL,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_ACCESS_SHADER_READ_BIT);
+  });
 }
 void TransitImageLayout(VkCommandBuffer command_buffer,
                         VkImage image,
