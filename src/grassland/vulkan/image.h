@@ -30,7 +30,6 @@ class Image {
                           VkAccessFlags new_access_flags);
   void Update(CommandBuffer *command_buffer, Buffer *buffer);
   void Retrieve(CommandBuffer *command_buffer, Buffer *buffer);
-  VkImageLayout GetImageLayout();
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkImage)
@@ -39,9 +38,6 @@ class Image {
   uint32_t width_{};
   uint32_t height_{};
   VkFormat format_{VK_FORMAT_R32G32B32A32_SFLOAT};
-  VkImageLayout image_layout_{VK_IMAGE_LAYOUT_UNDEFINED};
-  VkPipelineStageFlags pipeline_stage_flags_{VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
-  VkAccessFlags access_flags_{0};
 };
 
 void UploadImage(Queue *graphics_queue,

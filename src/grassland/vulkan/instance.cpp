@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/instance.h>
+#include <grassland/vulkan/instance_procedures.h>
 
 #include <cstring>
 #include <iostream>
@@ -10,7 +11,8 @@ namespace grassland::vulkan {
 
 namespace {
 
-std::vector<const char *> GetRequiredExtensions(bool require_surface) {
+std::vector<const char *> GetRequiredExtensions(bool require_surface,
+                                                bool enable_validation_layers) {
   uint32_t glfw_extension_count = 0;
   const char **glfw_extensions = nullptr;
   if (require_surface) {
@@ -23,7 +25,7 @@ std::vector<const char *> GetRequiredExtensions(bool require_surface) {
     extensions.push_back(glfw_extensions[i]);
   }
 
-  if (kEnableValidationLayers) {
+  if (enable_validation_layers) {
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
 
@@ -102,51 +104,31 @@ void PopulateDebugMessengerCreateInfo(
   create_info.pfnUserCallback = DebugCallback;
 }
 
-VkResult CreateDebugUtilsMessengerEXT(
-    VkInstance instance,
-    const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
-    const VkAllocationCallbacks *pAllocator,
-    VkDebugUtilsMessengerEXT *pDebugMessenger) {
-  auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-      instance, "vkCreateDebugUtilsMessengerEXT");
-  if (func != nullptr) {
-    return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-  } else {
-    return VK_ERROR_EXTENSION_NOT_PRESENT;
-  }
-}
-
-void DestroyDebugUtilsMessengerEXT(VkInstance instance,
-                                   VkDebugUtilsMessengerEXT debugMessenger,
-                                   const VkAllocationCallbacks *pAllocator) {
-  auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-      instance, "vkDestroyDebugUtilsMessengerEXT");
-  if (func != nullptr) {
-    func(instance, debugMessenger, pAllocator);
-  }
-}
-
 }  // namespace
 
-Instance::Instance(bool require_surface) {
+Instance::Instance(bool require_surface, bool enable_validation_layers) {
   require_surface_ = require_surface;
+  enable_validation_layers_ = enable_validation_layers;
   CreateInstance();
+  InstanceProcedures::GetStaticInstance()->SetInstance(handle_);
   CreateDebugMessenger();
 }
 
 Instance::~Instance() {
-  DestroyDebugUtilsMessengerEXT(handle_, debug_messenger_, nullptr);
+  if (enable_validation_layers_) {
+    vkDestroyDebugUtilsMessengerEXT(handle_, debug_messenger_, nullptr);
+  }
   vkDestroyInstance(handle_, nullptr);
 }
 
 void Instance::CreateInstance() {
-  if (kEnableValidationLayers && !CheckValidationLayerSupport()) {
+  if (enable_validation_layers_ && !CheckValidationLayerSupport()) {
     LAND_ERROR("[Vulkan] validation layer is required, but not supported.");
   }
 
   VkApplicationInfo app_info{};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  app_info.pApplicationName = "Hello Triangle";
+  app_info.pApplicationName = "Grassland";
   app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   app_info.pEngineName = "No Engine";
   app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -156,21 +138,23 @@ void Instance::CreateInstance() {
   create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   create_info.pApplicationInfo = &app_info;
 
-  auto extensions = GetRequiredExtensions(require_surface_);
+  auto extensions =
+      GetRequiredExtensions(require_surface_, enable_validation_layers_);
 #ifdef __APPLE__
   extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif
 
   spdlog::info("Instance extensions:");
   for (auto extension : extensions) {
-    spdlog::info("  {}", extension);
+    spdlog::info("- {}", extension);
   }
+  spdlog::info("");
 
   create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   create_info.ppEnabledExtensionNames = extensions.data();
 
   VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
-  if (kEnableValidationLayers) {
+  if (enable_validation_layers_) {
     create_info.enabledLayerCount =
         static_cast<uint32_t>(validationLayers.size());
     create_info.ppEnabledLayerNames = validationLayers.data();
@@ -194,14 +178,14 @@ void Instance::CreateInstance() {
 }
 
 void Instance::CreateDebugMessenger() {
-  if (!kEnableValidationLayers)
-    return;
-  VkDebugUtilsMessengerCreateInfoEXT create_info;
-  PopulateDebugMessengerCreateInfo(create_info);
+  if (enable_validation_layers_) {
+    VkDebugUtilsMessengerCreateInfoEXT create_info;
+    PopulateDebugMessengerCreateInfo(create_info);
 
-  if (CreateDebugUtilsMessengerEXT(handle_, &create_info, nullptr,
-                                   &debug_messenger_) != VK_SUCCESS) {
-    LAND_ERROR("[Vulkan] failed to set up debug messenger!");
+    if (vkCreateDebugUtilsMessengerEXT(handle_, &create_info, nullptr,
+                                       &debug_messenger_) != VK_SUCCESS) {
+      LAND_ERROR("[Vulkan] failed to set up debug messenger!");
+    }
   }
 }
 

@@ -34,23 +34,24 @@ SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device,
 }
 }  // namespace
 
-PhysicalDevice::PhysicalDevice() {
-  handle_ = nullptr;
+PhysicalDevice::PhysicalDevice() : PhysicalDevice(nullptr) {
 }
 
 PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
   handle_ = handle;
-  properties_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-  properties_.pNext = &ray_tracing_properties;
-  ray_tracing_properties.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
-  vkGetPhysicalDeviceProperties2(handle_, &properties_);
-  features_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-  features_.pNext = &ray_tracing_features_;
-  ray_tracing_features_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
-  vkGetPhysicalDeviceFeatures2(handle_, &features_);
-  vkGetPhysicalDeviceMemoryProperties(handle_, &memory_properties_);
+  if (handle_) {
+    properties_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    properties_.pNext = &ray_tracing_properties;
+    ray_tracing_properties.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+    vkGetPhysicalDeviceProperties2(handle_, &properties_);
+    features_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features_.pNext = &ray_tracing_features_;
+    ray_tracing_features_.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+    vkGetPhysicalDeviceFeatures2(handle_, &features_);
+    vkGetPhysicalDeviceMemoryProperties(handle_, &memory_properties_);
+  }
 }
 
 std::string PhysicalDevice::DeviceName() const {
@@ -144,6 +145,7 @@ void PhysicalDevice::PrintDeviceProperties() const {
                double(memory_size) / 1024.0 / 1024.0 / 1024.0);
   spdlog::info("- Ray Tracing Support: {}",
                ray_tracing_features_.rayTracingPipeline ? "YES" : "NO");
+  spdlog::info("");
 }
 
 void PhysicalDevice::PrintDeviceFeatures() const {

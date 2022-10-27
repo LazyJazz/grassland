@@ -133,9 +133,6 @@ void Image::Retrieve(CommandBuffer *command_buffer, Buffer *buffer) {
                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                          buffer->GetHandle(), 1, &region);
 }
-VkImageLayout Image::GetImageLayout() {
-  return image_layout_;
-}
 
 void UploadImage(Queue *graphics_queue,
                  CommandPool *command_pool,
