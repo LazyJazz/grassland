@@ -7,6 +7,7 @@ namespace grassland::vulkan {
 class Swapchain {
  public:
   Swapchain(GLFWwindow *window, Device *device);
+  Swapchain(Device *device, GLFWwindow *window);
   ~Swapchain();
   [[nodiscard]] VkFormat GetFormat() const;
   [[nodiscard]] VkExtent2D GetExtent() const;

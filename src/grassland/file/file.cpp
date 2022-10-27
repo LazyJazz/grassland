@@ -13,7 +13,7 @@ std::string ReadFile(const char *file_path) {
   file_in.seekg(std::ios::beg);
   std::string result;
   result.resize(file_size);
-  file_in.read(result.data(), std::streamsize(file_size));
+  file_in.read(const_cast<char *>(result.data()), std::streamsize(file_size));
   return result;
 }
 

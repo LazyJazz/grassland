@@ -6,7 +6,7 @@
 #include <vector>
 
 #define GRASSLAND_VULKAN_HANDLE(type) \
-  type handle_;                       \
+  type handle_{};                     \
                                       \
  public:                              \
   type &GetHandle() {                 \
@@ -28,13 +28,15 @@
                                     \
  private:
 
+#define GRASSLAND_VULKAN_PROCEDURE_VAR(function_name) \
+  PFN_##function_name function_name##_;
 namespace grassland::vulkan {
 const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};
 
 #ifdef NDEBUG
-constexpr bool kEnableValidationLayers = false;
+constexpr bool kDefaultEnableValidationLayers = false;
 #else
-constexpr bool kEnableValidationLayers = true;
+constexpr bool kDefaultEnableValidationLayers = true;
 #endif
 }  // namespace grassland::vulkan

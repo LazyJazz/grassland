@@ -6,11 +6,20 @@
 
 namespace grassland::vulkan {
 
-Device::Device(PhysicalDevice *physical_device)
-    : Device(physical_device, nullptr) {
+Device::Device(PhysicalDevice *physical_device,
+               const std::vector<const char *> &extra_device_extensions,
+               bool enable_validation_layers)
+    : Device(physical_device,
+             nullptr,
+             extra_device_extensions,
+             enable_validation_layers) {
 }
 
-Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
+Device::Device(PhysicalDevice *physical_device,
+               Surface *surface,
+               const std::vector<const char *> &extra_device_extensions,
+               bool enable_validation_layers)
+    : handle_{} {
   physical_device_ = physical_device;
   surface_ = surface;
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -25,6 +34,17 @@ Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
 #ifdef __APPLE__
   device_extensions.push_back("VK_KHR_portability_subset");
 #endif
+  if (!extra_device_extensions.empty()) {
+    device_extensions.insert(device_extensions.end(),
+                             extra_device_extensions.begin(),
+                             extra_device_extensions.end());
+  }
+
+  spdlog::info("Device extensions:");
+  for (auto extension : device_extensions) {
+    spdlog::info("- {}", extension);
+  }
+  spdlog::info("");
 
   float queuePriority = 1.0f;
   for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -48,7 +68,7 @@ Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
     createInfo.ppEnabledExtensionNames = device_extensions.data();
   }
 
-  if (kEnableValidationLayers) {
+  if (enable_validation_layers) {
     createInfo.enabledLayerCount =
         static_cast<uint32_t>(validationLayers.size());
     createInfo.ppEnabledLayerNames = validationLayers.data();
@@ -61,28 +81,37 @@ Device::Device(PhysicalDevice *physical_device, Surface *surface) : handle_{} {
     LAND_ERROR("[Vulkan] failed to create logical device!");
   }
 
-  graphics_queue_ = new Queue(this, physical_device_->GraphicsFamilyIndex());
+  graphics_queue_ =
+      std::make_unique<Queue>(this, physical_device_->GraphicsFamilyIndex());
+
+  if (surface_) {
+    present_queue_ = std::make_unique<Queue>(
+        this, physical_device_->PresentFamilyIndex(surface_));
+  }
 }
 
 Device::~Device() {
-  delete graphics_queue_;
+  graphics_queue_.reset();
   vkDestroyDevice(handle_, nullptr);
 }
 
-PhysicalDevice *Device::GetPhysicalDevice() {
+PhysicalDevice *Device::GetPhysicalDevice() const {
   return physical_device_;
 }
 
-Surface *Device::GetSurface() {
+Surface *Device::GetSurface() const {
   return surface_;
 }
 
-Queue *Device::GetGraphicsQueue() {
-  return graphics_queue_;
+Queue *Device::GetGraphicsQueue() const {
+  return graphics_queue_.get();
 }
 
 void Device::WaitIdle() {
   vkDeviceWaitIdle(handle_);
+}
+Queue *Device::GetPresentQueue() const {
+  return present_queue_.get();
 }
 
 }  // namespace grassland::vulkan

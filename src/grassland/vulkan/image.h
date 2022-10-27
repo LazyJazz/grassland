@@ -38,9 +38,6 @@ class Image {
   uint32_t width_{};
   uint32_t height_{};
   VkFormat format_{VK_FORMAT_R32G32B32A32_SFLOAT};
-  VkImageLayout image_layout_{VK_IMAGE_LAYOUT_UNDEFINED};
-  VkPipelineStageFlags pipeline_stage_flags_{VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
-  VkAccessFlags access_flags_{0};
 };
 
 void UploadImage(Queue *graphics_queue,
@@ -56,4 +53,10 @@ void DownloadImage(Queue *graphics_queue,
 void UploadImage(CommandPool *command_pool, Image *image, Buffer *buffer);
 
 void DownloadImage(CommandPool *command_pool, Image *image, Buffer *buffer);
+
+void TransitImageLayout(VkCommandBuffer command_buffer,
+                        VkImage image,
+                        VkImageLayout new_layout,
+                        VkPipelineStageFlags new_stage_flags,
+                        VkAccessFlags new_access_flags);
 }  // namespace grassland::vulkan

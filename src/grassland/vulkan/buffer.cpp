@@ -173,12 +173,12 @@ void CopyBuffer(Queue *graphics_queue,
                        command_pool->GetHandle(), 1, &commandBuffer);
 }
 
-void vulkan::CopyBuffer(CommandPool *command_pool,
-                        VkBuffer src_buffer,
-                        VkBuffer dst_buffer,
-                        VkDeviceSize size,
-                        VkDeviceSize src_offset,
-                        VkDeviceSize dst_offset) {
+void CopyBuffer(CommandPool *command_pool,
+                VkBuffer src_buffer,
+                VkBuffer dst_buffer,
+                VkDeviceSize size,
+                VkDeviceSize src_offset,
+                VkDeviceSize dst_offset) {
   CopyBuffer(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
              src_buffer, dst_buffer, size, src_offset, dst_offset);
 }
