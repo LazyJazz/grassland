@@ -22,6 +22,8 @@ class TextureImage {
   void WriteImage(const char *path);
   void WriteHDRImage(const char *path);
   [[nodiscard]] Core *GetCore() const;
+  [[nodiscard]] Image *GetImage() const;
+  [[nodiscard]] ImageView *GetImageView() const;
 
  private:
   Core *core_;

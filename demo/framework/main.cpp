@@ -10,9 +10,9 @@ int main() {
   grassland::vulkan::framework::Core core(core_settings);
   std::unique_ptr<grassland::vulkan::framework::TextureImage> texture_image =
       std::make_unique<grassland::vulkan::framework::TextureImage>(
-          &core, 256, 256, VK_FORMAT_B8G8R8A8_UNORM);
-  texture_image->ReadImage("../textures/xor_grid.png");
-  texture_image->WriteImage("../textures/xor_grid.jpg");
+          &core, 1, 1, VK_FORMAT_R32G32B32A32_SFLOAT);
+  texture_image->ReadImage("../textures/air_museum_playground_2k.hdr");
+  texture_image->WriteImage("../textures/air_museum_playground_2k.hdr.png");
   while (!glfwWindowShouldClose(core.GetWindow())) {
     glfwPollEvents();
   }

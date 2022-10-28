@@ -34,6 +34,7 @@ Image::Image(Device *device,
   width_ = width;
   height_ = height;
   format_ = format;
+  usage_ = usage;
 
   VkImageCreateInfo imageInfo{};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -133,6 +134,10 @@ void Image::Retrieve(CommandBuffer *command_buffer, Buffer *buffer) {
   vkCmdCopyImageToBuffer(command_buffer->GetHandle(), GetHandle(),
                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                          buffer->GetHandle(), 1, &region);
+}
+
+VkImageUsageFlags Image::GetUsage() const {
+  return usage_;
 }
 
 void UploadImage(Queue *graphics_queue,
