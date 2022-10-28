@@ -15,7 +15,8 @@ class Pipeline {
       PipelineLayout *pipeline_layout,
       const helper::ShaderStages &shader_stages,
       const helper::VertexInputDescriptions &vertex_input_descriptions,
-      bool depth_test = false);
+      bool depth_test = false,
+      bool blend_enable = false);
   ~Pipeline();
 
  private:

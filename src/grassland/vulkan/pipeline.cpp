@@ -13,7 +13,8 @@ Pipeline::Pipeline(
     PipelineLayout *pipeline_layout,
     const helper::ShaderStages &shader_stages,
     const helper::VertexInputDescriptions &vertex_input_descriptions,
-    bool depth_test)
+    bool depth_test,
+    bool blend_enable)
     : handle_{} {
   device_ = device;
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -64,6 +65,17 @@ Pipeline::Pipeline(
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
       VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   colorBlendAttachment.blendEnable = VK_FALSE;
+  if (blend_enable) {
+    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachment.dstAlphaBlendFactor =
+        VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    colorBlendAttachment.dstColorBlendFactor =
+        VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  }
 
   VkPipelineColorBlendStateCreateInfo colorBlending{};
   colorBlending.sType =
