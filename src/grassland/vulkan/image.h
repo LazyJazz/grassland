@@ -24,6 +24,7 @@ class Image {
   [[nodiscard]] VkFormat GetFormat() const;
   [[nodiscard]] uint32_t GetWidth() const;
   [[nodiscard]] uint32_t GetHeight() const;
+  [[nodiscard]] VkImageUsageFlags GetUsage() const;
   void TransitImageLayout(CommandBuffer *command_buffer,
                           VkImageLayout new_layout,
                           VkPipelineStageFlags new_stage_flags,
@@ -38,6 +39,8 @@ class Image {
   uint32_t width_{};
   uint32_t height_{};
   VkFormat format_{VK_FORMAT_R32G32B32A32_SFLOAT};
+  VkImageUsageFlags usage_{VK_IMAGE_USAGE_SAMPLED_BIT |
+                           VK_IMAGE_USAGE_TRANSFER_DST_BIT};
 };
 
 void UploadImage(Queue *graphics_queue,
@@ -59,4 +62,11 @@ void TransitImageLayout(VkCommandBuffer command_buffer,
                         VkImageLayout new_layout,
                         VkPipelineStageFlags new_stage_flags,
                         VkAccessFlags new_access_flags);
+
+void CopyImage(CommandPool *command_pool,
+               Image *src_image,
+               Image *dst_image,
+               VkOffset2D src_offset = {0, 0},
+               VkOffset2D dst_offset = {0, 0},
+               VkExtent2D extent = {0xffffffffu, 0xffffffffu});
 }  // namespace grassland::vulkan

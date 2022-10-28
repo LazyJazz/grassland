@@ -34,6 +34,7 @@ Image::Image(Device *device,
   width_ = width;
   height_ = height;
   format_ = format;
+  usage_ = usage;
 
   VkImageCreateInfo imageInfo{};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -135,6 +136,10 @@ void Image::Retrieve(CommandBuffer *command_buffer, Buffer *buffer) {
                          buffer->GetHandle(), 1, &region);
 }
 
+VkImageUsageFlags Image::GetUsage() const {
+  return usage_;
+}
+
 void UploadImage(Queue *graphics_queue,
                  CommandPool *command_pool,
                  Image *image,
@@ -199,5 +204,48 @@ void TransitImageLayout(VkCommandBuffer command_buffer,
 
   vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                        new_stage_flags, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+}
+
+void vulkan::CopyImage(CommandPool *command_pool,
+                       Image *src_image,
+                       Image *dst_image,
+                       VkOffset2D src_offset,
+                       VkOffset2D dst_offset,
+                       VkExtent2D extent) {
+  helper::SingleTimeCommands(command_pool, [&](CommandBuffer *command_buffer) {
+    TransitImageLayout(command_buffer->GetHandle(), dst_image->GetHandle(),
+                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                       VK_PIPELINE_STAGE_TRANSFER_BIT,
+                       VK_ACCESS_TRANSFER_WRITE_BIT);
+    TransitImageLayout(command_buffer->GetHandle(), src_image->GetHandle(),
+                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                       VK_PIPELINE_STAGE_TRANSFER_BIT,
+                       VK_ACCESS_TRANSFER_READ_BIT);
+    VkImageCopy imageCopy{};
+    imageCopy.srcOffset = VkOffset3D{src_offset.x, src_offset.y, 0};
+    imageCopy.dstOffset = VkOffset3D{dst_offset.x, dst_offset.y, 0};
+
+    imageCopy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageCopy.dstSubresource.mipLevel = 0;
+    imageCopy.dstSubresource.baseArrayLayer = 0;
+    imageCopy.dstSubresource.layerCount = 1;
+    imageCopy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageCopy.srcSubresource.mipLevel = 0;
+    imageCopy.srcSubresource.baseArrayLayer = 0;
+    imageCopy.srcSubresource.layerCount = 1;
+    imageCopy.extent = {
+        std::min(std::min(src_image->GetWidth() - src_offset.x,
+                          dst_image->GetWidth() - dst_offset.x),
+                 extent.width),
+        std::min(std::min(src_image->GetHeight() - src_offset.y,
+                          dst_image->GetHeight() - dst_offset.y),
+                 extent.height),
+        1};
+    vkCmdCopyImage(command_buffer->GetHandle(), src_image->GetHandle(),
+                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image->GetHandle(),
+                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+  });
+}
+void CopyImage(CommandPool *command_pool, Image *dst_image, Image *src_image) {
 }
 }  // namespace grassland::vulkan
