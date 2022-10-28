@@ -59,4 +59,11 @@ void TransitImageLayout(VkCommandBuffer command_buffer,
                         VkImageLayout new_layout,
                         VkPipelineStageFlags new_stage_flags,
                         VkAccessFlags new_access_flags);
+
+void CopyImage(CommandPool *command_pool,
+               Image *src_image,
+               Image *dst_image,
+               VkOffset2D src_offset = {0, 0},
+               VkOffset2D dst_offset = {0, 0},
+               VkExtent2D extent = {0xffffffffu, 0xffffffffu});
 }  // namespace grassland::vulkan
