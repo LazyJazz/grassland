@@ -15,7 +15,30 @@ Pipeline::Pipeline(
     const helper::VertexInputDescriptions &vertex_input_descriptions,
     bool depth_test,
     bool blend_enable)
-    : handle_{} {
+    : Pipeline(
+          device,
+          render_pass,
+          pipeline_layout,
+          shader_stages,
+          vertex_input_descriptions,
+          std::vector<VkPipelineColorBlendAttachmentState>{
+              {blend_enable ? VK_TRUE : VK_FALSE, VK_BLEND_FACTOR_SRC_ALPHA,
+               VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_OP_ADD,
+               VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+               VK_BLEND_OP_ADD,
+               VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT |
+                   VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT}},
+          depth_test) {
+}
+Pipeline::Pipeline(
+    Device *device,
+    RenderPass *render_pass,
+    PipelineLayout *pipeline_layout,
+    const helper::ShaderStages &shader_stages,
+    const helper::VertexInputDescriptions &vertex_input_descriptions,
+    const std::vector<VkPipelineColorBlendAttachmentState>
+        &pipeline_color_blend_attachment_states,
+    bool depth_test) {
   device_ = device;
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType =
@@ -60,30 +83,13 @@ Pipeline::Pipeline(
   multisampling.sampleShadingEnable = VK_FALSE;
   multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-  VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-  colorBlendAttachment.colorWriteMask =
-      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-      VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  colorBlendAttachment.blendEnable = VK_FALSE;
-  if (blend_enable) {
-    colorBlendAttachment.blendEnable = VK_TRUE;
-    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-    colorBlendAttachment.dstAlphaBlendFactor =
-        VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    colorBlendAttachment.dstColorBlendFactor =
-        VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-  }
-
   VkPipelineColorBlendStateCreateInfo colorBlending{};
   colorBlending.sType =
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   colorBlending.logicOpEnable = VK_FALSE;
   colorBlending.logicOp = VK_LOGIC_OP_COPY;
-  colorBlending.attachmentCount = 1;
-  colorBlending.pAttachments = &colorBlendAttachment;
+  colorBlending.attachmentCount = pipeline_color_blend_attachment_states.size();
+  colorBlending.pAttachments = pipeline_color_blend_attachment_states.data();
   colorBlending.blendConstants[0] = 0.0f;
   colorBlending.blendConstants[1] = 0.0f;
   colorBlending.blendConstants[2] = 0.0f;

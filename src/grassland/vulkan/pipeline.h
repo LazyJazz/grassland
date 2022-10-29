@@ -17,6 +17,14 @@ class Pipeline {
       const helper::VertexInputDescriptions &vertex_input_descriptions,
       bool depth_test = false,
       bool blend_enable = false);
+  Pipeline(Device *device,
+           RenderPass *render_pass,
+           PipelineLayout *pipeline_layout,
+           const helper::ShaderStages &shader_stages,
+           const helper::VertexInputDescriptions &vertex_input_descriptions,
+           const std::vector<VkPipelineColorBlendAttachmentState>
+               &pipeline_color_blend_attachment_states,
+           bool depth_test = false);
   ~Pipeline();
 
  private:
