@@ -1,5 +1,3 @@
-//
-// Created by zijian on 10/29/2022.
-//
+#include <grassland/vulkan/framework/render_node.h>
 
-#include "render_node.h"
+namespace grassland::vulkan::framework {}
