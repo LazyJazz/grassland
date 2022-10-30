@@ -14,7 +14,7 @@ class DynamicBuffer : public DataBuffer {
   [[nodiscard]] VkDeviceSize BufferSize() const override;
   void Sync(int frame_index) override;
   [[nodiscard]] size_t Size() const;
-  Ty &operator[](int64_t index) const;
+  Ty &operator[](int64_t index);
 
  private:
   void RequestMapState(bool requested_map_state);
@@ -71,7 +71,7 @@ size_t DynamicBuffer<Ty>::Size() const {
 }
 
 template <class Ty>
-Ty &DynamicBuffer<Ty>::operator[](int64_t index) const {
+Ty &DynamicBuffer<Ty>::operator[](int64_t index) {
   this->RequestMapState(true);
   return mapped_ptr_[index];
 }

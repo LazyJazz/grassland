@@ -25,6 +25,9 @@ class TextureImage {
   [[nodiscard]] Image *GetImage() const;
   [[nodiscard]] ImageView *GetImageView() const;
 
+  void ClearColor(VkClearColorValue clear_color) const;
+  void ClearDepth(VkClearDepthStencilValue clear_depth_stencil) const;
+
  private:
   Core *core_;
   std::unique_ptr<Image> image_;

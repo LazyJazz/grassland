@@ -247,6 +247,4 @@ void vulkan::CopyImage(CommandPool *command_pool,
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
   });
 }
-void CopyImage(CommandPool *command_pool, Image *dst_image, Image *src_image) {
-}
 }  // namespace grassland::vulkan
