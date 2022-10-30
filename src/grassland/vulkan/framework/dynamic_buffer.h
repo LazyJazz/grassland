@@ -42,7 +42,7 @@ DynamicBuffer<Ty>::DynamicBuffer(Core *core,
         std::make_unique<Buffer>(core_->GetDevice(), sizeof(Ty) * size, usage,
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
   }
-  device_buffer_synced_.resize(size_, 0);
+  device_buffer_synced_.resize(device_buffers_.size(), 0);
 }
 
 template <class Ty>
@@ -81,8 +81,8 @@ void DynamicBuffer<Ty>::Sync(int frame_index) {
   this->RequestMapState(false);
   if (!device_buffer_synced_[frame_index]) {
     device_buffer_synced_[frame_index] = true;
-    CopyBuffer(core_->GetCommandPool(), GetBuffer(frame_index)->GetHandle(),
-               host_buffer_->GetHandle(), size_ * sizeof(Ty), 0, 0);
+    CopyBuffer(core_->GetCommandPool(), host_buffer_->GetHandle(),
+               GetBuffer(frame_index)->GetHandle(), size_ * sizeof(Ty), 0, 0);
   }
 }
 template <class Ty>

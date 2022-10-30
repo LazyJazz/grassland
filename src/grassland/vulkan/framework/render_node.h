@@ -31,12 +31,20 @@ class RenderNode {
 
   void BuildRenderNode(uint32_t width, uint32_t height);
 
+  void Draw(DataBuffer *vertex_buffer,
+            DataBuffer *index_buffer,
+            int index_count,
+            int instance_index);
   void Draw(CommandBuffer *command_buffer,
             DataBuffer *vertex_buffer,
-            DataBuffer *index_buffer);
+            DataBuffer *index_buffer,
+            int index_count,
+            int instance_index);
   void Draw(VkCommandBuffer command_buffer,
             DataBuffer *vertex_buffer,
-            DataBuffer *index_buffer);
+            DataBuffer *index_buffer,
+            int index_count,
+            int instance_index);
 
   [[nodiscard]] TextureImage *GetColorImage(int color_image_index = 0) const;
   [[nodiscard]] TextureImage *GetDepthImage() const;

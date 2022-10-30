@@ -146,7 +146,8 @@ int Core::GetCurrentFrameIndex() const {
 }
 
 void Core::BeginCommandRecord() {
-  frame_index_ = (frame_index_ + 1) % core_settings_.frames_in_flight;
+  frame_index_ =
+      int(uint32_t((frame_index_ + 1u)) % core_settings_.frames_in_flight);
   vkWaitForFences(device_->GetHandle(), 1,
                   &in_flight_fences_[frame_index_]->GetHandle(), VK_TRUE,
                   UINT64_MAX);

@@ -24,6 +24,9 @@ Framebuffer::Framebuffer(Device *device,
   framebufferInfo.height = height;
   framebufferInfo.layers = 1;
 
+  extent_.width = width;
+  extent_.height = height;
+
   if (vkCreateFramebuffer(device_->GetHandle(), &framebufferInfo, nullptr,
                           &handle_) != VK_SUCCESS) {
     LAND_ERROR("[Vulkan] failed to create framebuffer!");
@@ -58,6 +61,10 @@ Framebuffer::Framebuffer(Device *device,
 
 Framebuffer::~Framebuffer() {
   vkDestroyFramebuffer(device_->GetHandle(), GetHandle(), nullptr);
+}
+
+VkExtent2D Framebuffer::GetExtent() const {
+  return extent_;
 }
 
 }  // namespace grassland::vulkan

@@ -77,20 +77,13 @@ int RenderNode::AddColorOutput(
 
 int RenderNode::AddColorOutput(VkFormat format, bool blend_enable) {
   return AddColorOutput(
-      format,
-      blend_enable
-          ? VkPipelineColorBlendAttachmentState{VK_TRUE,
-                                                VK_BLEND_FACTOR_SRC_ALPHA,
-                                                VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                                                VK_BLEND_OP_ADD,
-                                                VK_BLEND_FACTOR_ONE,
-                                                VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                                                VK_BLEND_OP_ADD,
-                                                VK_COLOR_COMPONENT_A_BIT |
-                                                    VK_COLOR_COMPONENT_R_BIT |
-                                                    VK_COLOR_COMPONENT_G_BIT |
-                                                    VK_COLOR_COMPONENT_B_BIT}
-          : VkPipelineColorBlendAttachmentState{VK_FALSE});
+      format, VkPipelineColorBlendAttachmentState{
+                  blend_enable ? VK_TRUE : VK_FALSE, VK_BLEND_FACTOR_SRC_ALPHA,
+                  VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_OP_ADD,
+                  VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                  VK_BLEND_OP_ADD,
+                  VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT |
+                      VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT});
 }
 
 void RenderNode::BuildRenderNode(uint32_t width, uint32_t height) {
@@ -153,6 +146,10 @@ void RenderNode::BuildRenderNode(uint32_t width, uint32_t height) {
       write_descriptor.dstSet = descriptor_sets_[desc_set_index]->GetHandle();
       write_descriptor_sets.push_back(write_descriptor);
     }
+
+    vkUpdateDescriptorSets(core_->GetDevice()->GetHandle(),
+                           write_descriptor_sets.size(),
+                           write_descriptor_sets.data(), 0, nullptr);
   }
 
   std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_state;
@@ -166,14 +163,80 @@ void RenderNode::BuildRenderNode(uint32_t width, uint32_t height) {
       depth_enable_);
 }
 
+void RenderNode::Draw(DataBuffer *vertex_buffer,
+                      DataBuffer *index_buffer,
+                      int index_count,
+                      int instance_index) {
+  Draw(core_->GetCommandBuffer(), vertex_buffer, index_buffer, index_count,
+       instance_index);
+}
+
 void RenderNode::Draw(CommandBuffer *command_buffer,
                       DataBuffer *vertex_buffer,
-                      DataBuffer *index_buffer) {
-  Draw(command_buffer->GetHandle(), vertex_buffer, index_buffer);
+                      DataBuffer *index_buffer,
+                      int index_count,
+                      int instance_index) {
+  Draw(command_buffer->GetHandle(), vertex_buffer, index_buffer, index_count,
+       instance_index);
 }
 
 void RenderNode::Draw(VkCommandBuffer command_buffer,
                       DataBuffer *vertex_buffer,
-                      DataBuffer *index_buffer) {
+                      DataBuffer *index_buffer,
+                      int index_count,
+                      int instance_index) {
+  for (auto &uniform_binding : uniform_bindings_) {
+    uniform_binding->PrepareState(core_->GetCommandBuffer(),
+                                  core_->GetCurrentFrameIndex());
+  }
+
+  VkRenderPassBeginInfo renderPassInfo{};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassInfo.renderPass = render_pass_->GetHandle();
+  renderPassInfo.framebuffer = framebuffer_->GetHandle();
+  renderPassInfo.renderArea.offset = {0, 0};
+  renderPassInfo.renderArea.extent = framebuffer_->GetExtent();
+  renderPassInfo.clearValueCount = 0;
+  renderPassInfo.pClearValues = nullptr;
+
+  vkCmdBeginRenderPass(command_buffer, &renderPassInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
+
+  vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphics_pipeline_->GetHandle());
+
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = (float)framebuffer_->GetExtent().width;
+  viewport.height = (float)framebuffer_->GetExtent().height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = framebuffer_->GetExtent();
+  vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+  VkDeviceSize offsets = 0;
+  vkCmdBindVertexBuffers(
+      command_buffer, 0, 1,
+      &vertex_buffer->GetBuffer(core_->GetCurrentFrameIndex())->GetHandle(),
+      &offsets);
+  vkCmdBindIndexBuffer(
+      command_buffer,
+      index_buffer->GetBuffer(core_->GetCurrentFrameIndex())->GetHandle(), 0,
+      VK_INDEX_TYPE_UINT32);
+  vkCmdBindDescriptorSets(
+      command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipeline_layout_->GetHandle(), 0, 1,
+      &descriptor_sets_[core_->GetCurrentFrameIndex()]->GetHandle(), 0,
+      nullptr);
+
+  vkCmdDrawIndexed(command_buffer, index_count, 1, 0, 0, instance_index);
+
+  vkCmdEndRenderPass(command_buffer);
 }
+
 }  // namespace grassland::vulkan::framework

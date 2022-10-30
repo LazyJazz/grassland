@@ -1,3 +1,4 @@
+#include <grassland/util/util.h>
 #include <grassland/vulkan/framework/uniform_bindings.h>
 
 namespace grassland::vulkan::framework {
@@ -41,6 +42,7 @@ VkWriteDescriptorSet UniformBindingBuffer::GetWriteDescriptorSet(
   descriptorWrite.pBufferInfo = &buffer_infos_[frame_index];
   return descriptorWrite;
 }
+
 void UniformBindingBuffer::PrepareState(CommandBuffer *command_buffer,
                                         int frame_index) const {
   uniform_buffer_->Sync(frame_index);
@@ -87,7 +89,7 @@ void UniformBindingTextureSampler::PrepareState(CommandBuffer *command_buffer,
   TransitImageLayout(command_buffer->GetHandle(),
                      texture_image_->GetImage()->GetHandle(),
                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
                      VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
@@ -138,7 +140,7 @@ void UniformBindingTextureSamplers::PrepareState(CommandBuffer *command_buffer,
     TransitImageLayout(command_buffer->GetHandle(),
                        texture_image_pair.first->GetImage()->GetHandle(),
                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                       VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
                        VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
@@ -179,12 +181,11 @@ VkWriteDescriptorSet UniformBindingStorageTexture::GetWriteDescriptorSet(
 
 void UniformBindingStorageTexture::PrepareState(CommandBuffer *command_buffer,
                                                 int frame_index) const {
-  TransitImageLayout(command_buffer->GetHandle(),
-                     texture_image_->GetImage()->GetHandle(),
-                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                     VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-                     VK_IMAGE_ASPECT_COLOR_BIT);
+  TransitImageLayout(
+      command_buffer->GetHandle(), texture_image_->GetImage()->GetHandle(),
+      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+      VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+      VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 UniformBindingStorageTextures::UniformBindingStorageTextures(
@@ -228,12 +229,11 @@ VkWriteDescriptorSet UniformBindingStorageTextures::GetWriteDescriptorSet(
 void UniformBindingStorageTextures::PrepareState(CommandBuffer *command_buffer,
                                                  int frame_index) const {
   for (auto &texture_image : texture_images_) {
-    TransitImageLayout(command_buffer->GetHandle(),
-                       texture_image->GetImage()->GetHandle(),
-                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                       VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-                       VK_IMAGE_ASPECT_COLOR_BIT);
+    TransitImageLayout(
+        command_buffer->GetHandle(), texture_image->GetImage()->GetHandle(),
+        VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+        VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
 }  // namespace grassland::vulkan::framework

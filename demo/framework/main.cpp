@@ -41,6 +41,7 @@ int main() {
   grassland::vulkan::framework::CoreSettings core_settings;
   core_settings.raytracing_pipeline_required = false;
   core_settings.window_title = "Hello, World!";
+  core_settings.frames_in_flight = 1;
   Core core(core_settings);
 
   auto vertex_buffer =
@@ -56,6 +57,12 @@ int main() {
 
   std::unique_ptr<RenderNode> render_node = std::make_unique<RenderNode>(&core);
 
+  std::unique_ptr<TextureImage> texture = std::make_unique<TextureImage>(
+      &core, core_settings.window_width, core_settings.window_height);
+  texture->ReadImage("../textures/xor_grid.png");
+  std::unique_ptr<grassland::vulkan::Sampler> sampler =
+      std::make_unique<grassland::vulkan::Sampler>(core.GetDevice());
+
   render_node->AddColorOutput(core.GetSwapchain()->GetFormat());
   render_node->EnableDepthTest();
   render_node->AddShader("../shaders/color_shader.vert.spv",
@@ -64,6 +71,8 @@ int main() {
                          VK_SHADER_STAGE_FRAGMENT_BIT);
   render_node->AddUniformBinding(uniform_buffer.get(),
                                  VK_SHADER_STAGE_VERTEX_BIT);
+  // render_node->AddUniformBinding(texture.get(), sampler.get(),
+  // VK_SHADER_STAGE_FRAGMENT_BIT);
   render_node->VertexInput(
       {VK_FORMAT_R32G32B32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT});
   render_node->BuildRenderNode(core_settings.window_width,
@@ -92,9 +101,17 @@ int main() {
       uniform_buffer->operator[](0ll) = ubo;
     }();
     core.BeginCommandRecord();
-    render_node->GetColorImage(0)->ClearColor({0.6f, 0.7f, 0.8f, 1.0f});
+    render_node->GetColorImage(0)->ClearColor({0.8f, 0.7f, 0.6f, 1.0f});
+    render_node->GetDepthImage()->ClearDepth({1.0f, 0});
+    render_node->Draw(vertex_buffer.get(), index_buffer.get(),
+                      index_buffer->Size(), 0);
     core.Output(render_node->GetColorImage(0));
     core.EndCommandRecordAndSubmit();
     glfwPollEvents();
   }
+  core.GetDevice()->WaitIdle();
+  render_node.reset();
+  uniform_buffer.reset();
+  vertex_buffer.reset();
+  index_buffer.reset();
 }
