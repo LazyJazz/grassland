@@ -1,5 +1,6 @@
 #pragma once
 #include <grassland/vulkan/framework/core.h>
+#include <grassland/vulkan/framework/data_buffer.h>
 #include <grassland/vulkan/framework/render_node_settings.h>
 #include <grassland/vulkan/framework/texture_image.h>
 #include <grassland/vulkan/framework/uniform_bindings.h>
@@ -7,7 +8,8 @@
 namespace grassland::vulkan::framework {
 class RenderNode {
  public:
-  void AddUniformBindingBuffer(Buffer *uniform_buffer,
+  RenderNode(Core *core_);
+  void AddUniformBindingBuffer(DataBuffer *uniform_buffer,
                                VkPipelineStageFlags access_stage_flag);
   void AddUniformBindingTextureSampler(TextureImage *texture_image,
                                        Sampler *sampler,
@@ -21,8 +23,8 @@ class RenderNode {
                                         VkPipelineStageFlags access_stage_flag);
   int AddColorAttachment(VkFormat format,
                          VkPipelineColorBlendAttachmentState blend_state);
-  void BuildRenderNode();
-  void Draw(Buffer *vertex_buffer, Buffer *index_buffer);
+  void BuildRenderNode(uint32_t width, uint32_t height);
+  void Draw(DataBuffer *vertex_buffer, DataBuffer *index_buffer);
 
  private:
   std::unique_ptr<RenderPass> render_pass_;

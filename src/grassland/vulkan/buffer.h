@@ -22,6 +22,11 @@ class Buffer {
                   const void *src_data,
                   VkDeviceSize size = 0xffffffffffffffffull,
                   VkDeviceSize offset = 0);
+  void DownloadData(Queue *graphics_queue,
+                    CommandPool *command_pool,
+                    void *dst_data,
+                    VkDeviceSize size = 0xffffffffffffffffull,
+                    VkDeviceSize offset = 0);
   void RetrieveData(Queue *graphics_queue,
                     CommandPool *command_pool,
                     void *dst_data,
@@ -32,6 +37,10 @@ class Buffer {
                   VkDeviceSize size = 0xffffffffffffffffull,
                   VkDeviceSize offset = 0);
   void RetrieveData(CommandPool *command_pool,
+                    void *dst_data,
+                    VkDeviceSize size = 0xffffffffffffffffull,
+                    VkDeviceSize offset = 0);
+  void DownloadData(CommandPool *command_pool,
                     void *dst_data,
                     VkDeviceSize size = 0xffffffffffffffffull,
                     VkDeviceSize offset = 0);
