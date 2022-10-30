@@ -93,9 +93,9 @@ void Image::TransitImageLayout(CommandBuffer *command_buffer,
                                VkImageLayout new_layout,
                                VkPipelineStageFlags new_stage_flags,
                                VkAccessFlags new_access_flags) {
-  grassland::vulkan::TransitImageLayout(command_buffer->GetHandle(),
-                                        GetHandle(), new_layout,
-                                        new_stage_flags, new_access_flags);
+  grassland::vulkan::TransitImageLayout(
+      command_buffer->GetHandle(), GetHandle(), new_layout, new_stage_flags,
+      new_access_flags, VK_IMAGE_ASPECT_COLOR_BIT);
 
   //  image_layout_ = new_layout;
   //  pipeline_stage_flags_ = new_stage_flags;
@@ -185,7 +185,8 @@ void TransitImageLayout(VkCommandBuffer command_buffer,
                         VkImage image,
                         VkImageLayout new_layout,
                         VkPipelineStageFlags new_stage_flags,
-                        VkAccessFlags new_access_flags) {
+                        VkAccessFlags new_access_flags,
+                        VkImageAspectFlags aspect_flags) {
   VkImageMemoryBarrier barrier{};
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -193,7 +194,7 @@ void TransitImageLayout(VkCommandBuffer command_buffer,
   barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image = image;
-  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.aspectMask = aspect_flags;
   barrier.subresourceRange.baseMipLevel = 0;
   barrier.subresourceRange.levelCount = 1;
   barrier.subresourceRange.baseArrayLayer = 0;
@@ -216,11 +217,11 @@ void vulkan::CopyImage(CommandPool *command_pool,
     TransitImageLayout(command_buffer->GetHandle(), dst_image->GetHandle(),
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                        VK_PIPELINE_STAGE_TRANSFER_BIT,
-                       VK_ACCESS_TRANSFER_WRITE_BIT);
+                       VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
     TransitImageLayout(command_buffer->GetHandle(), src_image->GetHandle(),
                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                        VK_PIPELINE_STAGE_TRANSFER_BIT,
-                       VK_ACCESS_TRANSFER_READ_BIT);
+                       VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
     VkImageCopy imageCopy{};
     imageCopy.srcOffset = VkOffset3D{src_offset.x, src_offset.y, 0};
     imageCopy.dstOffset = VkOffset3D{dst_offset.x, dst_offset.y, 0};

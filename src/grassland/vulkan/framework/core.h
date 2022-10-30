@@ -15,7 +15,7 @@ class Core {
   [[nodiscard]] Swapchain *GetSwapchain() const;
   [[nodiscard]] CommandPool *GetCommandPool() const;
   [[nodiscard]] GLFWwindow *GetWindow() const;
-  [[nodiscard]] int GetImageIndex() const;
+  [[nodiscard]] int GetCurrentFrameIndex() const;
 
  private:
   CoreSettings core_settings_;
@@ -35,6 +35,6 @@ class Core {
   std::vector<std::unique_ptr<Semaphore>> image_available_semaphores_;
   std::vector<std::unique_ptr<Semaphore>> render_finish_semaphores_;
 
-  int image_index_{0};
+  int frame_index_{0};
 };
 }  // namespace grassland::vulkan::framework

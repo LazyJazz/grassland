@@ -7,10 +7,18 @@ DescriptorPool::DescriptorPool(
     Device *device,
     const helper::DescriptorSetLayoutBindings &bindings,
     int max_sets)
-    : handle_{} {
+    : DescriptorPool(device,
+                     bindings.GetDescriptorSetLayoutBinding(),
+                     max_sets) {
+}
+
+DescriptorPool::DescriptorPool(
+    Device *device,
+    const std::vector<VkDescriptorSetLayoutBinding> &bindings,
+    int max_sets) {
   device_ = device;
   std::vector<VkDescriptorPoolSize> pool_sizes{};
-  for (auto binding : bindings.GetDescriptorSetLayoutBinding()) {
+  for (auto binding : bindings) {
     VkDescriptorPoolSize pool_size{};
     pool_size.type = binding.descriptorType;
     pool_size.descriptorCount =
@@ -34,5 +42,4 @@ DescriptorPool::DescriptorPool(
 DescriptorPool::~DescriptorPool() {
   vkDestroyDescriptorPool(device_->GetHandle(), GetHandle(), nullptr);
 }
-
 }  // namespace grassland::vulkan

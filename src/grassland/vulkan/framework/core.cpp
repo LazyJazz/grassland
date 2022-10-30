@@ -123,8 +123,8 @@ CommandPool *Core::GetCommandPool() const {
 GLFWwindow *Core::GetWindow() const {
   return window_;
 }
-int Core::GetImageIndex() const {
-  return image_index_;
+int Core::GetCurrentFrameIndex() const {
+  return frame_index_;
 }
 
 }  // namespace grassland::vulkan::framework

@@ -10,9 +10,9 @@ class StaticBuffer : public DataBuffer {
                VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-  [[nodiscard]] Buffer *GetBuffer(int image_index) const override;
+  [[nodiscard]] Buffer *GetBuffer(int frame_index) const override;
   [[nodiscard]] VkDeviceSize BufferSize() const override;
-  void Sync(int image_index) override;
+  void Sync(int frame_index) override;
   void Upload(const Ty *buffer);
   void Download(Ty *buffer);
   [[nodiscard]] size_t Size() const;
@@ -34,7 +34,7 @@ StaticBuffer<Ty>::StaticBuffer(Core *core,
 }
 
 template <class Ty>
-Buffer *StaticBuffer<Ty>::GetBuffer(int image_index) const {
+Buffer *StaticBuffer<Ty>::GetBuffer(int frame_index) const {
   return device_buffer_.get();
 }
 
@@ -54,7 +54,7 @@ size_t StaticBuffer<Ty>::Size() const {
 }
 
 template <class Ty>
-void StaticBuffer<Ty>::Sync(int image_index) {
+void StaticBuffer<Ty>::Sync(int frame_index) {
 }
 
 template <class Ty>

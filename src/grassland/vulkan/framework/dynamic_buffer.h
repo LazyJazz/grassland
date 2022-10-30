@@ -10,9 +10,9 @@ class DynamicBuffer : public DataBuffer {
                 VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
                                            VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-  [[nodiscard]] Buffer *GetBuffer(int image_index) const override;
+  [[nodiscard]] Buffer *GetBuffer(int frame_index) const override;
   [[nodiscard]] VkDeviceSize BufferSize() const override;
-  void Sync(int image_index) override;
+  void Sync(int frame_index) override;
   [[nodiscard]] size_t Size() const;
   Ty &operator[](int64_t index) const;
 
@@ -46,8 +46,8 @@ DynamicBuffer<Ty>::DynamicBuffer(Core *core,
 }
 
 template <class Ty>
-Buffer *DynamicBuffer<Ty>::GetBuffer(int image_index) const {
-  return device_buffers_[image_index].get();
+Buffer *DynamicBuffer<Ty>::GetBuffer(int frame_index) const {
+  return device_buffers_[frame_index].get();
 }
 
 template <class Ty>
@@ -77,11 +77,11 @@ Ty &DynamicBuffer<Ty>::operator[](int64_t index) const {
 }
 
 template <class Ty>
-void DynamicBuffer<Ty>::Sync(int image_index) {
+void DynamicBuffer<Ty>::Sync(int frame_index) {
   this->RequestMapState(false);
-  if (!device_buffer_synced_[image_index]) {
-    device_buffer_synced_[image_index] = true;
-    CopyBuffer(core_->GetCommandPool(), GetBuffer()->GetHandle(),
+  if (!device_buffer_synced_[frame_index]) {
+    device_buffer_synced_[frame_index] = true;
+    CopyBuffer(core_->GetCommandPool(), GetBuffer(frame_index)->GetHandle(),
                host_buffer_->GetHandle(), size_ * sizeof(Ty), 0, 0);
   }
 }

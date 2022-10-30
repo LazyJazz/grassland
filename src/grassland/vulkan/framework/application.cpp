@@ -453,15 +453,15 @@ void Application::OutputImage(CommandBuffer *command_buffer, Image *image) {
   TransitImageLayout(
       command_buffer->GetHandle(), swapchain_->GetImage(imageIndex),
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_ACCESS_TRANSFER_WRITE_BIT);
+      VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
   vkCmdCopyImage(command_buffer->GetHandle(), image->GetHandle(),
                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                  swapchain_->GetImage(imageIndex),
                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
-  TransitImageLayout(command_buffer->GetHandle(),
-                     swapchain_->GetImage(imageIndex),
-                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_NONE);
+  TransitImageLayout(
+      command_buffer->GetHandle(), swapchain_->GetImage(imageIndex),
+      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      VK_ACCESS_NONE, VK_IMAGE_ASPECT_COLOR_BIT);
   image->TransitImageLayout(command_buffer,
                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,

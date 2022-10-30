@@ -8,6 +8,9 @@ class DescriptorPool {
   DescriptorPool(Device *device,
                  const helper::DescriptorSetLayoutBindings &bindings,
                  int max_sets);
+  DescriptorPool(Device *device,
+                 const std::vector<VkDescriptorSetLayoutBinding> &bindings,
+                 int max_sets);
   ~DescriptorPool();
 
  private:

@@ -7,9 +7,9 @@ class DataBuffer {
   explicit DataBuffer(Core *core);
   virtual ~DataBuffer() = default;
 
-  [[nodiscard]] virtual Buffer *GetBuffer(int image_index) const = 0;
+  [[nodiscard]] virtual Buffer *GetBuffer(int frame_index) const = 0;
   [[nodiscard]] virtual VkDeviceSize BufferSize() const = 0;
-  virtual void Sync(int image_index) = 0;
+  virtual void Sync(int frame_index) = 0;
 
   [[nodiscard]] Core *GetCore() const;
 

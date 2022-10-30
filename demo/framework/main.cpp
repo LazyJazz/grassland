@@ -42,13 +42,32 @@ int main() {
   core_settings.window_title = "Hello, World!";
   Core core(core_settings);
 
-  std::unique_ptr<StaticBuffer<Vertex>> vertex_buffer =
+  auto vertex_buffer =
       std::make_unique<StaticBuffer<Vertex>>(&core, vertices.size());
   vertex_buffer->Upload(vertices.data());
-  std::vector<Vertex> another_vertex_buffer(vertices.size());
-  vertex_buffer->Download(another_vertex_buffer.data());
+
+  auto index_buffer =
+      std::make_unique<StaticBuffer<uint32_t>>(&core, indices.size());
+  index_buffer->Upload(indices.data());
+
+  auto uniform_buffer = std::make_unique<DynamicBuffer<UniformBufferObject>>(
+      &core, size_t(1), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
   std::unique_ptr<RenderNode> render_node = std::make_unique<RenderNode>(&core);
+
+  render_node->AddColorOutput(core.GetSwapchain()->GetFormat());
+  render_node->EnableDepthTest();
+  render_node->AddShader("../shaders/color_shader.vert.spv",
+                         VK_SHADER_STAGE_VERTEX_BIT);
+  render_node->AddShader("../shaders/color_shader.frag.spv",
+                         VK_SHADER_STAGE_FRAGMENT_BIT);
+  render_node->AddUniformBinding(uniform_buffer.get(),
+                                 VK_SHADER_STAGE_VERTEX_BIT);
+  render_node->VertexInput(
+      {VK_FORMAT_R32G32B32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT});
+  render_node->BuildRenderNode(core_settings.window_width,
+                               core_settings.window_height);
+
   while (!glfwWindowShouldClose(core.GetWindow())) {
     glfwPollEvents();
   }

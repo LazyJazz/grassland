@@ -343,6 +343,16 @@ void App::recreateSwapChain() {
 void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
                               uint32_t imageIndex) {
   vulkan::helper::CommandBegin(commandBuffer);
+  grassland::vulkan::TransitImageLayout(
+      commandBuffer, swapchain_->GetImage(imageIndex), VK_IMAGE_LAYOUT_GENERAL,
+      VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
+      VK_IMAGE_ASPECT_COLOR_BIT);
+
+  VkClearColorValue color{0.6f, 0.7f, 0.8f, 1.0f};
+  VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+  vkCmdClearColorImage(commandBuffer, swapchain_->GetImage(imageIndex),
+                       VK_IMAGE_LAYOUT_GENERAL, &color, 1, &range);
+  VkClearDepthStencilValue depth_stencil{1.0f, 0};
 
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -350,11 +360,8 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   renderPassInfo.framebuffer = framebuffers_[imageIndex]->GetHandle();
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = swapchain_->GetExtent();
-
-  VkClearValue clearColor[2] = {{{{0.0f, 0.0f, 0.0f, 1.0f}}}};
-  clearColor[1].depthStencil.depth = 1.0f;
-  renderPassInfo.clearValueCount = 2;
-  renderPassInfo.pClearValues = clearColor;
+  renderPassInfo.clearValueCount = 0;
+  renderPassInfo.pClearValues = nullptr;
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
