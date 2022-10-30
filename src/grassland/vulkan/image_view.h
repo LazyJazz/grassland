@@ -5,7 +5,7 @@
 namespace grassland::vulkan {
 class ImageView {
  public:
-  ImageView(Image *image);
+  explicit ImageView(Image *image);
   ImageView(Device *device, VkImage image, VkFormat format);
   ~ImageView();
 

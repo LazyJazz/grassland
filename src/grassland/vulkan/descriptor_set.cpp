@@ -22,6 +22,13 @@ DescriptorSet::DescriptorSet(Device *device,
   }
 }
 
+DescriptorSet::DescriptorSet(DescriptorSetLayout *descriptor_set_layout,
+                             DescriptorPool *descriptor_pool)
+    : DescriptorSet(descriptor_pool->GetDevice(),
+                    descriptor_set_layout,
+                    descriptor_pool) {
+}
+
 DescriptorSet::~DescriptorSet() {
   vkFreeDescriptorSets(device_->GetHandle(), descriptor_pool_->GetHandle(), 1,
                        &handle_);

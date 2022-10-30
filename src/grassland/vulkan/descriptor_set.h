@@ -8,6 +8,8 @@ class DescriptorSet {
   DescriptorSet(Device *device,
                 DescriptorSetLayout *descriptor_set_layout,
                 DescriptorPool *descriptor_pool);
+  DescriptorSet(DescriptorSetLayout *descriptor_set_layout,
+                DescriptorPool *descriptor_pool);
   ~DescriptorSet();
 
  private:

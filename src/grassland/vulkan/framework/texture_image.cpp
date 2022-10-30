@@ -275,4 +275,29 @@ void TextureImage::WriteHDRImage(const char *path) {
                  buffer.data());
 }
 
+void TextureImage::ClearColor(VkClearColorValue clear_color) const {
+  grassland::vulkan::TransitImageLayout(
+      core_->GetCommandBuffer()->GetHandle(), image_->GetHandle(),
+      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+      VK_ACCESS_NONE, VK_IMAGE_ASPECT_COLOR_BIT);
+
+  VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+  vkCmdClearColorImage(core_->GetCommandBuffer()->GetHandle(),
+                       image_->GetHandle(), VK_IMAGE_LAYOUT_GENERAL,
+                       &clear_color, 1, &range);
+}
+
+void TextureImage::ClearDepth(
+    VkClearDepthStencilValue clear_depth_stencil) const {
+  grassland::vulkan::TransitImageLayout(
+      core_->GetCommandBuffer()->GetHandle(), image_->GetHandle(),
+      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+      VK_ACCESS_NONE, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+  VkImageSubresourceRange range{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
+  vkCmdClearDepthStencilImage(core_->GetCommandBuffer()->GetHandle(),
+                              image_->GetHandle(), VK_IMAGE_LAYOUT_GENERAL,
+                              &clear_depth_stencil, 1, &range);
+}
+
 }  // namespace grassland::vulkan::framework

@@ -5,6 +5,7 @@
 #include <grassland/vulkan/descriptor_set.h>
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/fence.h>
+#include <grassland/vulkan/format.h>
 #include <grassland/vulkan/framebuffer.h>
 #include <grassland/vulkan/helper/helper.h>
 #include <grassland/vulkan/image.h>

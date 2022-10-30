@@ -6,9 +6,15 @@ namespace grassland::vulkan {
 DescriptorSetLayout::DescriptorSetLayout(
     Device *device,
     const helper::DescriptorSetLayoutBindings &layout_bindings)
-    : handle_{} {
+    : DescriptorSetLayout(device,
+                          layout_bindings.GetDescriptorSetLayoutBinding()) {
+}
+
+DescriptorSetLayout::DescriptorSetLayout(
+    Device *device,
+    const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings) {
   device_ = device;
-  auto &bindings = layout_bindings.GetDescriptorSetLayoutBinding();
+  auto &bindings = layout_bindings;
   VkDescriptorSetLayoutCreateInfo layoutInfo{};
   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   layoutInfo.bindingCount = bindings.size();

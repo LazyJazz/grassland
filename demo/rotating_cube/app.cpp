@@ -98,7 +98,8 @@ void App::OnInit() {
       device_.get(), swapchain_->GetExtent().width,
       swapchain_->GetExtent().height,
       vulkan::helper::FindDepthFormat(physical_device_.get()),
-      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+      VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
   depth_buffer_image_view_ =
       std::make_unique<vulkan::ImageView>(depth_buffer_image_.get());
 
@@ -369,7 +370,8 @@ void App::recreateSwapChain() {
       device_.get(), swapchain_->GetExtent().width,
       swapchain_->GetExtent().height,
       vulkan::helper::FindDepthFormat(physical_device_.get()),
-      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+      VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
   depth_buffer_image_view_ =
       std::make_unique<vulkan::ImageView>(depth_buffer_image_.get());
   framebuffers_.resize(swapchain_->GetImageCount());
@@ -385,6 +387,25 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
                               uint32_t imageIndex) {
   vulkan::helper::CommandBegin(commandBuffer);
 
+  grassland::vulkan::TransitImageLayout(
+      commandBuffer, swapchain_->GetImage(imageIndex), VK_IMAGE_LAYOUT_GENERAL,
+      VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
+      VK_IMAGE_ASPECT_COLOR_BIT);
+  grassland::vulkan::TransitImageLayout(
+      commandBuffer, depth_buffer_image_->GetHandle(), VK_IMAGE_LAYOUT_GENERAL,
+      VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
+      VK_IMAGE_ASPECT_DEPTH_BIT);
+
+  VkClearColorValue color{0.6f, 0.7f, 0.8f, 1.0f};
+  VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+  vkCmdClearColorImage(commandBuffer, swapchain_->GetImage(imageIndex),
+                       VK_IMAGE_LAYOUT_GENERAL, &color, 1, &range);
+  VkClearDepthStencilValue depth_stencil{1.0f, 0};
+  range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+  vkCmdClearDepthStencilImage(commandBuffer, depth_buffer_image_->GetHandle(),
+                              VK_IMAGE_LAYOUT_GENERAL, &depth_stencil, 1,
+                              &range);
+
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   renderPassInfo.renderPass = render_pass_->GetHandle();
@@ -392,10 +413,8 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = swapchain_->GetExtent();
 
-  VkClearValue clearColor[2] = {{{{0.0f, 0.0f, 0.0f, 1.0f}}}};
-  clearColor[1].depthStencil.depth = 1.0f;
-  renderPassInfo.clearValueCount = 2;
-  renderPassInfo.pClearValues = clearColor;
+  renderPassInfo.clearValueCount = 0;
+  renderPassInfo.pClearValues = nullptr;
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
                        VK_SUBPASS_CONTENTS_INLINE);

@@ -103,6 +103,14 @@ void Buffer::RetrieveData(Queue *graphics_queue,
                           void *dst_data,
                           VkDeviceSize size,
                           VkDeviceSize offset) {
+  DownloadData(graphics_queue, command_pool, dst_data, size, offset);
+}
+
+void Buffer::DownloadData(Queue *graphics_queue,
+                          CommandPool *command_pool,
+                          void *dst_data,
+                          VkDeviceSize size,
+                          VkDeviceSize offset) {
   size = std::min(size, size_ - offset);
   Buffer host_buffer(device_, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
@@ -127,7 +135,14 @@ void Buffer::RetrieveData(CommandPool *command_pool,
                           void *dst_data,
                           VkDeviceSize size,
                           VkDeviceSize offset) {
-  RetrieveData(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
+  DownloadData(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
+               dst_data, size, offset);
+}
+void Buffer::DownloadData(CommandPool *command_pool,
+                          void *dst_data,
+                          VkDeviceSize size,
+                          VkDeviceSize offset) {
+  DownloadData(command_pool->GetDevice()->GetGraphicsQueue(), command_pool,
                dst_data, size, offset);
 }
 
