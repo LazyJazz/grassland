@@ -29,12 +29,11 @@ const std::vector<Vertex> vertices = {
     {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 0.0f}},
     {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}}};
 
-const std::vector<uint16_t> indices = {
+const std::vector<uint32_t> indices = {
     0b000, 0b010, 0b001, 0b011, 0b001, 0b010, 0b100, 0b101, 0b110,
     0b111, 0b110, 0b101, 0b000, 0b100, 0b010, 0b110, 0b010, 0b100,
     0b001, 0b011, 0b101, 0b111, 0b101, 0b011, 0b000, 0b001, 0b100,
     0b001, 0b101, 0b100, 0b010, 0b110, 0b011, 0b111, 0b011, 0b110};
-
 }  // namespace
 
 int main() {
@@ -48,10 +47,8 @@ int main() {
   vertex_buffer->Upload(vertices.data());
   std::vector<Vertex> another_vertex_buffer(vertices.size());
   vertex_buffer->Download(another_vertex_buffer.data());
-  for (auto vertex : another_vertex_buffer) {
-    LAND_INFO("({}, {}, {}) ({}, {}, {})", vertex.pos.x, vertex.pos.y,
-              vertex.pos.z, vertex.color.r, vertex.color.g, vertex.color.b);
-  }
+
+  std::unique_ptr<RenderNode> render_node = std::make_unique<RenderNode>(&core);
   while (!glfwWindowShouldClose(core.GetWindow())) {
     glfwPollEvents();
   }

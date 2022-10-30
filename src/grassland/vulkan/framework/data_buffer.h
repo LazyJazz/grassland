@@ -6,7 +6,11 @@ class DataBuffer {
  public:
   explicit DataBuffer(Core *core);
   virtual ~DataBuffer() = default;
+
   [[nodiscard]] virtual Buffer *GetBuffer(int image_index) const = 0;
+  [[nodiscard]] virtual VkDeviceSize BufferSize() const = 0;
+  virtual void Sync(int image_index) = 0;
+
   [[nodiscard]] Core *GetCore() const;
 
  protected:

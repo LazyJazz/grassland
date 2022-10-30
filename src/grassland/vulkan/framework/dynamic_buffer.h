@@ -11,9 +11,10 @@ class DynamicBuffer : public DataBuffer {
                                            VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
   [[nodiscard]] Buffer *GetBuffer(int image_index) const override;
+  [[nodiscard]] VkDeviceSize BufferSize() const override;
+  void Sync(int image_index) override;
   [[nodiscard]] size_t Size() const;
   Ty &operator[](int64_t index) const;
-  void Sync(int image_index);
 
  private:
   void RequestMapState(bool requested_map_state);
@@ -83,5 +84,9 @@ void DynamicBuffer<Ty>::Sync(int image_index) {
     CopyBuffer(core_->GetCommandPool(), GetBuffer()->GetHandle(),
                host_buffer_->GetHandle(), size_ * sizeof(Ty), 0, 0);
   }
+}
+template <class Ty>
+VkDeviceSize DynamicBuffer<Ty>::BufferSize() const {
+  return size_ * sizeof(Ty);
 }
 }  // namespace grassland::vulkan::framework

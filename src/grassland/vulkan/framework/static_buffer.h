@@ -11,6 +11,8 @@ class StaticBuffer : public DataBuffer {
                                           VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
   [[nodiscard]] Buffer *GetBuffer(int image_index) const override;
+  [[nodiscard]] VkDeviceSize BufferSize() const override;
+  void Sync(int image_index) override;
   void Upload(const Ty *buffer);
   void Download(Ty *buffer);
   [[nodiscard]] size_t Size() const;
@@ -49,5 +51,14 @@ void StaticBuffer<Ty>::Download(Ty *buffer) {
 template <class Ty>
 size_t StaticBuffer<Ty>::Size() const {
   return size_;
+}
+
+template <class Ty>
+void StaticBuffer<Ty>::Sync(int image_index) {
+}
+
+template <class Ty>
+VkDeviceSize StaticBuffer<Ty>::BufferSize() const {
+  return size_ * sizeof(Ty);
 }
 }  // namespace grassland::vulkan::framework

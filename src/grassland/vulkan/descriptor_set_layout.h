@@ -8,6 +8,9 @@ class DescriptorSetLayout {
   DescriptorSetLayout(
       Device *device,
       const helper::DescriptorSetLayoutBindings &layout_bindings);
+  DescriptorSetLayout(
+      Device *device,
+      const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings);
   ~DescriptorSetLayout();
 
  private:
