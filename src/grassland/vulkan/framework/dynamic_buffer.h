@@ -9,6 +9,7 @@ class DynamicBuffer : public DataBuffer {
                 size_t size,
                 VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
                                            VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                                           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
   [[nodiscard]] Buffer *GetBuffer(int frame_index) const override;
   [[nodiscard]] VkDeviceSize BufferSize() const override;
