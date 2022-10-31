@@ -15,9 +15,16 @@ TextureImage *RenderNode::GetDepthImage() const {
 
 void RenderNode::AddUniformBinding(DataBuffer *uniform_buffer,
                                    VkShaderStageFlags access_stage_flags) {
+  uniform_bindings_.push_back(std::make_unique<UniformBindingUniform>(
+      uniform_buffer, access_stage_flags));
+}
+
+void RenderNode::AddBufferBinding(DataBuffer *uniform_buffer,
+                                  VkShaderStageFlags access_stage_flags) {
   uniform_bindings_.push_back(std::make_unique<UniformBindingBuffer>(
       uniform_buffer, access_stage_flags));
 }
+
 void RenderNode::AddUniformBinding(TextureImage *texture_image,
                                    Sampler *sampler,
                                    VkShaderStageFlags access_stage_flags) {

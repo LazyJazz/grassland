@@ -6,6 +6,48 @@ UniformBinding::UniformBinding(VkPipelineStageFlags access_stage_flags) {
   access_stage_flags_ = access_stage_flags;
 }
 
+UniformBindingUniform::UniformBindingUniform(
+    DataBuffer *uniform_buffer,
+    VkPipelineStageFlags access_stage_flags)
+    : UniformBinding(access_stage_flags) {
+  uniform_buffer_ = uniform_buffer;
+  buffer_infos_.resize(
+      uniform_buffer_->GetCore()->GetCoreSettings().frames_in_flight);
+  for (int frame_index = 0; frame_index < buffer_infos_.size(); frame_index++) {
+    auto &buffer_info = buffer_infos_[frame_index];
+    buffer_info.buffer = uniform_buffer_->GetBuffer(frame_index)->GetHandle();
+    buffer_info.range = uniform_buffer_->BufferSize();
+    buffer_info.offset = 0;
+  }
+}
+
+VkDescriptorSetLayoutBinding UniformBindingUniform::GetBinding() const {
+  VkDescriptorSetLayoutBinding result{};
+  result.descriptorCount = 1;
+  result.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  result.stageFlags = access_stage_flags_;
+  result.pImmutableSamplers = nullptr;
+  return result;
+}
+
+VkWriteDescriptorSet UniformBindingUniform::GetWriteDescriptorSet(
+    int frame_index) const {
+  VkWriteDescriptorSet descriptorWrite{};
+  descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite.dstSet = nullptr;
+  descriptorWrite.dstBinding = 0;
+  descriptorWrite.dstArrayElement = 0;
+  descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite.descriptorCount = 1;
+  descriptorWrite.pBufferInfo = &buffer_infos_[frame_index];
+  return descriptorWrite;
+}
+
+void UniformBindingUniform::PrepareState(CommandBuffer *command_buffer,
+                                         int frame_index) const {
+  uniform_buffer_->Sync(frame_index);
+}
+
 UniformBindingBuffer::UniformBindingBuffer(
     DataBuffer *uniform_buffer,
     VkPipelineStageFlags access_stage_flags)
@@ -24,7 +66,7 @@ UniformBindingBuffer::UniformBindingBuffer(
 VkDescriptorSetLayoutBinding UniformBindingBuffer::GetBinding() const {
   VkDescriptorSetLayoutBinding result{};
   result.descriptorCount = 1;
-  result.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  result.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   result.stageFlags = access_stage_flags_;
   result.pImmutableSamplers = nullptr;
   return result;
@@ -37,7 +79,7 @@ VkWriteDescriptorSet UniformBindingBuffer::GetWriteDescriptorSet(
   descriptorWrite.dstSet = nullptr;
   descriptorWrite.dstBinding = 0;
   descriptorWrite.dstArrayElement = 0;
-  descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   descriptorWrite.descriptorCount = 1;
   descriptorWrite.pBufferInfo = &buffer_infos_[frame_index];
   return descriptorWrite;

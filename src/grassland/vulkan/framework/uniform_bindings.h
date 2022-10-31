@@ -18,6 +18,23 @@ class UniformBinding {
   VkShaderStageFlags access_stage_flags_;
 };
 
+class UniformBindingUniform : public UniformBinding {
+ public:
+  explicit UniformBindingUniform(DataBuffer *uniform_buffer,
+                                 VkShaderStageFlags access_stage_flags);
+  ~UniformBindingUniform() override = default;
+
+ private:
+  [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
+  [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
+      int frame_index) const override;
+  void PrepareState(CommandBuffer *command_buffer,
+                    int frame_index) const override;
+
+  DataBuffer *uniform_buffer_{nullptr};
+  std::vector<VkDescriptorBufferInfo> buffer_infos_;
+};
+
 class UniformBindingBuffer : public UniformBinding {
  public:
   explicit UniformBindingBuffer(DataBuffer *uniform_buffer,
