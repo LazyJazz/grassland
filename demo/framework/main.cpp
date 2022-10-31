@@ -75,10 +75,9 @@ int main() {
   // VK_SHADER_STAGE_FRAGMENT_BIT);
   render_node->VertexInput(
       {VK_FORMAT_R32G32B32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT});
-  render_node->BuildRenderNode(core_settings.window_width,
-                               core_settings.window_height);
+  render_node->BuildRenderNode();
 
-  core.SetWindowSizeCallback([&](int width, int height) {
+  core.SetFrameSizeCallback([&](int width, int height) {
     render_node->BuildRenderNode(width, height);
   });
 
@@ -113,6 +112,7 @@ int main() {
                       index_buffer->Size(), 0);
     core.Output(render_node->GetColorImage(0));
     core.EndCommandRecordAndSubmit();
+
     glfwPollEvents();
   }
   core.GetDevice()->WaitIdle();

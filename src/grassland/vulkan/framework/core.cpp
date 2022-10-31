@@ -20,8 +20,13 @@ Core::Core(const CoreSettings &core_settings) {
       LAND_ERROR("[Vulkan] GLFW create window failed.");
     }
 
-    glfwSetWindowSizeCallback(
-        window_, ::grassland::vulkan::framework::Core::GLFWWindowSizeFunc);
+    int actual_width, actual_height;
+    glfwGetFramebufferSize(window_, &actual_width, &actual_height);
+    core_settings_.window_width = actual_width;
+    core_settings_.window_height = actual_height;
+
+    glfwSetFramebufferSizeCallback(
+        window_, ::grassland::vulkan::framework::Core::GLFWFrameSizeFunc);
     glfwSetWindowUserPointer(window_, this);
   }
 
@@ -270,12 +275,12 @@ void Core::Output(TextureImage *texture_image) {
       VK_ACCESS_NONE, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
-void Core::SetWindowSizeCallback(
+void Core::SetFrameSizeCallback(
     const std::function<void(int, int)> &window_size_callback) {
   custom_window_size_function_ = window_size_callback;
 }
 
-void Core::GLFWWindowSizeFunc(GLFWwindow *window, int width, int height) {
+void Core::GLFWFrameSizeFunc(GLFWwindow *window, int width, int height) {
   auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
   core->core_settings_.window_width = width;
   core->core_settings_.window_height = height;
