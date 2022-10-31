@@ -87,6 +87,17 @@ int RenderNode::AddColorOutput(VkFormat format, bool blend_enable) {
 }
 
 void RenderNode::BuildRenderNode(uint32_t width, uint32_t height) {
+  core_->GetDevice()->WaitIdle();
+  graphics_pipeline_.reset();
+  framebuffer_.reset();
+  pipeline_layout_.reset();
+  render_pass_.reset();
+  descriptor_sets_.clear();
+  descriptor_pool_.reset();
+  descriptor_set_layout_.reset();
+  color_attachment_textures_.clear();
+  depth_buffer_texture_.reset();
+
   helper::AttachmentParameters attachment_parameters{};
   std::vector<ImageView *> framebuffer_image_views{};
   if (depth_enable_) {

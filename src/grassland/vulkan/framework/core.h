@@ -25,7 +25,12 @@ class Core {
 
   void Output(TextureImage *texture_image);
 
+  void SetWindowSizeCallback(
+      const std::function<void(int width, int height)> &window_size_callback);
+
  private:
+  static void GLFWWindowSizeFunc(GLFWwindow *window, int width, int height);
+
   CoreSettings core_settings_;
 
   std::unique_ptr<Instance> instance_;
@@ -45,5 +50,7 @@ class Core {
 
   int frame_index_{0};
   uint32_t current_image_index{0};
+
+  std::function<void(int width, int height)> custom_window_size_function_;
 };
 }  // namespace grassland::vulkan::framework

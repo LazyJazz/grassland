@@ -78,6 +78,10 @@ int main() {
   render_node->BuildRenderNode(core_settings.window_width,
                                core_settings.window_height);
 
+  core.SetWindowSizeCallback([&](int width, int height) {
+    render_node->BuildRenderNode(width, height);
+  });
+
   while (!glfwWindowShouldClose(core.GetWindow())) {
     [&]() {
       static auto startTime = std::chrono::high_resolution_clock::now();
@@ -100,6 +104,8 @@ int main() {
       ubo.proj[1][1] *= -1;
       uniform_buffer->operator[](0ll) = ubo;
     }();
+    // LAND_INFO("{} {}", render_node->GetColorImage(0)->GetImage()->GetWidth(),
+    // render_node->GetColorImage(0)->GetImage()->GetHeight());
     core.BeginCommandRecord();
     render_node->GetColorImage(0)->ClearColor({0.8f, 0.7f, 0.6f, 1.0f});
     render_node->GetDepthImage()->ClearDepth({1.0f, 0});
