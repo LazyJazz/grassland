@@ -10,6 +10,8 @@ class RenderNode {
   explicit RenderNode(Core *core);
   void AddUniformBinding(DataBuffer *uniform_buffer,
                          VkShaderStageFlags access_stage_flags);
+  void AddBufferBinding(DataBuffer *uniform_buffer,
+                        VkShaderStageFlags access_stage_flags);
   void AddUniformBinding(TextureImage *texture_image,
                          Sampler *sampler,
                          VkShaderStageFlags access_stage_flags);
