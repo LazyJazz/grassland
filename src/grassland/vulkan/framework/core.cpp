@@ -19,6 +19,10 @@ Core::Core(const CoreSettings &core_settings) {
     if (!window_) {
       LAND_ERROR("[Vulkan] GLFW create window failed.");
     }
+
+    glfwSetWindowSizeCallback(
+        window_, ::grassland::vulkan::framework::Core::GLFWWindowSizeFunc);
+    glfwSetWindowUserPointer(window_, this);
   }
 
   instance_ = std::make_unique<Instance>(core_settings_.has_window,
@@ -264,6 +268,23 @@ void Core::Output(TextureImage *texture_image) {
       GetCommandBuffer()->GetHandle(), texture_image->GetImage()->GetHandle(),
       VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
       VK_ACCESS_NONE, VK_IMAGE_ASPECT_COLOR_BIT);
+}
+
+void Core::SetWindowSizeCallback(
+    const std::function<void(int, int)> &window_size_callback) {
+  custom_window_size_function_ = window_size_callback;
+}
+
+void Core::GLFWWindowSizeFunc(GLFWwindow *window, int width, int height) {
+  auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
+  core->core_settings_.window_width = width;
+  core->core_settings_.window_height = height;
+  core->swapchain_.reset();
+  core->swapchain_ = std::make_unique<Swapchain>(core->GetDevice(), window);
+
+  if (core->custom_window_size_function_) {
+    core->custom_window_size_function_(width, height);
+  }
 }
 
 }  // namespace grassland::vulkan::framework
