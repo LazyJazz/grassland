@@ -25,11 +25,11 @@ class Core {
 
   void Output(TextureImage *texture_image);
 
-  void SetWindowSizeCallback(
+  void SetFrameSizeCallback(
       const std::function<void(int width, int height)> &window_size_callback);
 
  private:
-  static void GLFWWindowSizeFunc(GLFWwindow *window, int width, int height);
+  static void GLFWFrameSizeFunc(GLFWwindow *window, int width, int height);
 
   CoreSettings core_settings_;
 

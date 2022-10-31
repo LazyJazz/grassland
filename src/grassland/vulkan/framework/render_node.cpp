@@ -86,6 +86,11 @@ int RenderNode::AddColorOutput(VkFormat format, bool blend_enable) {
                       VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT});
 }
 
+void RenderNode::BuildRenderNode() {
+  BuildRenderNode(core_->GetCoreSettings().window_width,
+                  core_->GetCoreSettings().window_height);
+}
+
 void RenderNode::BuildRenderNode(uint32_t width, uint32_t height) {
   core_->GetDevice()->WaitIdle();
   graphics_pipeline_.reset();

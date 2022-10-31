@@ -29,6 +29,7 @@ class RenderNode {
 
   void VertexInput(const std::vector<VkFormat> &vertex_inputs);
 
+  void BuildRenderNode();
   void BuildRenderNode(uint32_t width, uint32_t height);
 
   void Draw(DataBuffer *vertex_buffer,
