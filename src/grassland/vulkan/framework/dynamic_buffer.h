@@ -22,7 +22,6 @@ class DynamicBuffer : public DataBuffer {
   Ty *mapped_ptr_{nullptr};
   std::unique_ptr<Buffer> host_buffer_;
   std::vector<std::unique_ptr<Buffer>> device_buffers_;
-  std::vector<uint8_t> device_buffer_synced_;
 };
 
 template <class Ty>
@@ -42,7 +41,6 @@ DynamicBuffer<Ty>::DynamicBuffer(Core *core,
         std::make_unique<Buffer>(core_->GetDevice(), sizeof(Ty) * size, usage,
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
   }
-  device_buffer_synced_.resize(device_buffers_.size(), 0);
 }
 
 template <class Ty>
@@ -55,7 +53,6 @@ void DynamicBuffer<Ty>::RequestMapState(bool requested_map_state) {
   if (requested_map_state) {
     if (!mapped_ptr_) {
       mapped_ptr_ = reinterpret_cast<Ty *>(host_buffer_->Map());
-      std::memset(device_buffer_synced_.data(), 0, size_ * sizeof(uint8_t));
     }
   } else {
     if (mapped_ptr_) {
@@ -79,11 +76,8 @@ Ty &DynamicBuffer<Ty>::operator[](int64_t index) {
 template <class Ty>
 void DynamicBuffer<Ty>::Sync(int frame_index) {
   this->RequestMapState(false);
-  if (!device_buffer_synced_[frame_index]) {
-    device_buffer_synced_[frame_index] = true;
-    CopyBuffer(core_->GetCommandPool(), host_buffer_->GetHandle(),
-               GetBuffer(frame_index)->GetHandle(), size_ * sizeof(Ty), 0, 0);
-  }
+  CopyBuffer(core_->GetCommandPool(), host_buffer_->GetHandle(),
+             GetBuffer(frame_index)->GetHandle(), size_ * sizeof(Ty), 0, 0);
 }
 template <class Ty>
 VkDeviceSize DynamicBuffer<Ty>::BufferSize() const {
