@@ -207,12 +207,12 @@ void TransitImageLayout(VkCommandBuffer command_buffer,
                        new_stage_flags, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
-void vulkan::CopyImage(CommandPool *command_pool,
-                       Image *src_image,
-                       Image *dst_image,
-                       VkOffset2D src_offset,
-                       VkOffset2D dst_offset,
-                       VkExtent2D extent) {
+void CopyImage(CommandPool *command_pool,
+               Image *src_image,
+               Image *dst_image,
+               VkOffset2D src_offset,
+               VkOffset2D dst_offset,
+               VkExtent2D extent) {
   helper::SingleTimeCommands(command_pool, [&](CommandBuffer *command_buffer) {
     TransitImageLayout(command_buffer->GetHandle(), dst_image->GetHandle(),
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
