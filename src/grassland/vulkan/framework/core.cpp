@@ -230,7 +230,7 @@ void Core::EndCommandRecordAndSubmit() {
                                     &presentInfo);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-      LAND_ERROR("[Vulkan] present failed.");
+      glfwPollEvents();
     }
   }
 }
