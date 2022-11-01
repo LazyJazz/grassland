@@ -28,8 +28,8 @@ void SingleTimeCommands(CommandPool *command_pool,
   graphics_queue->WaitIdle();
 }
 
-void helper::SingleTimeCommands(CommandPool *command_pool,
-                                std::function<void(CommandBuffer *)> actions) {
+void SingleTimeCommands(CommandPool *command_pool,
+                        std::function<void(CommandBuffer *)> actions) {
   std::unique_ptr<CommandBuffer> command_buffer =
       std::make_unique<CommandBuffer>(command_pool);
 
