@@ -213,6 +213,23 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
                                   core_->GetCurrentFrameIndex());
   }
 
+  if (!color_attachment_textures_.empty()) {
+    for (auto &color_texture : color_attachment_textures_) {
+      TransitImageLayout(command_buffer, color_texture->GetImage()->GetHandle(),
+                         VK_IMAGE_LAYOUT_GENERAL,
+                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+    }
+  }
+
+  if (depth_buffer_texture_) {
+    TransitImageLayout(
+        command_buffer, depth_buffer_texture_->GetImage()->GetHandle(),
+        VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT);
+  }
+
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   renderPassInfo.renderPass = render_pass_->GetHandle();
