@@ -27,9 +27,27 @@ class Core {
 
   void SetFrameSizeCallback(
       const std::function<void(int width, int height)> &window_size_callback);
+  void SetCursorPosCallback(
+      const std::function<void(double xpos, double ypos)> &cursor_pos_callback);
+  void SetMouseButtonCallback(
+      const std::function<void(int button, int action, int mods)>
+          &mouse_button_callback);
+  void SetKeyCallback(
+      const std::function<void(int key, int scancode, int action, int mods)>
+          &key_callback);
 
  private:
   static void GLFWFrameSizeFunc(GLFWwindow *window, int width, int height);
+  static void GLFWCursorPosFunc(GLFWwindow *window, double xpos, double ypos);
+  static void GLFWMouseButtonFunc(GLFWwindow *window,
+                                  int button,
+                                  int action,
+                                  int mods);
+  static void GLFWKeyFunc(GLFWwindow *window,
+                          int key,
+                          int scancode,
+                          int action,
+                          int mods);
 
   CoreSettings core_settings_;
 
@@ -52,5 +70,10 @@ class Core {
   uint32_t current_image_index{0};
 
   std::function<void(int width, int height)> custom_window_size_function_;
+  std::function<void(double xpos, double ypos)> custom_cursor_pos_function_;
+  std::function<void(int button, int action, int mods)>
+      custom_mouse_button_function_;
+  std::function<void(int key, int scancode, int action, int mods)>
+      custom_key_functions_;
 };
 }  // namespace grassland::vulkan::framework
