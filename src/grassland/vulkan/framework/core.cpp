@@ -313,7 +313,7 @@ void Core::GLFWFrameSizeFunc(GLFWwindow *window, int width, int height) {
 void Core::GLFWCursorPosFunc(GLFWwindow *window, double xpos, double ypos) {
   auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
   if (core->custom_cursor_pos_function_) {
-    core->custom_window_size_function_(xpos, ypos);
+    core->custom_cursor_pos_function_(xpos, ypos);
   }
 }
 
