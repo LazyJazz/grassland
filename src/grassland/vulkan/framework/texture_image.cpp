@@ -183,10 +183,7 @@ void TextureImage::ReadImage(const char *path) {
   if (!buffer) {
     LAND_ERROR("[Vulkan] failed to load image \"{}\".", path);
   }
-  image_view_.reset();
-  image_ = std::make_unique<Image>(core_->GetDevice(), x, y,
-                                   image_->GetFormat(), image_->GetUsage());
-  image_view_ = std::make_unique<ImageView>(image_.get());
+  Resize(x, y);
   std::vector<uint8_t> host_image_buffer(x * y * 4);
   std::memcpy(host_image_buffer.data(), buffer, x * y * 4);
   stbi_image_free(buffer);
@@ -243,10 +240,7 @@ void TextureImage::ReadHDRImage(const char *path) {
   if (!buffer) {
     LAND_ERROR("[Vulkan] failed to load image \"{}\".", path);
   }
-  image_view_.reset();
-  image_ = std::make_unique<Image>(core_->GetDevice(), x, y,
-                                   image_->GetFormat(), image_->GetUsage());
-  image_view_ = std::make_unique<ImageView>(image_.get());
+  Resize(x, y);
   std::vector<float> host_image_buffer(x * y * 4);
   std::memcpy(host_image_buffer.data(), buffer, x * y * 4 * sizeof(float));
   stbi_image_free(buffer);
@@ -298,6 +292,13 @@ void TextureImage::ClearDepth(
   vkCmdClearDepthStencilImage(core_->GetCommandBuffer()->GetHandle(),
                               image_->GetHandle(), VK_IMAGE_LAYOUT_GENERAL,
                               &clear_depth_stencil, 1, &range);
+}
+
+void TextureImage::Resize(uint32_t width, uint32_t height) {
+  image_view_.reset();
+  image_ = std::make_unique<Image>(core_->GetDevice(), width, height,
+                                   image_->GetFormat(), image_->GetUsage());
+  image_view_ = std::make_unique<ImageView>(image_.get());
 }
 
 }  // namespace grassland::vulkan::framework
