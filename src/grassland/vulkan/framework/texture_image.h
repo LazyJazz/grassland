@@ -28,6 +28,8 @@ class TextureImage {
   void ClearColor(VkClearColorValue clear_color) const;
   void ClearDepth(VkClearDepthStencilValue clear_depth_stencil) const;
 
+  void Resize(uint32_t width, uint32_t height);
+
  private:
   Core *core_;
   std::unique_ptr<Image> image_;
