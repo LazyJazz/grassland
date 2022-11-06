@@ -217,6 +217,8 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
     for (auto &color_texture : color_attachment_textures_) {
       TransitImageLayout(command_buffer, color_texture->GetImage()->GetHandle(),
                          VK_IMAGE_LAYOUT_GENERAL,
+                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
+                         VK_IMAGE_LAYOUT_GENERAL,
                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
     }
@@ -225,7 +227,9 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
   if (depth_buffer_texture_) {
     TransitImageLayout(
         command_buffer, depth_buffer_texture_->GetImage()->GetHandle(),
-        VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+        VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        VK_ACCESS_NONE, VK_IMAGE_LAYOUT_GENERAL,
+        VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
         VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
         VK_IMAGE_ASPECT_DEPTH_BIT);
   }

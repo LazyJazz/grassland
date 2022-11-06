@@ -72,6 +72,16 @@ Image::Image(Device *device,
   }
 
   vkBindImageMemory(device_->GetHandle(), handle_, device_memory_, 0);
+
+  auto command_pool = std::make_unique<CommandPool>(device_);
+  helper::SingleTimeCommands(
+      command_pool.get(), [&](VkCommandBuffer command_buffer) {
+        ::grassland::vulkan::TransitImageLayout(
+            command_buffer, handle_, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_NONE,
+            format == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT
+                                           : VK_IMAGE_ASPECT_COLOR_BIT);
+      });
 }
 
 Image::~Image() {
@@ -96,10 +106,6 @@ void Image::TransitImageLayout(CommandBuffer *command_buffer,
   grassland::vulkan::TransitImageLayout(
       command_buffer->GetHandle(), GetHandle(), new_layout, new_stage_flags,
       new_access_flags, VK_IMAGE_ASPECT_COLOR_BIT);
-
-  //  image_layout_ = new_layout;
-  //  pipeline_stage_flags_ = new_stage_flags;
-  //  access_flags_ = new_access_flags;
 }
 
 void Image::Update(CommandBuffer *command_buffer, Buffer *buffer) {
@@ -181,32 +187,6 @@ void DownloadImage(CommandPool *command_pool, Image *image, Buffer *buffer) {
                               VK_ACCESS_SHADER_READ_BIT);
   });
 }
-void TransitImageLayout(VkCommandBuffer command_buffer,
-                        VkImage image,
-                        VkImageLayout new_layout,
-                        VkPipelineStageFlags new_stage_flags,
-                        VkAccessFlags new_access_flags,
-                        VkImageAspectFlags aspect_flags) {
-  VkImageMemoryBarrier barrier{};
-  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  barrier.newLayout = new_layout;
-  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.image = image;
-  barrier.subresourceRange.aspectMask = aspect_flags;
-  barrier.subresourceRange.baseMipLevel = 0;
-  barrier.subresourceRange.levelCount = 1;
-  barrier.subresourceRange.baseArrayLayer = 0;
-  barrier.subresourceRange.layerCount = 1;
-
-  barrier.srcAccessMask = VK_ACCESS_NONE;
-  barrier.dstAccessMask = new_access_flags;
-
-  vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                       new_stage_flags, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-}
-
 void CopyImage(CommandPool *command_pool,
                Image *src_image,
                Image *dst_image,
@@ -246,5 +226,46 @@ void CopyImage(CommandPool *command_pool,
                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image->GetHandle(),
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
   });
+}
+
+void TransitImageLayout(VkCommandBuffer command_buffer,
+                        VkImage image,
+                        VkImageLayout new_layout,
+                        VkPipelineStageFlags new_stage_flags,
+                        VkAccessFlags new_access_flags,
+                        VkImageAspectFlags aspect_flags) {
+  TransitImageLayout(command_buffer, image, VK_IMAGE_LAYOUT_UNDEFINED,
+                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
+                     new_layout, new_stage_flags, new_access_flags,
+                     aspect_flags);
+}
+
+void TransitImageLayout(VkCommandBuffer command_buffer,
+                        VkImage image,
+                        VkImageLayout old_layout,
+                        VkPipelineStageFlags old_stage_flags,
+                        VkAccessFlags old_access_flags,
+                        VkImageLayout new_layout,
+                        VkPipelineStageFlags new_stage_flags,
+                        VkAccessFlags new_access_flags,
+                        VkImageAspectFlags aspect_flags) {
+  VkImageMemoryBarrier barrier{};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = old_layout;
+  barrier.newLayout = new_layout;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = image;
+  barrier.subresourceRange.aspectMask = aspect_flags;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+
+  barrier.srcAccessMask = old_access_flags;
+  barrier.dstAccessMask = new_access_flags;
+
+  vkCmdPipelineBarrier(command_buffer, old_stage_flags, new_stage_flags, 0, 0,
+                       nullptr, 0, nullptr, 1, &barrier);
 }
 }  // namespace grassland::vulkan

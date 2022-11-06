@@ -1,4 +1,7 @@
 #include <grassland/util/logging.h>
+#include <grassland/vulkan/command_pool.h>
+#include <grassland/vulkan/helper/helper.h>
+#include <grassland/vulkan/image.h>
 #include <grassland/vulkan/swapchain.h>
 
 #include <algorithm>
@@ -150,6 +153,16 @@ void Swapchain::CreateImages() {
   for (int i = 0; i < image_count_; i++) {
     images_.emplace_back(swapChainImages[i]);
   }
+  auto command_pool = std::make_unique<CommandPool>(device_);
+  helper::SingleTimeCommands(
+      command_pool.get(), [&](VkCommandBuffer command_buffer) {
+        for (int i = 0; i < image_count_; i++) {
+          TransitImageLayout(command_buffer, images_[i],
+                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_NONE,
+                             VK_IMAGE_ASPECT_COLOR_BIT);
+        }
+      });
 }
 
 void Swapchain::CreateImageViews() {

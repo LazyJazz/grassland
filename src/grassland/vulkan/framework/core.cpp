@@ -168,7 +168,7 @@ void Core::BeginCommandRecord() {
                   UINT64_MAX);
 
   if (core_settings_.has_window) {
-    VkResult result = vkAcquireNextImageKHR(
+    vkAcquireNextImageKHR(
         device_->GetHandle(), swapchain_->GetHandle(), UINT64_MAX,
         image_available_semaphores_[frame_index_]->GetHandle(), VK_NULL_HANDLE,
         &current_image_index);
@@ -244,13 +244,17 @@ void Core::EndCommandRecordAndSubmit() {
 void Core::Output(TextureImage *texture_image) {
   TransitImageLayout(GetCommandBuffer()->GetHandle(),
                      swapchain_->GetImage(current_image_index),
+                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                      VK_PIPELINE_STAGE_TRANSFER_BIT,
                      VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
   TransitImageLayout(
       GetCommandBuffer()->GetHandle(), texture_image->GetImage()->GetHandle(),
-      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+      VK_ACCESS_NONE, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+      VK_IMAGE_ASPECT_COLOR_BIT);
   VkImageCopy imageCopy{};
   imageCopy.srcOffset = VkOffset3D{0, 0, 0};
   imageCopy.dstOffset = VkOffset3D{0, 0, 0};
@@ -270,15 +274,19 @@ void Core::Output(TextureImage *texture_image) {
                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                  swapchain_->GetImage(current_image_index),
                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
-  TransitImageLayout(GetCommandBuffer()->GetHandle(),
-                     swapchain_->GetImage(current_image_index),
-                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
-                     VK_IMAGE_ASPECT_COLOR_BIT);
+  TransitImageLayout(
+      GetCommandBuffer()->GetHandle(),
+      swapchain_->GetImage(current_image_index),
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_NONE,
+      VK_IMAGE_ASPECT_COLOR_BIT);
   TransitImageLayout(
       GetCommandBuffer()->GetHandle(), texture_image->GetImage()->GetHandle(),
-      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-      VK_ACCESS_NONE, VK_IMAGE_ASPECT_COLOR_BIT);
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL,
+      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_NONE,
+      VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void Core::SetFrameSizeCallback(
