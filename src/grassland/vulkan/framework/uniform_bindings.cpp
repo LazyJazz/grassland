@@ -6,10 +6,6 @@ UniformBinding::UniformBinding(VkPipelineStageFlags access_stage_flags) {
   access_stage_flags_ = access_stage_flags;
 }
 
-void UniformBinding::AfterDraw(CommandBuffer *command_buffer,
-                               int frame_index) const {
-}
-
 UniformBindingUniform::UniformBindingUniform(
     DataBuffer *uniform_buffer,
     VkPipelineStageFlags access_stage_flags)
@@ -47,8 +43,8 @@ VkWriteDescriptorSet UniformBindingUniform::GetWriteDescriptorSet(
   return descriptorWrite;
 }
 
-void UniformBindingUniform::BeforeDraw(CommandBuffer *command_buffer,
-                                       int frame_index) const {
+void UniformBindingUniform::PrepareState(CommandBuffer *command_buffer,
+                                         int frame_index) const {
   uniform_buffer_->Sync(frame_index);
 }
 
@@ -89,8 +85,8 @@ VkWriteDescriptorSet UniformBindingBuffer::GetWriteDescriptorSet(
   return descriptorWrite;
 }
 
-void UniformBindingBuffer::BeforeDraw(CommandBuffer *command_buffer,
-                                      int frame_index) const {
+void UniformBindingBuffer::PrepareState(CommandBuffer *command_buffer,
+                                        int frame_index) const {
   uniform_buffer_->Sync(frame_index);
 }
 
@@ -130,24 +126,13 @@ VkWriteDescriptorSet UniformBindingTextureSampler::GetWriteDescriptorSet(
   return descriptorWrite;
 }
 
-void UniformBindingTextureSampler::BeforeDraw(CommandBuffer *command_buffer,
-                                              int frame_index) const {
-  TransitImageLayout(
-      command_buffer->GetHandle(), texture_image_->GetImage()->GetHandle(),
-      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-      VK_ACCESS_NONE, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_ACCESS_SHADER_READ_BIT,
-      VK_IMAGE_ASPECT_COLOR_BIT);
-}
-void UniformBindingTextureSampler::AfterDraw(
-    grassland::vulkan::CommandBuffer *command_buffer,
-    int frame_index) const {
-  TransitImageLayout(
-      command_buffer->GetHandle(), texture_image_->GetImage()->GetHandle(),
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_ACCESS_SHADER_READ_BIT,
-      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-      VK_ACCESS_NONE, VK_IMAGE_ASPECT_COLOR_BIT);
+void UniformBindingTextureSampler::PrepareState(CommandBuffer *command_buffer,
+                                                int frame_index) const {
+  TransitImageLayout(command_buffer->GetHandle(),
+                     texture_image_->GetImage()->GetHandle(),
+                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                     VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 UniformBindingTextureSamplers::UniformBindingTextureSamplers(
@@ -191,29 +176,14 @@ VkWriteDescriptorSet UniformBindingTextureSamplers::GetWriteDescriptorSet(
   return descriptorWrite;
 }
 
-void UniformBindingTextureSamplers::BeforeDraw(CommandBuffer *command_buffer,
-                                               int frame_index) const {
+void UniformBindingTextureSamplers::PrepareState(CommandBuffer *command_buffer,
+                                                 int frame_index) const {
   for (auto &texture_image_pair : texture_sampler_pairs_) {
     TransitImageLayout(command_buffer->GetHandle(),
                        texture_image_pair.first->GetImage()->GetHandle(),
-                       VK_IMAGE_LAYOUT_GENERAL,
-                       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                        VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
                        VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-  }
-}
-void UniformBindingTextureSamplers::AfterDraw(
-    grassland::vulkan::CommandBuffer *command_buffer,
-    int frame_index) const {
-  for (auto &texture_image_pair : texture_sampler_pairs_) {
-    TransitImageLayout(command_buffer->GetHandle(),
-                       texture_image_pair.first->GetImage()->GetHandle(),
-                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                       VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                       VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL,
-                       VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_NONE,
-                       VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
 
@@ -251,8 +221,13 @@ VkWriteDescriptorSet UniformBindingStorageTexture::GetWriteDescriptorSet(
   return descriptorWrite;
 }
 
-void UniformBindingStorageTexture::BeforeDraw(CommandBuffer *command_buffer,
-                                              int frame_index) const {
+void UniformBindingStorageTexture::PrepareState(CommandBuffer *command_buffer,
+                                                int frame_index) const {
+  TransitImageLayout(
+      command_buffer->GetHandle(), texture_image_->GetImage()->GetHandle(),
+      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+      VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+      VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 UniformBindingStorageTextures::UniformBindingStorageTextures(
@@ -293,7 +268,14 @@ VkWriteDescriptorSet UniformBindingStorageTextures::GetWriteDescriptorSet(
 
   return descriptorWrite;
 }
-void UniformBindingStorageTextures::BeforeDraw(CommandBuffer *command_buffer,
-                                               int frame_index) const {
+void UniformBindingStorageTextures::PrepareState(CommandBuffer *command_buffer,
+                                                 int frame_index) const {
+  for (auto &texture_image : texture_images_) {
+    TransitImageLayout(
+        command_buffer->GetHandle(), texture_image->GetImage()->GetHandle(),
+        VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+        VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT);
+  }
 }
 }  // namespace grassland::vulkan::framework
