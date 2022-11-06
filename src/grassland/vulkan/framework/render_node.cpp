@@ -209,8 +209,8 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
                       int index_count,
                       int instance_index) {
   for (auto &uniform_binding : uniform_bindings_) {
-    uniform_binding->PrepareState(core_->GetCommandBuffer(),
-                                  core_->GetCurrentFrameIndex());
+    uniform_binding->BeforeDraw(core_->GetCommandBuffer(),
+                                core_->GetCurrentFrameIndex());
   }
 
   if (!color_attachment_textures_.empty()) {
@@ -281,6 +281,11 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
   vkCmdDrawIndexed(command_buffer, index_count, 1, 0, 0, instance_index);
 
   vkCmdEndRenderPass(command_buffer);
+
+  for (auto &uniform_binding : uniform_bindings_) {
+    uniform_binding->AfterDraw(core_->GetCommandBuffer(),
+                               core_->GetCurrentFrameIndex());
+  }
 }
 
 }  // namespace grassland::vulkan::framework

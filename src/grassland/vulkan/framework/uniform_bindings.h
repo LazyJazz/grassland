@@ -11,8 +11,9 @@ class UniformBinding {
   [[nodiscard]] virtual VkDescriptorSetLayoutBinding GetBinding() const = 0;
   [[nodiscard]] virtual VkWriteDescriptorSet GetWriteDescriptorSet(
       int frame_index) const = 0;
-  virtual void PrepareState(CommandBuffer *command_buffer,
-                            int frame_index) const = 0;
+  virtual void BeforeDraw(CommandBuffer *command_buffer,
+                          int frame_index) const = 0;
+  virtual void AfterDraw(CommandBuffer *command_buffer, int frame_index) const;
 
  protected:
   VkShaderStageFlags access_stage_flags_;
@@ -28,8 +29,8 @@ class UniformBindingUniform : public UniformBinding {
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
       int frame_index) const override;
-  void PrepareState(CommandBuffer *command_buffer,
-                    int frame_index) const override;
+  void BeforeDraw(CommandBuffer *command_buffer,
+                  int frame_index) const override;
 
   DataBuffer *uniform_buffer_{nullptr};
   std::vector<VkDescriptorBufferInfo> buffer_infos_;
@@ -45,8 +46,8 @@ class UniformBindingBuffer : public UniformBinding {
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
       int frame_index) const override;
-  void PrepareState(CommandBuffer *command_buffer,
-                    int frame_index) const override;
+  void BeforeDraw(CommandBuffer *command_buffer,
+                  int frame_index) const override;
 
   DataBuffer *uniform_buffer_{nullptr};
   std::vector<VkDescriptorBufferInfo> buffer_infos_;
@@ -63,9 +64,10 @@ class UniformBindingTextureSampler : public UniformBinding {
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
       int frame_index) const override;
-  void PrepareState(CommandBuffer *command_buffer,
-                    int frame_index) const override;
-
+  void BeforeDraw(CommandBuffer *command_buffer,
+                  int frame_index) const override;
+  void AfterDraw(grassland::vulkan::CommandBuffer *command_buffer,
+                 int frame_index) const override;
   TextureImage *texture_image_{nullptr};
   Sampler *sampler_{nullptr};
   VkDescriptorImageInfo image_info_{};
@@ -83,8 +85,10 @@ class UniformBindingTextureSamplers : public UniformBinding {
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
       int frame_index) const override;
-  void PrepareState(CommandBuffer *command_buffer,
-                    int frame_index) const override;
+  void BeforeDraw(CommandBuffer *command_buffer,
+                  int frame_index) const override;
+  void AfterDraw(grassland::vulkan::CommandBuffer *command_buffer,
+                 int frame_index) const override;
 
   std::vector<std::pair<TextureImage *, Sampler *>> texture_sampler_pairs_;
   std::vector<VkDescriptorImageInfo> image_infos_;
@@ -100,8 +104,8 @@ class UniformBindingStorageTexture : public UniformBinding {
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
       int frame_index) const override;
-  void PrepareState(CommandBuffer *command_buffer,
-                    int frame_index) const override;
+  void BeforeDraw(CommandBuffer *command_buffer,
+                  int frame_index) const override;
 
   TextureImage *texture_image_{nullptr};
   VkDescriptorImageInfo image_info_{};
@@ -118,8 +122,8 @@ class UniformBindingStorageTextures : public UniformBinding {
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
       int frame_index) const override;
-  void PrepareState(CommandBuffer *command_buffer,
-                    int frame_index) const override;
+  void BeforeDraw(CommandBuffer *command_buffer,
+                  int frame_index) const override;
 
   std::vector<TextureImage *> texture_images_;
   std::vector<VkDescriptorImageInfo> image_infos_;
