@@ -25,10 +25,10 @@ class Image {
   [[nodiscard]] uint32_t GetWidth() const;
   [[nodiscard]] uint32_t GetHeight() const;
   [[nodiscard]] VkImageUsageFlags GetUsage() const;
-  void TransitImageLayout(CommandBuffer *command_buffer,
-                          VkImageLayout new_layout,
-                          VkPipelineStageFlags new_stage_flags,
-                          VkAccessFlags new_access_flags);
+  [[deprecated]] void TransitImageLayout(CommandBuffer *command_buffer,
+                                         VkImageLayout new_layout,
+                                         VkPipelineStageFlags new_stage_flags,
+                                         VkAccessFlags new_access_flags);
   void Update(CommandBuffer *command_buffer, Buffer *buffer);
   void Retrieve(CommandBuffer *command_buffer, Buffer *buffer);
 
@@ -57,6 +57,13 @@ void UploadImage(CommandPool *command_pool, Image *image, Buffer *buffer);
 
 void DownloadImage(CommandPool *command_pool, Image *image, Buffer *buffer);
 
+void CopyImage(CommandPool *command_pool,
+               Image *src_image,
+               Image *dst_image,
+               VkOffset2D src_offset = {0, 0},
+               VkOffset2D dst_offset = {0, 0},
+               VkExtent2D extent = {0xffffffffu, 0xffffffffu});
+
 void TransitImageLayout(
     VkCommandBuffer command_buffer,
     VkImage image,
@@ -65,10 +72,15 @@ void TransitImageLayout(
     VkAccessFlags new_access_flags,
     VkImageAspectFlags aspect_flags = VK_IMAGE_ASPECT_COLOR_BIT);
 
-void CopyImage(CommandPool *command_pool,
-               Image *src_image,
-               Image *dst_image,
-               VkOffset2D src_offset = {0, 0},
-               VkOffset2D dst_offset = {0, 0},
-               VkExtent2D extent = {0xffffffffu, 0xffffffffu});
+void TransitImageLayout(
+    VkCommandBuffer command_buffer,
+    VkImage image,
+    VkImageLayout old_layout,
+    VkPipelineStageFlags old_stage_flags,
+    VkAccessFlags old_access_flags,
+    VkImageLayout new_layout,
+    VkPipelineStageFlags new_stage_flags,
+    VkAccessFlags new_access_flags,
+    VkImageAspectFlags aspect_flags = VK_IMAGE_ASPECT_COLOR_BIT);
+
 }  // namespace grassland::vulkan

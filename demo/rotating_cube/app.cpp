@@ -450,5 +450,11 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
 
   vkCmdEndRenderPass(commandBuffer);
 
+  grassland::vulkan::TransitImageLayout(
+      commandBuffer, swapchain_->GetImage(imageIndex), VK_IMAGE_LAYOUT_GENERAL,
+      VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
+      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      VK_ACCESS_NONE);
+
   vulkan::helper::CommandEnd(commandBuffer);
 }
