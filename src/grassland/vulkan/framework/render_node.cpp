@@ -209,8 +209,8 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
                       int index_count,
                       int instance_index) {
   for (auto &uniform_binding : uniform_bindings_) {
-    uniform_binding->BeforeDraw(core_->GetCommandBuffer(),
-                                core_->GetCurrentFrameIndex());
+    uniform_binding->PrepareState(core_->GetCommandBuffer(),
+                                  core_->GetCurrentFrameIndex());
   }
 
   if (!color_attachment_textures_.empty()) {
