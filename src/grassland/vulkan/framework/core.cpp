@@ -58,9 +58,6 @@ Core::Core(const CoreSettings &core_settings) {
         if (physical_device.IsDiscreteGPU()) {
           score *= 2;
         }
-        if (physical_device.GetProperties().vendorID == 0x1002) {
-          return 0xffffff;
-        }
         return score;
       }));
 
@@ -171,7 +168,7 @@ void Core::BeginCommandRecord() {
                   UINT64_MAX);
 
   if (core_settings_.has_window) {
-    VkResult result = vkAcquireNextImageKHR(
+    vkAcquireNextImageKHR(
         device_->GetHandle(), swapchain_->GetHandle(), UINT64_MAX,
         image_available_semaphores_[frame_index_]->GetHandle(), VK_NULL_HANDLE,
         &current_image_index);
