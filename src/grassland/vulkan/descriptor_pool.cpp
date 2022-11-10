@@ -31,7 +31,6 @@ DescriptorPool::DescriptorPool(
   poolInfo.poolSizeCount = pool_sizes.size();
   poolInfo.pPoolSizes = pool_sizes.data();
   poolInfo.maxSets = static_cast<uint32_t>(max_sets);
-  poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
   if (vkCreateDescriptorPool(device_->GetHandle(), &poolInfo, nullptr,
                              &handle_) != VK_SUCCESS) {

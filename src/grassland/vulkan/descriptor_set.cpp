@@ -29,10 +29,7 @@ DescriptorSet::DescriptorSet(DescriptorSetLayout *descriptor_set_layout,
                     descriptor_pool) {
 }
 
-DescriptorSet::~DescriptorSet() {
-  vkFreeDescriptorSets(device_->GetHandle(), descriptor_pool_->GetHandle(), 1,
-                       &handle_);
-}
+DescriptorSet::~DescriptorSet() = default;
 
 DescriptorSets::DescriptorSets(Device *device,
                                DescriptorSetLayout *descriptor_set_layout,
