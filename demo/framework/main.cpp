@@ -109,7 +109,7 @@ int main() {
     render_node->GetColorImage(0)->ClearColor({0.8f, 0.7f, 0.6f, 1.0f});
     render_node->GetDepthImage()->ClearDepth({1.0f, 0});
     render_node->Draw(vertex_buffer.get(), index_buffer.get(),
-                      index_buffer->Size(), 0);
+                      index_buffer->Size(), 0, 1);
     core.Output(render_node->GetColorImage(0));
     core.EndCommandRecordAndSubmit();
 

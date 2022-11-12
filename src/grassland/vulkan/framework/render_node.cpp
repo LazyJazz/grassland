@@ -189,25 +189,28 @@ void RenderNode::BuildRenderNode(uint32_t width, uint32_t height) {
 void RenderNode::Draw(DataBuffer *vertex_buffer,
                       DataBuffer *index_buffer,
                       int index_count,
-                      int instance_index) {
+                      int first_instance_index,
+                      int instance_count) {
   Draw(core_->GetCommandBuffer(), vertex_buffer, index_buffer, index_count,
-       instance_index);
+       first_instance_index, instance_count);
 }
 
 void RenderNode::Draw(CommandBuffer *command_buffer,
                       DataBuffer *vertex_buffer,
                       DataBuffer *index_buffer,
                       int index_count,
-                      int instance_index) {
+                      int first_instance_index,
+                      int instance_count) {
   Draw(command_buffer->GetHandle(), vertex_buffer, index_buffer, index_count,
-       instance_index);
+       first_instance_index, instance_count);
 }
 
 void RenderNode::Draw(VkCommandBuffer command_buffer,
                       DataBuffer *vertex_buffer,
                       DataBuffer *index_buffer,
                       int index_count,
-                      int instance_index) {
+                      int first_instance_index,
+                      int instance_count) {
   for (auto &uniform_binding : uniform_bindings_) {
     uniform_binding->BeforeDraw(core_->GetCommandBuffer(),
                                 core_->GetCurrentFrameIndex());
@@ -278,7 +281,8 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
       &descriptor_sets_[core_->GetCurrentFrameIndex()]->GetHandle(), 0,
       nullptr);
 
-  vkCmdDrawIndexed(command_buffer, index_count, 1, 0, 0, instance_index);
+  vkCmdDrawIndexed(command_buffer, index_count, instance_count, 0, 0,
+                   first_instance_index);
 
   vkCmdEndRenderPass(command_buffer);
 
