@@ -2,6 +2,10 @@
 
 #include <utility>
 
+namespace {
+struct UniformBufferObject {};
+}  // namespace
+
 FontViewer::FontViewer(grassland::font::Mesh font_mesh)
     : font_mesh_(std::move(font_mesh)) {
 }
