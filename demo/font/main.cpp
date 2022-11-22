@@ -1,8 +1,8 @@
 #include "app.h"
+#include "grassland/font/font.h"
 
 int main() {
-  FontViewer font_viewer(grassland::font::Mesh(
-      {{0.1f, 0.1f}, {0.1f, 0.9f}, {0.9f, 0.1f}, {0.9f, 0.9f}},
-      {0, 1, 2, 1, 2, 3}));
+  grassland::font::Factory factory("../fonts/NotoSansSC-Light.otf");
+  FontViewer font_viewer(factory.GetChar(L'䉸'));
   font_viewer.Run();
 }

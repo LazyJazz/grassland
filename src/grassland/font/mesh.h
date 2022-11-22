@@ -7,6 +7,7 @@ class Mesh {
  public:
   Mesh(const std::vector<glm::vec2> &vertices,
        const std::vector<uint32_t> &indices);
+  explicit Mesh(const std::vector<glm::vec2> &triangle_vertices);
   std::vector<glm::vec2> &GetVertices();
   [[nodiscard]] const std::vector<glm::vec2> &GetVertices() const;
   std::vector<uint32_t> &GetIndices();
