@@ -6,6 +6,8 @@
 
 namespace {
 const int arc_precision = 3;
+const int size_scale = 128;
+const float inv_size = 1.0f / (64.0f * float(size_scale));
 
 int cross(const glm::ivec2 &a, const glm::ivec2 &b) {
   return a.x * b.y - a.y * b.x;
@@ -101,12 +103,6 @@ int directional_scan(const glm::ivec2 &v,
   auto rv = rotate90(v);
   auto ru = rotate90(u);
   auto line = construct_line(v, u);
-  printf("%d, %d\n", v.x, v.y);
-  printf("%d, %d\n", u.x, u.y);
-  printf("%d, %d\n", p.x, p.y);
-  printf("%d, %d\n", rv.x, rv.y);
-  printf("%d, %d\n", ru.x, ru.y);
-  printf("%dx+%dy+%d=0\n", line.x, line.y, line.z);
   if (signal(dot(v, ru)) * signal(dot(ru, p)) < 0) {
     return 0;
   }
@@ -135,23 +131,6 @@ bool inside(const std::vector<glm::ivec2> &cycle, const glm::ivec2 &p) {
     }
     scan_counter += directional_scan(cycle[i], cycle[j], p);
   }
-  printf("%d\n", scan_counter);
-  if (scan_counter != 1) {
-    for (int i = 0; i < cycle.size(); i++) {
-      int j = i + 1;
-      if (j == cycle.size()) {
-        j = 0;
-      }
-      if (directional_scan(cycle[i], cycle[j], p)) {
-        printf("(%d, %d)\n", cycle[i].x, cycle[i].y);
-        printf("(%d, %d)\n", cycle[j].x, cycle[j].y);
-        printf("(%d, %d)\n", p.x, p.y);
-        printf("%d\n", directional_scan(cycle[i], cycle[j], p));
-        printf("===================\n");
-      }
-    }
-  }
-  printf("-----------------------------------------\n");
   return scan_counter;
 }
 
@@ -303,13 +282,12 @@ void triangulation(std::vector<glm::vec2> &triangles,
     triangle =
         Triangle{outline[prev_index], outline[mid_index], outline[next_index]};
     if (result_area > 0) {
-      const float inv_size = 1.0f / (64.0f * 128.0f);
       triangles.emplace_back(float(triangle.v0.x) * inv_size,
-                             float(triangle.v0.y) * inv_size);
+                             float(triangle.v0.y) * inv_size + 0.125f);
       triangles.emplace_back(float(triangle.v1.x) * inv_size,
-                             float(triangle.v1.y) * inv_size);
+                             float(triangle.v1.y) * inv_size + 0.125f);
       triangles.emplace_back(float(triangle.v2.x) * inv_size,
-                             float(triangle.v2.y) * inv_size);
+                             float(triangle.v2.y) * inv_size + 0.125f);
     }
     for (int i = mid_index; i < sz - 1; i++) {
       outline[i] = outline[i + 1];
@@ -323,7 +301,7 @@ namespace grassland::font {
 Factory::Factory(const char *font_file_path) {
   FTCall(FT_Init_FreeType(&library_));
   FTCall(FT_New_Face(library_, font_file_path, 0, &face_));
-  FTCall(FT_Set_Pixel_Sizes(face_, 0, 128));
+  FTCall(FT_Set_Pixel_Sizes(face_, 0, size_scale));
 }
 
 Factory::~Factory() {
@@ -469,7 +447,8 @@ void Factory::LoadChar(Char_T c) {
   for (auto i : out_most_set) {
     triangulation(vertices, outlines.outlines[i]);
   }
-  loaded_fonts.insert(std::make_pair(c, Mesh(vertices)));
+  loaded_fonts.insert(std::make_pair(
+      c, Mesh(vertices, float(face_->glyph->advance.x) * inv_size)));
 }
 
 }  // namespace grassland::font

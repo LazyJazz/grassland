@@ -5,17 +5,16 @@
 namespace grassland::font {
 
 Mesh::Mesh(const std::vector<glm::vec2> &vertices,
-           const std::vector<uint32_t> &indices) {
+           const std::vector<uint32_t> &indices,
+           float advection) {
   vertices_ = vertices;
   indices_ = indices;
+  advection_ = advection;
 }
 
-Mesh::Mesh(const std::vector<glm::vec2> &triangle_vertices) {
-  //  vertices_ = triangle_vertices;
-  //  for (int i = 0; i < triangle_vertices.size(); i++) {
-  //    indices_.push_back(i);
-  //  }
-  //  return;
+Mesh::Mesh(const std::vector<glm::vec2> &triangle_vertices, float advection) {
+  advection_ = advection;
+
   class Vec2Eq {
    public:
     bool operator()(const glm::vec2 &a, const glm::vec2 &b) const {
@@ -53,5 +52,9 @@ std::vector<uint32_t> &Mesh::GetIndices() {
 
 const std::vector<uint32_t> &Mesh::GetIndices() const {
   return indices_;
+}
+
+float Mesh::GetAdvection() const {
+  return advection_;
 }
 }  // namespace grassland::font

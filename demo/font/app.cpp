@@ -44,8 +44,8 @@ void FontViewer::OnInit() {
   vertex_buffer_->Upload(font_mesh_.GetVertices().data());
   index_buffer_->Upload(font_mesh_.GetIndices().data());
   uniform_buffer_->operator[](0) = {
-      glm::translate(glm::mat4{1.0f}, glm::vec3{-1.0f, 0.0f, 0.0f}) *
-          glm::scale(glm::mat4{1.0f}, glm::vec3{1.0f, -1.0f, 1.0f}),
+      glm::translate(glm::mat4{1.0f}, glm::vec3{-1.0f, 1.0f, 0.0f}) *
+          glm::scale(glm::mat4{1.0f}, glm::vec3{2.0f, -2.0f, 1.0f}),
       glm::vec4{1.0f}};
 }
 
