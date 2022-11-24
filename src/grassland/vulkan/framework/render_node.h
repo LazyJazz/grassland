@@ -22,14 +22,16 @@ class RenderNode {
                          VkShaderStageFlags access_stage_flags);
   void AddUniformBinding(const std::vector<TextureImage *> &texture_images,
                          VkShaderStageFlags access_stage_flags);
-  int AddColorOutput(VkFormat format,
-                     const VkPipelineColorBlendAttachmentState &blend_state);
-  int AddColorOutput(VkFormat format, bool blend_enable = false);
-  int AddColorOutput(TextureImage *color_image,
-                     const VkPipelineColorBlendAttachmentState &blend_state);
-  int AddColorOutput(TextureImage *color_image, bool blend_enable = false);
-  void EnableDepthTest();
-  void AttachDepthBuffer(TextureImage *depth_image);
+  int AddColorAttachment(
+      VkFormat format,
+      const VkPipelineColorBlendAttachmentState &blend_state);
+  int AddColorAttachment(VkFormat format, bool blend_enable = false);
+  int AddColorAttachment(
+      TextureImage *color_image,
+      const VkPipelineColorBlendAttachmentState &blend_state);
+  int AddColorAttachment(TextureImage *color_image, bool blend_enable = false);
+  void AddDepthAttachment();
+  void AddDepthAttachment(TextureImage *depth_image);
 
   void AddShader(const char *shader_path, VkShaderStageFlagBits shader_stage);
 
@@ -56,8 +58,9 @@ class RenderNode {
             int first_instance_index,
             int instance_count = 1);
 
-  [[nodiscard]] TextureImage *GetColorImage(int color_image_index = 0) const;
-  [[nodiscard]] TextureImage *GetDepthImage() const;
+  [[nodiscard]] TextureImage *GetColorAttachmentImage(
+      int color_attachment_index = 0) const;
+  [[nodiscard]] TextureImage *GetDepthAttachmentImage() const;
 
  private:
   Core *core_{nullptr};

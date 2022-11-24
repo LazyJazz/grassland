@@ -63,8 +63,8 @@ int main() {
   std::unique_ptr<grassland::vulkan::Sampler> sampler =
       std::make_unique<grassland::vulkan::Sampler>(core.GetDevice());
 
-  render_node->AddColorOutput(core.GetSwapchain()->GetFormat());
-  render_node->EnableDepthTest();
+  render_node->AddColorAttachment(core.GetSwapchain()->GetFormat());
+  render_node->AddDepthAttachment();
   render_node->AddShader("../shaders/color_shader.vert.spv",
                          VK_SHADER_STAGE_VERTEX_BIT);
   render_node->AddShader("../shaders/color_shader.frag.spv",
@@ -106,11 +106,12 @@ int main() {
     // LAND_INFO("{} {}", render_node->GetColorImage(0)->GetImage()->GetWidth(),
     // render_node->GetColorImage(0)->GetImage()->GetHeight());
     core.BeginCommandRecord();
-    render_node->GetColorImage(0)->ClearColor({0.8f, 0.7f, 0.6f, 1.0f});
-    render_node->GetDepthImage()->ClearDepth({1.0f, 0});
+    render_node->GetColorAttachmentImage(0)->ClearColor(
+        {0.8f, 0.7f, 0.6f, 1.0f});
+    render_node->GetDepthAttachmentImage()->ClearDepth({1.0f, 0});
     render_node->Draw(vertex_buffer.get(), index_buffer.get(),
                       index_buffer->Size(), 0, 1);
-    core.Output(render_node->GetColorImage(0));
+    core.Output(render_node->GetColorAttachmentImage(0));
     core.EndCommandRecordAndSubmit();
 
     glfwPollEvents();

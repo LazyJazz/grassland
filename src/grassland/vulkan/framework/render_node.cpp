@@ -6,10 +6,11 @@ RenderNode::RenderNode(Core *core) {
   core_ = core;
 }
 
-TextureImage *RenderNode::GetColorImage(int color_image_index) const {
-  return color_attachments_[color_image_index].first;
+TextureImage *RenderNode::GetColorAttachmentImage(
+    int color_attachment_index) const {
+  return color_attachments_[color_attachment_index].first;
 }
-TextureImage *RenderNode::GetDepthImage() const {
+TextureImage *RenderNode::GetDepthAttachmentImage() const {
   return depth_attachment_;
 }
 
@@ -71,30 +72,30 @@ void RenderNode::AddShader(const char *shader_path,
   shader_stages_.AddShaderModule(shader_modules_.rbegin()->get(), shader_stage);
 }
 
-void RenderNode::EnableDepthTest() {
+void RenderNode::AddDepthAttachment() {
   internal_attachment_textures_.push_back(std::make_unique<TextureImage>(
       core_, 1, 1,
       helper::FindDepthFormat(core_->GetDevice()->GetPhysicalDevice()),
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
           VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
-  AttachDepthBuffer(internal_attachment_textures_.rbegin()->get());
+  AddDepthAttachment(internal_attachment_textures_.rbegin()->get());
 }
 
-void RenderNode::AttachDepthBuffer(TextureImage *depth_image) {
+void RenderNode::AddDepthAttachment(TextureImage *depth_image) {
   depth_attachment_ = depth_image;
 }
 
-int RenderNode::AddColorOutput(
+int RenderNode::AddColorAttachment(
     VkFormat format,
     const VkPipelineColorBlendAttachmentState &blend_state) {
   internal_attachment_textures_.push_back(
       std::make_unique<TextureImage>(core_, 1, 1, format));
-  return AddColorOutput(internal_attachment_textures_.rbegin()->get(),
-                        blend_state);
+  return AddColorAttachment(internal_attachment_textures_.rbegin()->get(),
+                            blend_state);
 }
 
-int RenderNode::AddColorOutput(VkFormat format, bool blend_enable) {
-  return AddColorOutput(
+int RenderNode::AddColorAttachment(VkFormat format, bool blend_enable) {
+  return AddColorAttachment(
       format, VkPipelineColorBlendAttachmentState{
                   blend_enable ? VK_TRUE : VK_FALSE, VK_BLEND_FACTOR_SRC_ALPHA,
                   VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_OP_ADD,
@@ -104,15 +105,16 @@ int RenderNode::AddColorOutput(VkFormat format, bool blend_enable) {
                       VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT});
 }
 
-int RenderNode::AddColorOutput(
+int RenderNode::AddColorAttachment(
     TextureImage *color_image,
     const VkPipelineColorBlendAttachmentState &blend_state) {
   color_attachments_.emplace_back(color_image, blend_state);
   return int(color_attachments_.size()) - 1;
 }
 
-int RenderNode::AddColorOutput(TextureImage *color_image, bool blend_enable) {
-  return AddColorOutput(
+int RenderNode::AddColorAttachment(TextureImage *color_image,
+                                   bool blend_enable) {
+  return AddColorAttachment(
       color_image,
       VkPipelineColorBlendAttachmentState{
           blend_enable ? VK_TRUE : VK_FALSE, VK_BLEND_FACTOR_SRC_ALPHA,

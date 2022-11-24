@@ -29,7 +29,7 @@ void FontViewer::OnInit() {
   render_node_->AddBufferBinding(uniform_buffer_.get(),
                                  VK_SHADER_STAGE_VERTEX_BIT);
   render_node_->VertexInput({VK_FORMAT_R32G32_SFLOAT});
-  render_node_->AddColorOutput(VK_FORMAT_B8G8R8A8_UNORM);
+  render_node_->AddColorAttachment(VK_FORMAT_B8G8R8A8_UNORM);
   render_node_->AddShader("../shaders/font_shader.vert.spv",
                           VK_SHADER_STAGE_VERTEX_BIT);
   render_node_->AddShader("../shaders/font_shader.frag.spv",
@@ -51,10 +51,11 @@ void FontViewer::OnInit() {
 
 void FontViewer::OnLoop() {
   core_->BeginCommandRecord();
-  render_node_->GetColorImage(0)->ClearColor({0.6f, 0.7f, 0.8f, 1.0f});
+  render_node_->GetColorAttachmentImage(0)->ClearColor(
+      {0.6f, 0.7f, 0.8f, 1.0f});
   render_node_->Draw(vertex_buffer_.get(), index_buffer_.get(),
                      index_buffer_->Size(), 0);
-  core_->Output(render_node_->GetColorImage(0));
+  core_->Output(render_node_->GetColorAttachmentImage(0));
   core_->EndCommandRecordAndSubmit();
 }
 
