@@ -23,9 +23,13 @@ class RenderNode {
   void AddUniformBinding(const std::vector<TextureImage *> &texture_images,
                          VkShaderStageFlags access_stage_flags);
   int AddColorOutput(VkFormat format,
-                     VkPipelineColorBlendAttachmentState blend_state);
+                     const VkPipelineColorBlendAttachmentState &blend_state);
   int AddColorOutput(VkFormat format, bool blend_enable = false);
+  int AddColorOutput(TextureImage *color_image,
+                     const VkPipelineColorBlendAttachmentState &blend_state);
+  int AddColorOutput(TextureImage *color_image, bool blend_enable = false);
   void EnableDepthTest();
+  void AttachDepthBuffer(TextureImage *depth_image);
 
   void AddShader(const char *shader_path, VkShaderStageFlagBits shader_stage);
 
@@ -66,11 +70,10 @@ class RenderNode {
 
   std::unique_ptr<RenderPass> render_pass_;
   std::unique_ptr<Framebuffer> framebuffer_;
-  std::vector<std::unique_ptr<TextureImage>> color_attachment_textures_;
-  std::unique_ptr<TextureImage> depth_buffer_texture_;
-  std::vector<std::pair<VkFormat, VkPipelineColorBlendAttachmentState>>
+  std::vector<std::unique_ptr<TextureImage>> internal_attachment_textures_;
+  std::vector<std::pair<TextureImage *, VkPipelineColorBlendAttachmentState>>
       color_attachments_;
-  bool depth_enable_{false};
+  TextureImage *depth_attachment_{nullptr};
 
   std::vector<std::unique_ptr<ShaderModule>> shader_modules_;
   helper::ShaderStages shader_stages_;

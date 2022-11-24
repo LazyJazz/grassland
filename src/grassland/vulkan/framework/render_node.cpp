@@ -7,10 +7,10 @@ RenderNode::RenderNode(Core *core) {
 }
 
 TextureImage *RenderNode::GetColorImage(int color_image_index) const {
-  return color_attachment_textures_[color_image_index].get();
+  return color_attachments_[color_image_index].first;
 }
 TextureImage *RenderNode::GetDepthImage() const {
-  return depth_buffer_texture_.get();
+  return depth_attachment_;
 }
 
 void RenderNode::AddUniformBinding(DataBuffer *uniform_buffer,
@@ -72,14 +72,25 @@ void RenderNode::AddShader(const char *shader_path,
 }
 
 void RenderNode::EnableDepthTest() {
-  depth_enable_ = true;
+  internal_attachment_textures_.push_back(std::make_unique<TextureImage>(
+      core_, 1, 1,
+      helper::FindDepthFormat(core_->GetDevice()->GetPhysicalDevice()),
+      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+  AttachDepthBuffer(internal_attachment_textures_.rbegin()->get());
+}
+
+void RenderNode::AttachDepthBuffer(TextureImage *depth_image) {
+  depth_attachment_ = depth_image;
 }
 
 int RenderNode::AddColorOutput(
     VkFormat format,
-    VkPipelineColorBlendAttachmentState blend_state) {
-  color_attachments_.emplace_back(format, blend_state);
-  return int(color_attachments_.size()) - 1;
+    const VkPipelineColorBlendAttachmentState &blend_state) {
+  internal_attachment_textures_.push_back(
+      std::make_unique<TextureImage>(core_, 1, 1, format));
+  return AddColorOutput(internal_attachment_textures_.rbegin()->get(),
+                        blend_state);
 }
 
 int RenderNode::AddColorOutput(VkFormat format, bool blend_enable) {
@@ -91,6 +102,25 @@ int RenderNode::AddColorOutput(VkFormat format, bool blend_enable) {
                   VK_BLEND_OP_ADD,
                   VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT |
                       VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT});
+}
+
+int RenderNode::AddColorOutput(
+    TextureImage *color_image,
+    const VkPipelineColorBlendAttachmentState &blend_state) {
+  color_attachments_.emplace_back(color_image, blend_state);
+  return int(color_attachments_.size()) - 1;
+}
+
+int RenderNode::AddColorOutput(TextureImage *color_image, bool blend_enable) {
+  return AddColorOutput(
+      color_image,
+      VkPipelineColorBlendAttachmentState{
+          blend_enable ? VK_TRUE : VK_FALSE, VK_BLEND_FACTOR_SRC_ALPHA,
+          VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_OP_ADD,
+          VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+          VK_BLEND_OP_ADD,
+          VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT |
+              VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT});
 }
 
 void RenderNode::BuildRenderNode() {
@@ -107,30 +137,24 @@ void RenderNode::BuildRenderNode(uint32_t width, uint32_t height) {
   descriptor_sets_.clear();
   descriptor_pool_.reset();
   descriptor_set_layout_.reset();
-  color_attachment_textures_.clear();
-  depth_buffer_texture_.reset();
+
+  for (auto &attachment_image : internal_attachment_textures_) {
+    attachment_image->Resize(width, height);
+  }
 
   helper::AttachmentParameters attachment_parameters{};
   std::vector<ImageView *> framebuffer_image_views{};
-  if (depth_enable_) {
+  if (depth_attachment_) {
     attachment_parameters.AddDepthStencilAttachment(
-        helper::FindDepthFormat(core_->GetPhysicalDevice()));
-    depth_buffer_texture_ = std::make_unique<TextureImage>(
-        core_, width, height,
-        helper::FindDepthFormat(core_->GetPhysicalDevice()),
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-    framebuffer_image_views.push_back(depth_buffer_texture_->GetImageView());
+        depth_attachment_->GetImage()->GetFormat());
+    framebuffer_image_views.push_back(depth_attachment_->GetImageView());
   }
   if (!color_attachments_.empty()) {
     for (auto &color_attachment_format : color_attachments_) {
-      attachment_parameters.AddColorAttachment(color_attachment_format.first);
-      color_attachment_textures_.push_back(std::make_unique<TextureImage>(
-          core_, width, height, color_attachment_format.first,
-          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT));
+      attachment_parameters.AddColorAttachment(
+          color_attachment_format.first->GetImage()->GetFormat());
       framebuffer_image_views.push_back(
-          color_attachment_textures_.rbegin()->get()->GetImageView());
+          color_attachment_format.first->GetImageView());
     }
   }
   render_pass_ =
@@ -183,7 +207,7 @@ void RenderNode::BuildRenderNode(uint32_t width, uint32_t height) {
   graphics_pipeline_ = std::make_unique<Pipeline>(
       core_->GetDevice(), render_pass_.get(), pipeline_layout_.get(),
       shader_stages_, vertex_input_descriptions_, blend_attachment_state,
-      depth_enable_);
+      depth_attachment_);
 }
 
 void RenderNode::Draw(DataBuffer *vertex_buffer,
@@ -216,20 +240,20 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
                                 core_->GetCurrentFrameIndex());
   }
 
-  if (!color_attachment_textures_.empty()) {
-    for (auto &color_texture : color_attachment_textures_) {
-      TransitImageLayout(command_buffer, color_texture->GetImage()->GetHandle(),
-                         VK_IMAGE_LAYOUT_GENERAL,
-                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
-                         VK_IMAGE_LAYOUT_GENERAL,
-                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+  if (!internal_attachment_textures_.empty()) {
+    for (auto &color_texture : color_attachments_) {
+      TransitImageLayout(
+          command_buffer, color_texture.first->GetImage()->GetHandle(),
+          VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+          VK_ACCESS_NONE, VK_IMAGE_LAYOUT_GENERAL,
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
     }
   }
 
-  if (depth_buffer_texture_) {
+  if (depth_attachment_) {
     TransitImageLayout(
-        command_buffer, depth_buffer_texture_->GetImage()->GetHandle(),
+        command_buffer, depth_attachment_->GetImage()->GetHandle(),
         VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
         VK_ACCESS_NONE, VK_IMAGE_LAYOUT_GENERAL,
         VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
