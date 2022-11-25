@@ -6,7 +6,7 @@ foreach(grassland_file ${grassland_files})
     endif()
 endforeach()
 
-add_library(grassland grassland/grassland.cpp)
+add_library(grassland grassland/grassland.cpp grassland/grassland.h)
 
 foreach(grassland_lib ${GRASSLAND_LIBS})
     message("Using sublib ${grassland_lib}.")
