@@ -3,4 +3,5 @@
 #include <grassland/font/font.h>
 #include <grassland/util/util.h>
 #include <grassland/vulkan/framework/framework.h>
+#include <grassland/vulkan/gui/gui.h>
 #include <grassland/vulkan/vulkan.h>

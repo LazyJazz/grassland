@@ -19,6 +19,10 @@ class Core {
   [[nodiscard]] CommandBuffer *GetCommandBuffer(int frame_index) const;
   [[nodiscard]] CommandBuffer *GetCommandBuffer() const;
   [[nodiscard]] int GetCurrentFrameIndex() const;
+  int GetWindowWidth() const;
+  int GetWindowHeight() const;
+  int GetFramebufferWidth() const;
+  int GetFramebufferHeight() const;
 
   void BeginCommandRecord();
   void EndCommandRecordAndSubmit();

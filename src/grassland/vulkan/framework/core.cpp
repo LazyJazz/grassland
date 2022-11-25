@@ -346,4 +346,25 @@ void Core::GLFWKeyFunc(GLFWwindow *window,
   }
 }
 
+int Core::GetWindowWidth() const {
+  int width;
+  glfwGetWindowSize(window_, &width, nullptr);
+  return width;
+}
+int Core::GetWindowHeight() const {
+  int height;
+  glfwGetWindowSize(window_, nullptr, &height);
+  return height;
+}
+int Core::GetFramebufferWidth() const {
+  int width;
+  glfwGetFramebufferSize(window_, &width, nullptr);
+  return width;
+}
+int Core::GetFramebufferHeight() const {
+  int height;
+  glfwGetFramebufferSize(window_, nullptr, &height);
+  return height;
+}
+
 }  // namespace grassland::vulkan::framework
