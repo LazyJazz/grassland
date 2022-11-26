@@ -20,6 +20,9 @@ Manager::Manager(framework::Core *core) {
       render_node_->BuildRenderNode(width, height);
     }
   });
+
+  font_factory_ = std::make_unique<grassland::font::Factory>(
+      "../fonts/NotoSansSC-Regular.otf");
 }
 
 void Manager::BindFrameTexture(framework::TextureImage *frame_texture) {

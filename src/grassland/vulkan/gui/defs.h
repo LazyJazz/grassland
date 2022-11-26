@@ -59,7 +59,18 @@ struct GlobalUniformObject {
 
 struct ModelUniformObject {
   glm::mat4 local_to_screen;
-  int extra_interpret_mode;
-  int reserve[3];
+  float x;
+  float y;
+  float width;
+  float height;
+  uint32_t render_flag;
+  float round_radius;
+  float reserve0;
+  float reserve1;
 };
+
+typedef enum ModelRenderFlagBits : uint32_t {
+  MODEL_RENDER_FLAG_ROUNDED_RECT_BIT = 0x00000001,
+  MODEL_RENDER_FLAG_TEXTURE_BIT = 0x00000002
+} ModelRenderFlagBits;
 }  // namespace grassland::vulkan::gui

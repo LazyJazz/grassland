@@ -25,11 +25,18 @@ void GuiExample::OnInit() {
   manager_->BindFrameTexture(paint_buffer_.get());
   test_model_ = std::make_unique<grassland::vulkan::gui::Model>(manager_.get());
   test_model_->UploadMesh(
-      {{{10.0f, 10.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 0.5f}},
-       {{10.0f, 110.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 0.5f}},
-       {{110.0f, 10.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 0.5f}},
-       {{110.0f, 110.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 0.5f}}},
+      {{{10.0f, 10.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+       {{10.0f, 42.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+       {{42.0f, 10.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+       {{42.0f, 42.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}},
       {0, 1, 2, 1, 2, 3});
+  test_model_->GetModelObject().x = 10.0f;
+  test_model_->GetModelObject().y = 10.0f;
+  test_model_->GetModelObject().width = 32.0f;
+  test_model_->GetModelObject().height = 32.0f;
+  test_model_->GetModelObject().render_flag |= grassland::vulkan::gui::
+      ModelRenderFlagBits::MODEL_RENDER_FLAG_ROUNDED_RECT_BIT;
+  test_model_->GetModelObject().round_radius = 16.0f;
 }
 
 void GuiExample::OnLoop() {

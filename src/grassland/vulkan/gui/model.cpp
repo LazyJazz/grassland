@@ -5,7 +5,7 @@ namespace grassland::vulkan::gui {
 Model::Model(Manager *manager) {
   manager_ = manager;
   model_index_ = manager_->RegisterModel(this);
-  model_object_.extra_interpret_mode = 0;
+  model_object_.render_flag = 0;
   model_object_.local_to_screen = glm::mat4{1.0f};
 }
 

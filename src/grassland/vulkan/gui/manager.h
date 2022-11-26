@@ -33,7 +33,7 @@ class Manager {
       global_uniform_buffer_;
   std::unique_ptr<framework::DynamicBuffer<ModelUniformObject>>
       model_uniform_buffer_;
-  float unit_length_{50.0f};
+  float unit_length_{32.0f};
   std::vector<Model *> models_;
 };
 }  // namespace grassland::vulkan::gui
