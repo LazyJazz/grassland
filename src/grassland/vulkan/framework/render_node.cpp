@@ -318,4 +318,115 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
   }
 }
 
+void RenderNode::BeginDraw() {
+  auto command_buffer = core_->GetCommandBuffer()->GetHandle();
+  for (auto &uniform_binding : uniform_bindings_) {
+    uniform_binding->BeforeDraw(core_->GetCommandBuffer(),
+                                core_->GetCurrentFrameIndex());
+  }
+
+  if (!internal_attachment_textures_.empty()) {
+    for (auto &color_texture : color_attachments_) {
+      TransitImageLayout(
+          command_buffer, color_texture.first->GetImage()->GetHandle(),
+          VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+          VK_ACCESS_NONE, VK_IMAGE_LAYOUT_GENERAL,
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+    }
+  }
+
+  if (depth_attachment_) {
+    TransitImageLayout(
+        command_buffer, depth_attachment_->GetImage()->GetHandle(),
+        VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        VK_ACCESS_NONE, VK_IMAGE_LAYOUT_GENERAL,
+        VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT);
+  }
+
+  VkRenderPassBeginInfo renderPassInfo{};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassInfo.renderPass = render_pass_->GetHandle();
+  renderPassInfo.framebuffer = framebuffer_->GetHandle();
+  renderPassInfo.renderArea.offset = {0, 0};
+  renderPassInfo.renderArea.extent = framebuffer_->GetExtent();
+  renderPassInfo.clearValueCount = 0;
+  renderPassInfo.pClearValues = nullptr;
+
+  vkCmdBeginRenderPass(command_buffer, &renderPassInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
+
+  vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphics_pipeline_->GetHandle());
+
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = (float)framebuffer_->GetExtent().width;
+  viewport.height = (float)framebuffer_->GetExtent().height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = framebuffer_->GetExtent();
+  vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+  vkCmdBindDescriptorSets(
+      command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipeline_layout_->GetHandle(), 0, 1,
+      &descriptor_sets_[core_->GetCurrentFrameIndex()]->GetHandle(), 0,
+      nullptr);
+}
+
+void RenderNode::DrawDirect(DataBuffer *vertex_buffer,
+                            DataBuffer *index_buffer,
+                            int index_count,
+                            int first_instance_index,
+                            int instance_count) {
+  auto command_buffer = core_->GetCommandBuffer()->GetHandle();
+  VkDeviceSize offsets = 0;
+  vkCmdBindVertexBuffers(
+      command_buffer, 0, 1,
+      &vertex_buffer->GetBuffer(core_->GetCurrentFrameIndex())->GetHandle(),
+      &offsets);
+  vkCmdBindIndexBuffer(
+      command_buffer,
+      index_buffer->GetBuffer(core_->GetCurrentFrameIndex())->GetHandle(), 0,
+      VK_INDEX_TYPE_UINT32);
+  vkCmdDrawIndexed(command_buffer, index_count, instance_count, 0, 0,
+                   first_instance_index);
+}
+
+void RenderNode::EndDraw() {
+  auto command_buffer = core_->GetCommandBuffer()->GetHandle();
+  vkCmdEndRenderPass(command_buffer);
+
+  for (auto &uniform_binding : uniform_bindings_) {
+    uniform_binding->AfterDraw(core_->GetCommandBuffer(),
+                               core_->GetCurrentFrameIndex());
+  }
+}
+
+void RenderNode::SetViewport(const VkViewport &viewport) {
+  auto command_buffer = core_->GetCommandBuffer()->GetHandle();
+  vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+}
+
+void RenderNode::SetViewport(float x, float y, float width, float height) {
+  SetViewport({x, y, width, height, 0.0f, 1.0f});
+}
+
+void RenderNode::SetScissorRect(const VkRect2D &scissor) {
+  auto command_buffer = core_->GetCommandBuffer()->GetHandle();
+  vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+}
+
+void RenderNode::SetScissorRect(int x, int y, int width, int height) {
+  SetScissorRect({{x, y}, {uint32_t(width), uint32_t(height)}});
+}
+
 }  // namespace grassland::vulkan::framework

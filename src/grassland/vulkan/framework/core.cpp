@@ -291,19 +291,19 @@ void Core::Output(TextureImage *texture_image) {
 
 void Core::SetFrameSizeCallback(
     const std::function<void(int, int)> &window_size_callback) {
-  custom_window_size_function_ = window_size_callback;
+  custom_window_size_function_.push_back(window_size_callback);
 }
 void Core::SetCursorPosCallback(
     const std::function<void(double, double)> &cursor_pos_callback) {
-  custom_cursor_pos_function_ = cursor_pos_callback;
+  custom_cursor_pos_function_.push_back(cursor_pos_callback);
 }
 void Core::SetMouseButtonCallback(
     const std::function<void(int, int, int)> &mouse_button_callback) {
-  custom_mouse_button_function_ = mouse_button_callback;
+  custom_mouse_button_function_.push_back(mouse_button_callback);
 }
 void Core::SetKeyCallback(
     const std::function<void(int, int, int, int)> &key_callback) {
-  custom_key_functions_ = key_callback;
+  custom_key_functions_.push_back(key_callback);
 }
 
 void Core::GLFWFrameSizeFunc(GLFWwindow *window, int width, int height) {
@@ -313,15 +313,20 @@ void Core::GLFWFrameSizeFunc(GLFWwindow *window, int width, int height) {
   core->swapchain_.reset();
   core->swapchain_ = std::make_unique<Swapchain>(core->GetDevice(), window);
 
-  if (core->custom_window_size_function_) {
-    core->custom_window_size_function_(width, height);
+  if (!core->custom_window_size_function_.empty()) {
+    for (auto &func : core->custom_window_size_function_) {
+      func(width, height);
+    }
   }
 }
 
 void Core::GLFWCursorPosFunc(GLFWwindow *window, double xpos, double ypos) {
   auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
-  if (core->custom_cursor_pos_function_) {
-    core->custom_cursor_pos_function_(xpos, ypos);
+
+  if (!core->custom_cursor_pos_function_.empty()) {
+    for (auto &func : core->custom_cursor_pos_function_) {
+      func(xpos, ypos);
+    }
   }
 }
 
@@ -330,8 +335,10 @@ void Core::GLFWMouseButtonFunc(GLFWwindow *window,
                                int action,
                                int mods) {
   auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
-  if (core->custom_mouse_button_function_) {
-    core->custom_mouse_button_function_(button, action, mods);
+  if (!core->custom_mouse_button_function_.empty()) {
+    for (auto &func : core->custom_mouse_button_function_) {
+      func(button, action, mods);
+    }
   }
 }
 
@@ -341,8 +348,10 @@ void Core::GLFWKeyFunc(GLFWwindow *window,
                        int action,
                        int mods) {
   auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
-  if (core->custom_key_functions_) {
-    core->custom_key_functions_(key, scancode, action, mods);
+  if (!core->custom_key_functions_.empty()) {
+    for (auto &func : core->custom_key_functions_) {
+      func(key, scancode, action, mods);
+    }
   }
 }
 
@@ -351,16 +360,19 @@ int Core::GetWindowWidth() const {
   glfwGetWindowSize(window_, &width, nullptr);
   return width;
 }
+
 int Core::GetWindowHeight() const {
   int height;
   glfwGetWindowSize(window_, nullptr, &height);
   return height;
 }
+
 int Core::GetFramebufferWidth() const {
   int width;
   glfwGetFramebufferSize(window_, &width, nullptr);
   return width;
 }
+
 int Core::GetFramebufferHeight() const {
   int height;
   glfwGetFramebufferSize(window_, nullptr, &height);
