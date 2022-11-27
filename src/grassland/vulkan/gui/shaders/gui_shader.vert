@@ -8,6 +8,7 @@ layout(location = 0) out vec4 frag_extra;
 layout(location = 1) out vec4 frag_scissor_rect;
 layout(location = 2) out uint frag_render_flag;
 layout(location = 3) out float frag_round_radius;
+layout(location = 4) out float frag_inv_super_sample_scale;
 
 layout(binding = 0) readonly uniform global_uniform_object {
   GlobalUniformObject global_object;
@@ -26,4 +27,5 @@ void main() {
                            model_object.height);
   frag_render_flag = model_object.render_flag;
   frag_round_radius = model_object.round_radius;
+  frag_inv_super_sample_scale = 1.0 / float(global_object.super_sample_scale);
 }

@@ -20,8 +20,11 @@ Window::Window(Manager *manager,
 }
 
 void Window::Draw() {
-  manager_->render_node_->SetScissorRect(layout_.x, layout_.y, layout_.width,
-                                         layout_.height);
+  manager_->render_node_->SetScissorRect(
+      layout_.x * manager_->super_sample_scale_,
+      layout_.y * manager_->super_sample_scale_,
+      layout_.width * manager_->super_sample_scale_,
+      layout_.height * manager_->super_sample_scale_);
   if (flag_ & WINDOW_FLAG_BAR_BIT) {
     model_bar_->Draw();
     model_title_->Draw();

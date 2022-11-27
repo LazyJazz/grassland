@@ -1,5 +1,6 @@
 struct GlobalUniformObject {
   mat4 screen_to_frame;
+  int super_sample_scale;
 };
 
 struct ModelUniformObject {

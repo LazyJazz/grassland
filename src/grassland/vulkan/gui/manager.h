@@ -32,7 +32,11 @@ class Manager {
 
   framework::Core *core_{nullptr};
   std::unique_ptr<framework::RenderNode> render_node_;
+  std::unique_ptr<framework::RenderNode> output_render_node_;
+  std::unique_ptr<framework::StaticBuffer<glm::vec2>> texture_vertex_buffer_;
+  std::unique_ptr<framework::StaticBuffer<uint32_t>> texture_index_buffer_;
   std::unique_ptr<framework::TextureImage> frame_;
+  std::unique_ptr<Sampler> sampler_;
   std::unique_ptr<font::Factory> font_factory_;
   std::unique_ptr<framework::StaticBuffer<GlobalUniformObject>>
       global_uniform_buffer_;
@@ -41,6 +45,7 @@ class Manager {
   std::vector<Model *> models_;
 
   int unit_length_{32};
+  int super_sample_scale_{2};
   std::vector<Window *> windows_;
   Window *focus_window_{nullptr};
 };
