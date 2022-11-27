@@ -1,4 +1,4 @@
-#include "grassland/font/factory.h"
+﻿#include "grassland/font/factory.h"
 #include FT_OUTLINE_H
 #include "algorithm"
 #include "grassland/util/util.h"
@@ -449,6 +449,27 @@ void Factory::LoadChar(Char_T c) {
   }
   loaded_fonts.insert(std::make_pair(
       c, Mesh(vertices, float(face_->glyph->advance.x) * inv_size)));
+}
+
+Mesh Factory::GetString(const std::wstring &wide_str) {
+  Mesh mesh{};
+  for (auto wc : wide_str) {
+    auto &char_mesh = GetChar(wc);
+    for (auto index : char_mesh.indices) {
+      mesh.indices.push_back(index + mesh.vertices.size());
+    }
+    for (auto vertex : char_mesh.vertices) {
+      vertex.x += mesh.advection;
+      mesh.vertices.push_back(vertex);
+    }
+    mesh.advection += char_mesh.advection;
+  }
+
+  if (mesh.indices.empty()) {
+    mesh.vertices = {{0.0f, 0.0f}};
+    mesh.indices = {0, 0, 0};
+  }
+  return mesh;
 }
 
 }  // namespace grassland::font

@@ -10,7 +10,7 @@ class UniformBinding {
   virtual ~UniformBinding() = default;
   [[nodiscard]] virtual VkDescriptorSetLayoutBinding GetBinding() const = 0;
   [[nodiscard]] virtual VkWriteDescriptorSet GetWriteDescriptorSet(
-      int frame_index) const = 0;
+      int frame_index) = 0;
   virtual void BeforeDraw(CommandBuffer *command_buffer,
                           int frame_index) const = 0;
   virtual void AfterDraw(CommandBuffer *command_buffer, int frame_index) const;
@@ -28,7 +28,7 @@ class UniformBindingUniform : public UniformBinding {
  private:
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
-      int frame_index) const override;
+      int frame_index) override;
   void BeforeDraw(CommandBuffer *command_buffer,
                   int frame_index) const override;
 
@@ -45,7 +45,7 @@ class UniformBindingBuffer : public UniformBinding {
  private:
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
-      int frame_index) const override;
+      int frame_index) override;
   void BeforeDraw(CommandBuffer *command_buffer,
                   int frame_index) const override;
 
@@ -63,7 +63,7 @@ class UniformBindingTextureSampler : public UniformBinding {
  private:
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
-      int frame_index) const override;
+      int frame_index) override;
   void BeforeDraw(CommandBuffer *command_buffer,
                   int frame_index) const override;
   void AfterDraw(grassland::vulkan::CommandBuffer *command_buffer,
@@ -84,7 +84,7 @@ class UniformBindingTextureSamplers : public UniformBinding {
  private:
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
-      int frame_index) const override;
+      int frame_index) override;
   void BeforeDraw(CommandBuffer *command_buffer,
                   int frame_index) const override;
   void AfterDraw(grassland::vulkan::CommandBuffer *command_buffer,
@@ -103,7 +103,7 @@ class UniformBindingStorageTexture : public UniformBinding {
  private:
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
-      int frame_index) const override;
+      int frame_index) override;
   void BeforeDraw(CommandBuffer *command_buffer,
                   int frame_index) const override;
 
@@ -121,7 +121,7 @@ class UniformBindingStorageTextures : public UniformBinding {
  private:
   [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
   [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
-      int frame_index) const override;
+      int frame_index) override;
   void BeforeDraw(CommandBuffer *command_buffer,
                   int frame_index) const override;
 

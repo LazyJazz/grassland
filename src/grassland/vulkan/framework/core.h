@@ -19,6 +19,10 @@ class Core {
   [[nodiscard]] CommandBuffer *GetCommandBuffer(int frame_index) const;
   [[nodiscard]] CommandBuffer *GetCommandBuffer() const;
   [[nodiscard]] int GetCurrentFrameIndex() const;
+  int GetWindowWidth() const;
+  int GetWindowHeight() const;
+  int GetFramebufferWidth() const;
+  int GetFramebufferHeight() const;
 
   void BeginCommandRecord();
   void EndCommandRecordAndSubmit();
@@ -69,11 +73,13 @@ class Core {
   int frame_index_{0};
   uint32_t current_image_index{0};
 
-  std::function<void(int width, int height)> custom_window_size_function_;
-  std::function<void(double xpos, double ypos)> custom_cursor_pos_function_;
-  std::function<void(int button, int action, int mods)>
+  std::vector<std::function<void(int width, int height)>>
+      custom_window_size_function_;
+  std::vector<std::function<void(double xpos, double ypos)>>
+      custom_cursor_pos_function_;
+  std::vector<std::function<void(int button, int action, int mods)>>
       custom_mouse_button_function_;
-  std::function<void(int key, int scancode, int action, int mods)>
+  std::vector<std::function<void(int key, int scancode, int action, int mods)>>
       custom_key_functions_;
 };
 }  // namespace grassland::vulkan::framework

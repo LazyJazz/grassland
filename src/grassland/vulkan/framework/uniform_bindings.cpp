@@ -17,12 +17,6 @@ UniformBindingUniform::UniformBindingUniform(
   uniform_buffer_ = uniform_buffer;
   buffer_infos_.resize(
       uniform_buffer_->GetCore()->GetCoreSettings().frames_in_flight);
-  for (int frame_index = 0; frame_index < buffer_infos_.size(); frame_index++) {
-    auto &buffer_info = buffer_infos_[frame_index];
-    buffer_info.buffer = uniform_buffer_->GetBuffer(frame_index)->GetHandle();
-    buffer_info.range = uniform_buffer_->BufferSize();
-    buffer_info.offset = 0;
-  }
 }
 
 VkDescriptorSetLayoutBinding UniformBindingUniform::GetBinding() const {
@@ -35,7 +29,11 @@ VkDescriptorSetLayoutBinding UniformBindingUniform::GetBinding() const {
 }
 
 VkWriteDescriptorSet UniformBindingUniform::GetWriteDescriptorSet(
-    int frame_index) const {
+    int frame_index) {
+  auto &buffer_info = buffer_infos_[frame_index];
+  buffer_info.buffer = uniform_buffer_->GetBuffer(frame_index)->GetHandle();
+  buffer_info.range = uniform_buffer_->BufferSize();
+  buffer_info.offset = 0;
   VkWriteDescriptorSet descriptorWrite{};
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   descriptorWrite.dstSet = nullptr;
@@ -59,12 +57,6 @@ UniformBindingBuffer::UniformBindingBuffer(
   uniform_buffer_ = uniform_buffer;
   buffer_infos_.resize(
       uniform_buffer_->GetCore()->GetCoreSettings().frames_in_flight);
-  for (int frame_index = 0; frame_index < buffer_infos_.size(); frame_index++) {
-    auto &buffer_info = buffer_infos_[frame_index];
-    buffer_info.buffer = uniform_buffer_->GetBuffer(frame_index)->GetHandle();
-    buffer_info.range = uniform_buffer_->BufferSize();
-    buffer_info.offset = 0;
-  }
 }
 
 VkDescriptorSetLayoutBinding UniformBindingBuffer::GetBinding() const {
@@ -77,7 +69,11 @@ VkDescriptorSetLayoutBinding UniformBindingBuffer::GetBinding() const {
 }
 
 VkWriteDescriptorSet UniformBindingBuffer::GetWriteDescriptorSet(
-    int frame_index) const {
+    int frame_index) {
+  auto &buffer_info = buffer_infos_[frame_index];
+  buffer_info.buffer = uniform_buffer_->GetBuffer(frame_index)->GetHandle();
+  buffer_info.range = uniform_buffer_->BufferSize();
+  buffer_info.offset = 0;
   VkWriteDescriptorSet descriptorWrite{};
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   descriptorWrite.dstSet = nullptr;
@@ -101,9 +97,6 @@ UniformBindingTextureSampler::UniformBindingTextureSampler(
     : UniformBinding(access_stage_flags) {
   texture_image_ = texture_image;
   sampler_ = sampler;
-  image_info_.imageView = texture_image_->GetImageView()->GetHandle();
-  image_info_.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  image_info_.sampler = sampler_->GetHandle();
 }
 
 VkDescriptorSetLayoutBinding UniformBindingTextureSampler::GetBinding() const {
@@ -116,7 +109,11 @@ VkDescriptorSetLayoutBinding UniformBindingTextureSampler::GetBinding() const {
 }
 
 VkWriteDescriptorSet UniformBindingTextureSampler::GetWriteDescriptorSet(
-    int frame_index) const {
+    int frame_index) {
+  image_info_.imageView = texture_image_->GetImageView()->GetHandle();
+  image_info_.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  image_info_.sampler = sampler_->GetHandle();
+
   VkWriteDescriptorSet descriptorWrite{};
 
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -157,14 +154,6 @@ UniformBindingTextureSamplers::UniformBindingTextureSamplers(
     : UniformBinding(access_stage_flags) {
   texture_sampler_pairs_ = texture_sampler_pairs;
   image_infos_.resize(texture_sampler_pairs_.size());
-  for (int i = 0; i < texture_sampler_pairs_.size(); i++) {
-    auto &image_info = image_infos_[i];
-    auto &texture_sampler_pair = texture_sampler_pairs_[i];
-    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    image_info.imageView =
-        texture_sampler_pair.first->GetImageView()->GetHandle();
-    image_info.sampler = texture_sampler_pair.second->GetHandle();
-  }
 }
 
 VkDescriptorSetLayoutBinding UniformBindingTextureSamplers::GetBinding() const {
@@ -177,7 +166,16 @@ VkDescriptorSetLayoutBinding UniformBindingTextureSamplers::GetBinding() const {
 }
 
 VkWriteDescriptorSet UniformBindingTextureSamplers::GetWriteDescriptorSet(
-    int frame_index) const {
+    int frame_index) {
+  for (int i = 0; i < texture_sampler_pairs_.size(); i++) {
+    auto &image_info = image_infos_[i];
+    auto &texture_sampler_pair = texture_sampler_pairs_[i];
+    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_info.imageView =
+        texture_sampler_pair.first->GetImageView()->GetHandle();
+    image_info.sampler = texture_sampler_pair.second->GetHandle();
+  }
+
   VkWriteDescriptorSet descriptorWrite{};
 
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -222,9 +220,6 @@ UniformBindingStorageTexture::UniformBindingStorageTexture(
     VkShaderStageFlags access_stage_flags)
     : UniformBinding(access_stage_flags) {
   texture_image_ = texture_image;
-  image_info_.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-  image_info_.imageView = texture_image_->GetImageView()->GetHandle();
-  image_info_.sampler = nullptr;
 }
 
 VkDescriptorSetLayoutBinding UniformBindingStorageTexture::GetBinding() const {
@@ -237,7 +232,11 @@ VkDescriptorSetLayoutBinding UniformBindingStorageTexture::GetBinding() const {
 }
 
 VkWriteDescriptorSet UniformBindingStorageTexture::GetWriteDescriptorSet(
-    int frame_index) const {
+    int frame_index) {
+  image_info_.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+  image_info_.imageView = texture_image_->GetImageView()->GetHandle();
+  image_info_.sampler = nullptr;
+
   VkWriteDescriptorSet descriptorWrite{};
 
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -261,13 +260,6 @@ UniformBindingStorageTextures::UniformBindingStorageTextures(
     : UniformBinding(access_stage_flags) {
   texture_images_ = texture_images;
   image_infos_.resize(texture_images_.size());
-  for (int i = 0; i < image_infos_.size(); i++) {
-    auto &image_info = image_infos_[i];
-    auto &texture_image = texture_images_[i];
-    image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    image_info.imageView = texture_image->GetImageView()->GetHandle();
-    image_info.sampler = nullptr;
-  }
 }
 
 VkDescriptorSetLayoutBinding UniformBindingStorageTextures::GetBinding() const {
@@ -280,7 +272,15 @@ VkDescriptorSetLayoutBinding UniformBindingStorageTextures::GetBinding() const {
 }
 
 VkWriteDescriptorSet UniformBindingStorageTextures::GetWriteDescriptorSet(
-    int frame_index) const {
+    int frame_index) {
+  for (int i = 0; i < image_infos_.size(); i++) {
+    auto &image_info = image_infos_[i];
+    auto &texture_image = texture_images_[i];
+    image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    image_info.imageView = texture_image->GetImageView()->GetHandle();
+    image_info.sampler = nullptr;
+  }
+
   VkWriteDescriptorSet descriptorWrite{};
 
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

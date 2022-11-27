@@ -58,6 +58,18 @@ class RenderNode {
             int first_instance_index,
             int instance_count = 1);
 
+  void BeginDraw();
+  void DrawDirect(DataBuffer *vertex_buffer,
+                  DataBuffer *index_buffer,
+                  int index_count,
+                  int first_instance_index,
+                  int instance_count = 1);
+  void SetViewport(const VkViewport &viewport);
+  void SetViewport(float x, float y, float width, float height);
+  void SetScissorRect(const VkRect2D &scissor);
+  void SetScissorRect(int x, int y, int width, int height);
+  void EndDraw();
+
   [[nodiscard]] TextureImage *GetColorAttachmentImage(
       int color_attachment_index = 0) const;
   [[nodiscard]] TextureImage *GetDepthAttachmentImage() const;
