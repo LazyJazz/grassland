@@ -27,8 +27,6 @@ void main() {
                         frag_round_radius,
                     0.0),
                 1.0);
-    // alpha = sqrt(distx * distx + disty * disty);
-    alpha *= 0.5;
   }
   out_color.w *= alpha;
 }

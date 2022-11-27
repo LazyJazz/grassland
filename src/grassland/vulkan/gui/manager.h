@@ -7,24 +7,28 @@ namespace grassland::vulkan::gui {
 
 class Model;
 
+class Window;
+
 class Manager {
  public:
   explicit Manager(framework::Core *core);
   void BindFrameTexture(framework::TextureImage *frame_texture);
   [[nodiscard]] framework::Core *GetCore() const;
-  [[nodiscard]] float GetUnitLength() const;
-  void UpdateLayout();
-  void RefreshLayout();
-  void UpdatePosition();
+  [[nodiscard]] int GetUnitLength() const;
+
+  void Draw();
+
+ private:
+  friend Model;
+  friend Window;
 
   void BeginDraw();
   void EndDraw();
-
- private:
   void UpdateGlobalObject(int width, int height);
   void UpdateModelObjects();
-  friend Model;
   int RegisterModel(Model *model);
+  void RegisterWindow(Window *window);
+
   framework::Core *core_{nullptr};
   std::unique_ptr<framework::RenderNode> render_node_;
   std::unique_ptr<framework::TextureImage> frame_;
@@ -33,7 +37,10 @@ class Manager {
       global_uniform_buffer_;
   std::unique_ptr<framework::DynamicBuffer<ModelUniformObject>>
       model_uniform_buffer_;
-  float unit_length_{32.0f};
   std::vector<Model *> models_;
+
+  int unit_length_{32};
+  std::vector<Window *> windows_;
+  Window *focus_window_{nullptr};
 };
 }  // namespace grassland::vulkan::gui

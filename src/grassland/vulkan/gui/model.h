@@ -8,6 +8,9 @@ class Model {
   explicit Model(Manager *manager);
   void UploadMesh(const std::vector<Vertex> &vertices,
                   const std::vector<uint32_t> &indices);
+  void UploadMesh(const std::vector<glm::vec2> &vertices,
+                  const std::vector<uint32_t> &indices,
+                  const glm::vec4 &color);
   ModelUniformObject &GetModelObject();
   [[nodiscard]] const ModelUniformObject &GetModelObject() const;
   [[nodiscard]] int GetIndex() const;

@@ -2,6 +2,7 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "grassland/vulkan/gui/model.h"
+#include "grassland/vulkan/gui/window.h"
 
 namespace grassland::vulkan::gui {
 
@@ -23,6 +24,10 @@ Manager::Manager(framework::Core *core) {
 
   font_factory_ = std::make_unique<grassland::font::Factory>(
       "../fonts/NotoSansSC-Regular.otf");
+}
+
+void Manager::RegisterWindow(Window *window) {
+  windows_.push_back(window);
 }
 
 void Manager::BindFrameTexture(framework::TextureImage *frame_texture) {
@@ -48,17 +53,8 @@ framework::Core *Manager::GetCore() const {
   return core_;
 }
 
-float Manager::GetUnitLength() const {
+int Manager::GetUnitLength() const {
   return unit_length_;
-}
-
-void Manager::UpdateLayout() {
-}
-
-void Manager::RefreshLayout() {
-}
-
-void Manager::UpdatePosition() {
 }
 
 int Manager::RegisterModel(Model *model) {
@@ -88,6 +84,14 @@ void Manager::BeginDraw() {
 
 void Manager::EndDraw() {
   render_node_->EndDraw();
+}
+
+void Manager::Draw() {
+  BeginDraw();
+  for (auto it = windows_.rbegin(); it != windows_.rend(); it++) {
+    (*it)->Draw();
+  }
+  EndDraw();
 }
 
 }  // namespace grassland::vulkan::gui

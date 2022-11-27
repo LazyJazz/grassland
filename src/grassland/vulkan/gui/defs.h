@@ -10,31 +10,21 @@ struct Layout {
   int height;
 };
 
-enum ModuleViewportSizeMode : uint32_t {
-  MODULE_VIEWPORT_SIZE_MODE_FIXED = 0,
-  MODULE_VIEWPORT_SIZE_MODE_SPACE = 1,
-  MODULE_VIEWPORT_SIZE_MODE_FRAME = 2
-};
+typedef enum WindowFlag : uint32_t {
+  WINDOW_FLAG_NONE = 0,
+  WINDOW_FLAG_BAR_BIT = 1,
+  WINDOW_FLAG_COMPRESS_BIT = 2,
+  WINDOW_FLAG_CLOSE_BIT = 4,
+} WindowFlag;
 
 enum ModuleFrameSizeMode : uint32_t {
-  MODULE_FRAME_SIZE_MODE_VIEWPORT = 0,
-  MODULE_FRAME_SIZE_MODE_SLIDER = 1,
-  MODULE_FRAME_SIZE_MODE_DYNAMIC = 2
-};
-
-enum ModulePositionMode : uint32_t {
-  MODULE_POSITION_MODE_CENTER = 0,
-  MODULE_POSITION_MODE_ALIGN_LOW_BORDER = 1,
-  MODULE_POSITION_MODE_ALIGN_HIGH_BORDER = 2
+  MODULE_FRAME_SIZE_MODE_FIXED = 0,
+  MODULE_FRAME_SIZE_MODE_SLIDER = 1
 };
 
 struct ModuleSettings {
-  ModuleViewportSizeMode viewport_size_h{MODULE_VIEWPORT_SIZE_MODE_FIXED};
-  ModuleViewportSizeMode viewport_size_v{MODULE_VIEWPORT_SIZE_MODE_FIXED};
-  ModuleFrameSizeMode frame_size_h{MODULE_FRAME_SIZE_MODE_VIEWPORT};
-  ModuleFrameSizeMode frame_size_v{MODULE_FRAME_SIZE_MODE_VIEWPORT};
-  ModulePositionMode position_mode_h{MODULE_POSITION_MODE_CENTER};
-  ModulePositionMode position_mode_v{MODULE_POSITION_MODE_CENTER};
+  ModuleFrameSizeMode frame_size_mode_h{MODULE_FRAME_SIZE_MODE_FIXED};
+  ModuleFrameSizeMode frame_size_mode_v{MODULE_FRAME_SIZE_MODE_FIXED};
   float weight{1.0f};
 };
 
@@ -58,15 +48,15 @@ struct GlobalUniformObject {
 };
 
 struct ModelUniformObject {
-  glm::mat4 local_to_screen;
-  float x;
-  float y;
-  float width;
-  float height;
-  uint32_t render_flag;
-  float round_radius;
-  float reserve0;
-  float reserve1;
+  glm::mat4 local_to_screen{1.0f};
+  float x{};
+  float y{};
+  float width{};
+  float height{};
+  uint32_t render_flag{};
+  float round_radius{};
+  float reserve0{};
+  float reserve1{};
 };
 
 typedef enum ModelRenderFlagBits : uint32_t {

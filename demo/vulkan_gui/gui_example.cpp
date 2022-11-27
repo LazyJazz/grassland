@@ -23,35 +23,22 @@ void GuiExample::OnInit() {
 
   manager_ = std::make_unique<grassland::vulkan::gui::Manager>(core_.get());
   manager_->BindFrameTexture(paint_buffer_.get());
-  test_model_ = std::make_unique<grassland::vulkan::gui::Model>(manager_.get());
-  test_model_->UploadMesh(
-      {{{10.0f, 10.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-       {{10.0f, 42.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-       {{42.0f, 10.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-       {{42.0f, 42.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}},
-      {0, 1, 2, 1, 2, 3});
-  test_model_->GetModelObject().x = 10.0f;
-  test_model_->GetModelObject().y = 10.0f;
-  test_model_->GetModelObject().width = 32.0f;
-  test_model_->GetModelObject().height = 32.0f;
-  test_model_->GetModelObject().render_flag |= grassland::vulkan::gui::
-      ModelRenderFlagBits::MODEL_RENDER_FLAG_ROUNDED_RECT_BIT;
-  test_model_->GetModelObject().round_radius = 16.0f;
+  window_ = std::make_unique<grassland::vulkan::gui::Window>(
+      manager_.get(), grassland::vulkan::gui::Layout{10, 10, 320, 320},
+      "Test Window", grassland::vulkan::gui::WindowFlag::WINDOW_FLAG_NONE);
 }
 
 void GuiExample::OnLoop() {
   core_->BeginCommandRecord();
   paint_buffer_->ClearColor({0.6f, 0.7f, 0.8f, 1.0f});
-  manager_->BeginDraw();
-  test_model_->Draw();
-  manager_->EndDraw();
+  manager_->Draw();
   core_->Output(paint_buffer_.get());
   core_->EndCommandRecordAndSubmit();
 }
 
 void GuiExample::OnClose() {
   core_->GetDevice()->WaitIdle();
-  test_model_.reset();
+  window_.reset();
   manager_.reset();
   paint_buffer_.reset();
   core_.reset();

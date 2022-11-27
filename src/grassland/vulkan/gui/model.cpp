@@ -35,4 +35,15 @@ void Model::Draw() const {
   manager_->render_node_->DrawDirect(vertex_buffer_.get(), index_buffer_.get(),
                                      int(index_buffer_->Size()), model_index_);
 }
+
+void Model::UploadMesh(const std::vector<glm::vec2> &vertices,
+                       const std::vector<uint32_t> &indices,
+                       const glm::vec4 &color) {
+  std::vector<Vertex> real_vertices;
+  real_vertices.reserve(vertices.size());
+  for (auto &vert : vertices) {
+    real_vertices.push_back({{vert, 0.0f, 1.0f}, color});
+  }
+  UploadMesh(real_vertices, indices);
+}
 }  // namespace grassland::vulkan::gui
