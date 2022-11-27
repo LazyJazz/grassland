@@ -379,4 +379,8 @@ int Core::GetFramebufferHeight() const {
   return height;
 }
 
+int Core::GetCurrentImageIndex() const {
+  return current_image_index;
+}
+
 }  // namespace grassland::vulkan::framework
