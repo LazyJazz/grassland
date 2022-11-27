@@ -53,6 +53,10 @@ framework::Core *Manager::GetCore() const {
   return core_;
 }
 
+font::Factory *Manager::GetFontFactory() const {
+  return font_factory_.get();
+}
+
 int Manager::GetUnitLength() const {
   return unit_length_;
 }

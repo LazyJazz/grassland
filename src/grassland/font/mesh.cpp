@@ -4,16 +4,19 @@
 
 namespace grassland::font {
 
+Mesh::Mesh() {
+}
+
 Mesh::Mesh(const std::vector<glm::vec2> &vertices,
            const std::vector<uint32_t> &indices,
            float advection) {
-  vertices_ = vertices;
-  indices_ = indices;
-  advection_ = advection;
+  this->vertices = vertices;
+  this->indices = indices;
+  this->advection = advection;
 }
 
 Mesh::Mesh(const std::vector<glm::vec2> &triangle_vertices, float advection) {
-  advection_ = advection;
+  this->advection = advection;
 
   class Vec2Eq {
    public:
@@ -24,37 +27,41 @@ Mesh::Mesh(const std::vector<glm::vec2> &triangle_vertices, float advection) {
   std::map<glm::vec2, uint32_t, Vec2Eq> vec_index;
   auto vec_2_index = [&](const glm::vec2 &v) {
     if (!vec_index.count(v)) {
-      uint32_t index = vertices_.size();
+      uint32_t index = vertices.size();
       vec_index.insert(std::make_pair(v, index));
-      vertices_.push_back(v);
+      vertices.push_back(v);
       return index;
     }
     return vec_index.at(v);
   };
-  vertices_.clear();
-  indices_.clear();
+  vertices.clear();
+  indices.clear();
   for (auto &v : triangle_vertices) {
-    indices_.push_back(vec_2_index(v));
+    indices.push_back(vec_2_index(v));
   }
 }
 
 std::vector<glm::vec2> &Mesh::GetVertices() {
-  return vertices_;
+  return vertices;
 }
 
 const std::vector<glm::vec2> &Mesh::GetVertices() const {
-  return vertices_;
+  return vertices;
 }
 
 std::vector<uint32_t> &Mesh::GetIndices() {
-  return indices_;
+  return indices;
 }
 
 const std::vector<uint32_t> &Mesh::GetIndices() const {
-  return indices_;
+  return indices;
 }
 
 float Mesh::GetAdvection() const {
-  return advection_;
+  return advection;
+}
+
+float &Mesh::GetAdvection() {
+  return advection;
 }
 }  // namespace grassland::font

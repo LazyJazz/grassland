@@ -1,6 +1,7 @@
 #include "grassland/vulkan/gui/window.h"
 
 #include "glm/gtc/matrix_transform.hpp"
+#include "grassland/util/util.h"
 
 namespace grassland::vulkan::gui {
 
@@ -23,6 +24,7 @@ void Window::Draw() {
                                          layout_.height);
   if (flag_ & WINDOW_FLAG_BAR_BIT) {
     model_bar_->Draw();
+    model_title_->Draw();
   }
   model_frame_->Draw();
 }
@@ -74,9 +76,18 @@ void Window::Resize(const Layout &new_layout) {
     model_object.local_to_screen = glm::translate(
         glm::mat4{1.0f},
         glm::vec3{float(layout_.x), float(layout_.y + unit_length), 0.0f});
+    model_frame_->GetModelObject() = model_object;
+    float blank_size = float(unit_length) / 6.0f;
+    float font_size = float(unit_length) - blank_size * 2.0f;
+    model_object.local_to_screen =
+        glm::translate(glm::mat4{1.0f},
+                       glm::vec3{float(layout_.x), float(layout_.y), 0.0f}) *
+        glm::translate(glm::mat4{1.0f},
+                       glm::vec3{float(unit_length) * 0.5f,
+                                 font_size + blank_size, 0.0f}) *
+        glm::scale(glm::mat4{1.0f}, glm::vec3{font_size, -font_size, 1.0f});
+    model_title_->GetModelObject() = model_object;
   }
-
-  model_frame_->GetModelObject() = model_object;
 
   if (flag_ & WINDOW_FLAG_BAR_BIT) {
     model_bar_->UploadMesh({{0.0f, 0.0f},
@@ -84,6 +95,10 @@ void Window::Resize(const Layout &new_layout) {
                             {float(layout_.width), 0.0f},
                             {float(layout_.width), float(unit_length)}},
                            {0, 1, 2, 1, 2, 3}, {glm::vec3{0.9f}, 1.0f});
+    auto title_mesh = manager_->GetFontFactory()->GetString(
+        util::U8StringToWideString(title_));
+    model_title_->UploadMesh(title_mesh.vertices, title_mesh.indices,
+                             glm::vec4{glm::vec3{0.5f}, 1.0f});
     model_frame_->UploadMesh(
         {{0.0f, 0.0f},
          {0.0f, float(layout_.height - unit_length)},

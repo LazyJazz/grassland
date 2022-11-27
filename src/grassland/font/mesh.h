@@ -3,8 +3,8 @@
 #include "vector"
 
 namespace grassland::font {
-class Mesh {
- public:
+struct Mesh {
+  Mesh();
   Mesh(const std::vector<glm::vec2> &vertices,
        const std::vector<uint32_t> &indices,
        float advection);
@@ -13,11 +13,11 @@ class Mesh {
   [[nodiscard]] const std::vector<glm::vec2> &GetVertices() const;
   std::vector<uint32_t> &GetIndices();
   [[nodiscard]] const std::vector<uint32_t> &GetIndices() const;
+  float &GetAdvection();
   [[nodiscard]] float GetAdvection() const;
 
- private:
-  std::vector<glm::vec2> vertices_;
-  std::vector<uint32_t> indices_;
-  float advection_{0.0f};
+  std::vector<glm::vec2> vertices;
+  std::vector<uint32_t> indices;
+  float advection{0.0f};
 };
 }  // namespace grassland::font

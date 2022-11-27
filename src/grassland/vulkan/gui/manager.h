@@ -14,6 +14,7 @@ class Manager {
   explicit Manager(framework::Core *core);
   void BindFrameTexture(framework::TextureImage *frame_texture);
   [[nodiscard]] framework::Core *GetCore() const;
+  [[nodiscard]] font::Factory *GetFontFactory() const;
   [[nodiscard]] int GetUnitLength() const;
 
   void Draw();

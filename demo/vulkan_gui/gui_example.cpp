@@ -25,7 +25,7 @@ void GuiExample::OnInit() {
   manager_->BindFrameTexture(paint_buffer_.get());
   window_ = std::make_unique<grassland::vulkan::gui::Window>(
       manager_.get(), grassland::vulkan::gui::Layout{10, 10, 320, 320},
-      "Test Window", grassland::vulkan::gui::WindowFlag::WINDOW_FLAG_NONE);
+      "Test Window", grassland::vulkan::gui::WindowFlag::WINDOW_FLAG_BAR_BIT);
 }
 
 void GuiExample::OnLoop() {
