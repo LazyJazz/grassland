@@ -2,28 +2,23 @@
 
 namespace grassland::vulkan::gui {
 
-Module::Module(Manager *manager,
-               const Layout &layout,
-               const ModuleSettings &module_settings) {
-  manager_ = manager;
-  layout_ = layout;
-  module_settings_ = module_settings;
-}
-
-void Module::AddSubmodule(Module *module) {
-  submodule_list_.push_back(module);
-}
-
-const Layout &Module::GetLayout() const {
-  return layout_;
-}
-
-const ModuleSettings &Module::GetModuleSettings() const {
-  return module_settings_;
-}
-
-Manager *Module::GetManager() const {
-  return manager_;
-}
+// Module::Module(const ModuleSettings &module_settings) {
+//   module_settings_ = module_settings;
+// }
+//
+// const ModuleSettings &Module::GetModuleSettings() const {
+//   return module_settings_;
+// }
+//
+// const Extent &Module::GetExtent() const {
+//   return extent_;
+// }
+//
+// void Module::UpdateLayout(const Layout &layout) {
+//   layout_ = layout;
+// }
+//
+// void Module::PostDraw() {
+// }
 
 }  // namespace grassland::vulkan::gui

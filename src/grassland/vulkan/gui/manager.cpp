@@ -25,8 +25,8 @@ Manager::Manager(framework::Core *core) {
     }
   });
 
-  font_factory_ = std::make_unique<grassland::font::Factory>(
-      "../fonts/NotoSansSC-Regular.otf");
+  font_factory_ =
+      std::make_unique<grassland::font::Factory>("../fonts/consolab.ttf");
   frame_ = std::make_unique<framework::TextureImage>(
       core_, core_->GetFramebufferWidth() * super_sample_scale_,
       core_->GetFramebufferHeight() * super_sample_scale_);
@@ -139,6 +139,19 @@ void Manager::Draw() {
     (*it)->Draw();
   }
   EndDraw();
+}
+
+void Manager::SetScissorRect(const VkRect2D &scissor) {
+  render_node_->SetScissorRect({{scissor.offset.x * super_sample_scale_,
+                                 scissor.offset.y * super_sample_scale_},
+                                {scissor.extent.width * super_sample_scale_,
+                                 scissor.extent.height * super_sample_scale_}});
+}
+
+void Manager::SetScissorRect(int x, int y, int width, int height) {
+  render_node_->SetScissorRect(x * super_sample_scale_, y * super_sample_scale_,
+                               width * super_sample_scale_,
+                               height * super_sample_scale_);
 }
 
 }  // namespace grassland::vulkan::gui

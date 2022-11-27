@@ -25,7 +25,6 @@ enum ModuleFrameSizeMode : uint32_t {
 struct ModuleSettings {
   ModuleFrameSizeMode frame_size_mode_h{MODULE_FRAME_SIZE_MODE_FIXED};
   ModuleFrameSizeMode frame_size_mode_v{MODULE_FRAME_SIZE_MODE_FIXED};
-  float weight{1.0f};
 };
 
 struct Offset {

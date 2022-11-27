@@ -29,6 +29,8 @@ class Manager {
   void UpdateModelObjects();
   int RegisterModel(Model *model);
   void RegisterWindow(Window *window);
+  void SetScissorRect(const VkRect2D &scissor);
+  void SetScissorRect(int x, int y, int width, int height);
 
   framework::Core *core_{nullptr};
   std::unique_ptr<framework::RenderNode> render_node_;
