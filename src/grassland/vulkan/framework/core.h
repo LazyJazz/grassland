@@ -2,6 +2,10 @@
 #include <grassland/vulkan/framework/core_settings.h>
 #include <grassland/vulkan/vulkan.h>
 
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
+#include "imgui.h"
+
 namespace grassland::vulkan::framework {
 class TextureImage;
 class Core {
@@ -19,11 +23,11 @@ class Core {
   [[nodiscard]] CommandBuffer *GetCommandBuffer(int frame_index) const;
   [[nodiscard]] CommandBuffer *GetCommandBuffer() const;
   [[nodiscard]] int GetCurrentFrameIndex() const;
-  int GetCurrentImageIndex() const;
-  int GetWindowWidth() const;
-  int GetWindowHeight() const;
-  int GetFramebufferWidth() const;
-  int GetFramebufferHeight() const;
+  [[nodiscard]] int GetCurrentImageIndex() const;
+  [[nodiscard]] int GetWindowWidth() const;
+  [[nodiscard]] int GetWindowHeight() const;
+  [[nodiscard]] int GetFramebufferWidth() const;
+  [[nodiscard]] int GetFramebufferHeight() const;
 
   void BeginCommandRecord();
   void EndCommandRecordAndSubmit();
@@ -40,6 +44,11 @@ class Core {
   void SetKeyCallback(
       const std::function<void(int key, int scancode, int action, int mods)>
           &key_callback);
+
+  void ImGuiInit(TextureImage *render_texture,
+                 const char *font_file_path = nullptr,
+                 float font_size = 13.0f);
+  void ImGuiRender();
 
  private:
   static void GLFWFrameSizeFunc(GLFWwindow *window, int width, int height);
@@ -82,5 +91,10 @@ class Core {
       custom_mouse_button_function_;
   std::vector<std::function<void(int key, int scancode, int action, int mods)>>
       custom_key_functions_;
+
+  VkDescriptorPool imgui_pool_{};
+  TextureImage *imgui_render_target_;
+  std::unique_ptr<RenderPass> imgui_render_pass_;
+  std::unique_ptr<Framebuffer> imgui_framebuffer_;
 };
 }  // namespace grassland::vulkan::framework
