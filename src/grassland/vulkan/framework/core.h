@@ -93,7 +93,7 @@ class Core {
       custom_key_functions_;
 
   VkDescriptorPool imgui_pool_{};
-  TextureImage *imgui_render_target_;
+  TextureImage *imgui_render_target_{nullptr};
   std::unique_ptr<RenderPass> imgui_render_pass_;
   std::unique_ptr<Framebuffer> imgui_framebuffer_;
 };
