@@ -100,6 +100,13 @@ Core::Core(const CoreSettings &core_settings) {
 
 Core::~Core() {
   device_->WaitIdle();
+  if (imgui_render_target_) {
+    imgui_framebuffer_.reset();
+    imgui_render_pass_.reset();
+
+    vkDestroyDescriptorPool(device_->GetHandle(), imgui_pool_, nullptr);
+    ImGui_ImplVulkan_Shutdown();
+  }
   render_finish_semaphores_.clear();
   image_available_semaphores_.clear();
   in_flight_fences_.clear();
@@ -377,6 +384,108 @@ int Core::GetFramebufferHeight() const {
   int height;
   glfwGetFramebufferSize(window_, nullptr, &height);
   return height;
+}
+
+int Core::GetCurrentImageIndex() const {
+  return current_image_index;
+}
+
+void Core::ImGuiInit(TextureImage *render_texture,
+                     const char *font_file_path,
+                     float font_size) {
+  VkDescriptorPoolSize pool_sizes[] = {
+      {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+      {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+      {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+      {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+
+  VkDescriptorPoolCreateInfo pool_info = {};
+  pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+  pool_info.maxSets = 1000;
+  pool_info.poolSizeCount = std::size(pool_sizes);
+  pool_info.pPoolSizes = pool_sizes;
+
+  vkCreateDescriptorPool(device_->GetHandle(), &pool_info, nullptr,
+                         &imgui_pool_);
+
+  // 2: initialize imgui library
+
+  // this initializes the core structures of imgui
+  ImGui::CreateContext();
+  ImGui::StyleColorsClassic();
+  ImGui_ImplGlfw_InitForVulkan(window_, true);
+
+  // this initializes imgui for Vulkan
+  ImGui_ImplVulkan_InitInfo init_info = {};
+  init_info.Instance = instance_->GetHandle();
+  init_info.PhysicalDevice = physical_device_->GetHandle();
+  init_info.Device = device_->GetHandle();
+  init_info.Queue = device_->GetGraphicsQueue()->GetHandle();
+  init_info.DescriptorPool = imgui_pool_;
+  init_info.MinImageCount = 3;
+  init_info.ImageCount = 3;
+  init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+  imgui_render_target_ = render_texture;
+  imgui_render_pass_ = std::make_unique<RenderPass>(
+      device_.get(), imgui_render_target_->GetImage()->GetFormat());
+  imgui_framebuffer_ = std::make_unique<Framebuffer>(
+      device_.get(), imgui_render_target_->GetImage()->GetWidth(),
+      imgui_render_target_->GetImage()->GetHeight(), imgui_render_pass_.get(),
+      imgui_render_target_->GetImageView());
+  ImGui_ImplVulkan_Init(&init_info, imgui_render_pass_->GetHandle());
+
+  SetFrameSizeCallback([this](int width, int height) {
+    imgui_framebuffer_ = std::make_unique<Framebuffer>(
+        device_.get(), imgui_render_target_->GetImage()->GetWidth(),
+        imgui_render_target_->GetImage()->GetHeight(), imgui_render_pass_.get(),
+        imgui_render_target_->GetImageView());
+  });
+
+  auto &io = ImGui::GetIO();
+  if (font_file_path) {
+    io.Fonts->AddFontFromFileTTF(font_file_path, font_size, nullptr,
+                                 io.Fonts->GetGlyphRangesChineseFull());
+    io.Fonts->Build();
+  } else {
+    ImFontConfig im_font_config{};
+    im_font_config.SizePixels = font_size;
+    io.Fonts->AddFontDefault(&im_font_config);
+  }
+
+  // execute a gpu command to upload imgui font textures
+  grassland::vulkan::helper::SingleTimeCommands(
+      command_pool_.get(),
+      [&](VkCommandBuffer cmd) { ImGui_ImplVulkan_CreateFontsTexture(cmd); });
+
+  // clear font textures from cpu data
+  ImGui_ImplVulkan_DestroyFontUploadObjects();
+}
+
+void Core::ImGuiRender() {
+  auto command_buffer = GetCommandBuffer()->GetHandle();
+  VkRenderPassBeginInfo renderPassInfo{};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassInfo.renderPass = imgui_render_pass_->GetHandle();
+  renderPassInfo.framebuffer = imgui_framebuffer_->GetHandle();
+  renderPassInfo.renderArea.offset = {0, 0};
+  renderPassInfo.renderArea.extent = imgui_framebuffer_->GetExtent();
+  renderPassInfo.clearValueCount = 0;
+  renderPassInfo.pClearValues = nullptr;
+
+  vkCmdBeginRenderPass(command_buffer, &renderPassInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
+
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer);
+  vkCmdEndRenderPass(command_buffer);
 }
 
 }  // namespace grassland::vulkan::framework
