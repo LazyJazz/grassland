@@ -31,6 +31,7 @@ class Core {
 
   void BeginCommandRecord();
   void EndCommandRecordAndSubmit();
+  void TemporalSubmit();
 
   void Output(TextureImage *texture_image);
 

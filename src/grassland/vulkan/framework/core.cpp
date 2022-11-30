@@ -190,6 +190,41 @@ void Core::BeginCommandRecord() {
   vulkan::helper::CommandBegin(command_buffers_[frame_index_]->GetHandle());
 }
 
+void Core::TemporalSubmit() {
+  vulkan::helper::CommandEnd(command_buffers_[frame_index_]->GetHandle());
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkSemaphore waitSemaphores[] = {
+      image_available_semaphores_[frame_index_]->GetHandle()};
+  VkPipelineStageFlags waitStages[] = {
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  VkSemaphore signalSemaphores[] = {
+      render_finish_semaphores_[frame_index_]->GetHandle()};
+
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &command_buffers_[frame_index_]->GetHandle();
+  submitInfo.waitSemaphoreCount = 0;
+  submitInfo.pWaitSemaphores = nullptr;
+  submitInfo.pWaitDstStageMask = nullptr;
+  submitInfo.signalSemaphoreCount = 0;
+  submitInfo.pSignalSemaphores = nullptr;
+
+  if (vkQueueSubmit(device_->GetGraphicsQueue()->GetHandle(), 1, &submitInfo,
+                    in_flight_fences_[frame_index_]->GetHandle()) !=
+      VK_SUCCESS) {
+    LAND_ERROR("failed to submit draw command buffer!");
+  }
+  vkWaitForFences(device_->GetHandle(), 1,
+                  &in_flight_fences_[frame_index_]->GetHandle(), VK_TRUE,
+                  UINT64_MAX);
+  vkResetFences(device_->GetHandle(), 1,
+                &in_flight_fences_[frame_index_]->GetHandle());
+  vkResetCommandBuffer(command_buffers_[frame_index_]->GetHandle(),
+                       /*VkCommandBufferResetFlagBits*/ 0);
+  vulkan::helper::CommandBegin(command_buffers_[frame_index_]->GetHandle());
+}
+
 void Core::EndCommandRecordAndSubmit() {
   vulkan::helper::CommandEnd(command_buffers_[frame_index_]->GetHandle());
 
@@ -487,5 +522,4 @@ void Core::ImGuiRender() {
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer);
   vkCmdEndRenderPass(command_buffer);
 }
-
 }  // namespace grassland::vulkan::framework
