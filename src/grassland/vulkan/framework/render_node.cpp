@@ -309,7 +309,6 @@ void RenderNode::Draw(VkCommandBuffer command_buffer,
 
   vkCmdDrawIndexed(command_buffer, index_count, instance_count, 0, 0,
                    first_instance_index);
-
   vkCmdEndRenderPass(command_buffer);
 
   for (auto &uniform_binding : uniform_bindings_) {
