@@ -34,6 +34,8 @@ Device::Device(PhysicalDevice *physical_device,
 #ifdef __APPLE__
   device_extensions.push_back("VK_KHR_portability_subset");
 #endif
+  device_extensions.push_back(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
+  device_extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
   if (!extra_device_extensions.empty()) {
     device_extensions.insert(device_extensions.end(),
                              extra_device_extensions.begin(),
@@ -75,6 +77,17 @@ Device::Device(PhysicalDevice *physical_device,
   } else {
     createInfo.enabledLayerCount = 0;
   }
+
+  VkPhysicalDeviceDescriptorIndexingFeaturesEXT
+      physicalDeviceDescriptorIndexingFeatures{};
+  physicalDeviceDescriptorIndexingFeatures.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+  physicalDeviceDescriptorIndexingFeatures
+      .shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+  physicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+  physicalDeviceDescriptorIndexingFeatures
+      .descriptorBindingVariableDescriptorCount = VK_TRUE;
+  createInfo.pNext = &physicalDeviceDescriptorIndexingFeatures;
 
   if (vkCreateDevice(physical_device->GetHandle(), &createInfo, nullptr,
                      &handle_) != VK_SUCCESS) {

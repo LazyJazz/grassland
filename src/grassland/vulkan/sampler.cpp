@@ -28,9 +28,34 @@ Sampler::Sampler(Device *device,
                  VkSamplerAddressMode address_mode_w,
                  VkBool32 anisotropy_enable,
                  VkBorderColor border_color,
-                 VkSamplerMipmapMode mipmap_mode)
-    : handle_{} {
+                 VkSamplerMipmapMode mipmap_mode) {
   device_ = device;
+  Reset(mag_filter, min_filter, address_mode_u, address_mode_v, address_mode_w,
+        anisotropy_enable, border_color, mipmap_mode);
+}
+
+Sampler::~Sampler() {
+  Clear();
+}
+
+void Sampler::Reset(VkFilter filter,
+                    VkSamplerAddressMode address_mode,
+                    VkBool32 anisotropy_enable,
+                    VkBorderColor border_color,
+                    VkSamplerMipmapMode mipmap_mode) {
+  Reset(filter, filter, address_mode, address_mode, address_mode,
+        anisotropy_enable, border_color, mipmap_mode);
+}
+
+void Sampler::Reset(VkFilter mag_filter,
+                    VkFilter min_filter,
+                    VkSamplerAddressMode address_mode_u,
+                    VkSamplerAddressMode address_mode_v,
+                    VkSamplerAddressMode address_mode_w,
+                    VkBool32 anisotropy_enable,
+                    VkBorderColor border_color,
+                    VkSamplerMipmapMode mipmap_mode) {
+  Clear();
   if (!device_->GetPhysicalDevice()->GetFeatures().samplerAnisotropy) {
     anisotropy_enable = VK_FALSE;
   }
@@ -59,8 +84,11 @@ Sampler::Sampler(Device *device,
   }
 }
 
-Sampler::~Sampler() {
-  vkDestroySampler(device_->GetHandle(), GetHandle(), nullptr);
+void Sampler::Clear() {
+  if (handle_) {
+    vkDestroySampler(device_->GetHandle(), GetHandle(), nullptr);
+    handle_ = nullptr;
+  }
 }
 
 }  // namespace grassland::vulkan

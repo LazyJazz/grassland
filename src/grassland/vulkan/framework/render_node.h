@@ -40,6 +40,8 @@ class RenderNode {
   void BuildRenderNode();
   void BuildRenderNode(uint32_t width, uint32_t height);
 
+  void UpdateDescriptorSetBinding(int binding_index);
+
   void Draw(DataBuffer *vertex_buffer,
             DataBuffer *index_buffer,
             int index_count,
