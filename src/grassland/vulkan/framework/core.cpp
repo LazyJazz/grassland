@@ -33,6 +33,8 @@ Core::Core(const CoreSettings &core_settings) {
         window_, ::grassland::vulkan::framework::Core::GLFWMouseButtonFunc);
     glfwSetKeyCallback(window_,
                        ::grassland::vulkan::framework::Core::GLFWKeyFunc);
+    glfwSetDropCallback(window_,
+                        ::grassland::vulkan::framework::Core::GLFWDropFunc);
     glfwSetWindowUserPointer(window_, this);
   }
 
@@ -348,6 +350,11 @@ void Core::SetKeyCallback(
   custom_key_functions_.push_back(key_callback);
 }
 
+void Core::SetDropCallback(
+    const std::function<void(int, const char **)> &drop_callback) {
+  custom_drop_functions_.push_back(drop_callback);
+}
+
 void Core::GLFWFrameSizeFunc(GLFWwindow *window, int width, int height) {
   auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
   core->core_settings_.window_width = width;
@@ -393,6 +400,17 @@ void Core::GLFWKeyFunc(GLFWwindow *window,
   if (!core->custom_key_functions_.empty()) {
     for (auto &func : core->custom_key_functions_) {
       func(key, scancode, action, mods);
+    }
+  }
+}
+
+void Core::GLFWDropFunc(GLFWwindow *window,
+                        int path_count,
+                        const char **paths) {
+  auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
+  if (!core->custom_drop_functions_.empty()) {
+    for (auto &func : core->custom_drop_functions_) {
+      func(path_count, paths);
     }
   }
 }

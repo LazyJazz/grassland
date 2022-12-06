@@ -45,6 +45,9 @@ class Core {
   void SetKeyCallback(
       const std::function<void(int key, int scancode, int action, int mods)>
           &key_callback);
+  void SetDropCallback(
+      const std::function<void(int path_count, const char **paths)>
+          &drop_callback);
 
   void ImGuiInit(TextureImage *render_texture,
                  const char *font_file_path = nullptr,
@@ -63,6 +66,9 @@ class Core {
                           int scancode,
                           int action,
                           int mods);
+  static void GLFWDropFunc(GLFWwindow *window,
+                           int path_count,
+                           const char **paths);
 
   CoreSettings core_settings_;
 
@@ -92,6 +98,7 @@ class Core {
       custom_mouse_button_function_;
   std::vector<std::function<void(int key, int scancode, int action, int mods)>>
       custom_key_functions_;
+  std::vector<std::function<void(int, const char **)>> custom_drop_functions_;
 
   VkDescriptorPool imgui_pool_{};
   TextureImage *imgui_render_target_{nullptr};
