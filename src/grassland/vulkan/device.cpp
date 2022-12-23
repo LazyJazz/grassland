@@ -1,5 +1,6 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/device.h>
+#include <grassland/vulkan/device_procedures.h>
 #include <grassland/vulkan/queue.h>
 
 #include <set>
@@ -12,13 +13,15 @@ Device::Device(PhysicalDevice *physical_device,
     : Device(physical_device,
              nullptr,
              extra_device_extensions,
-             enable_validation_layers) {
+             enable_validation_layers,
+             nullptr) {
 }
 
 Device::Device(PhysicalDevice *physical_device,
                Surface *surface,
                const std::vector<const char *> &extra_device_extensions,
-               bool enable_validation_layers)
+               bool enable_validation_layers,
+               void *extraDeviceFeatures)
     : handle_{} {
   physical_device_ = physical_device;
   surface_ = surface;
@@ -36,6 +39,7 @@ Device::Device(PhysicalDevice *physical_device,
 #endif
   device_extensions.push_back(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
   device_extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+  device_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
   if (!extra_device_extensions.empty()) {
     device_extensions.insert(device_extensions.end(),
                              extra_device_extensions.begin(),
@@ -78,6 +82,12 @@ Device::Device(PhysicalDevice *physical_device,
     createInfo.enabledLayerCount = 0;
   }
 
+  VkPhysicalDeviceBufferDeviceAddressFeaturesEXT
+      physicalDeviceBufferDeviceAddressFeatures{};
+  physicalDeviceBufferDeviceAddressFeatures.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
+  physicalDeviceBufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+
   VkPhysicalDeviceDescriptorIndexingFeaturesEXT
       physicalDeviceDescriptorIndexingFeatures{};
   physicalDeviceDescriptorIndexingFeatures.sType =
@@ -87,7 +97,11 @@ Device::Device(PhysicalDevice *physical_device,
   physicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
   physicalDeviceDescriptorIndexingFeatures
       .descriptorBindingVariableDescriptorCount = VK_TRUE;
-  createInfo.pNext = &physicalDeviceDescriptorIndexingFeatures;
+
+  physicalDeviceDescriptorIndexingFeatures.pNext = extraDeviceFeatures;
+  physicalDeviceBufferDeviceAddressFeatures.pNext =
+      &physicalDeviceDescriptorIndexingFeatures;
+  createInfo.pNext = &physicalDeviceBufferDeviceAddressFeatures;
 
   if (vkCreateDevice(physical_device->GetHandle(), &createInfo, nullptr,
                      &handle_) != VK_SUCCESS) {
@@ -101,6 +115,8 @@ Device::Device(PhysicalDevice *physical_device,
     present_queue_ = std::make_unique<Queue>(
         this, physical_device_->PresentFamilyIndex(surface_));
   }
+
+  DeviceProcedures::GetStaticInstance()->SetDevice(this);
 }
 
 Device::~Device() {

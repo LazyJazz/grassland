@@ -15,7 +15,8 @@ class Device {
   Device(PhysicalDevice *physical_device,
          Surface *surface,
          const std::vector<const char *> &extra_device_extensions = {},
-         bool enable_validation_layers = kDefaultEnableValidationLayers);
+         bool enable_validation_layers = kDefaultEnableValidationLayers,
+         void *extraDeviceFeatures = nullptr);
   ~Device();
   [[nodiscard]] PhysicalDevice *GetPhysicalDevice() const;
   [[nodiscard]] Surface *GetSurface() const;
