@@ -39,7 +39,6 @@ Device::Device(PhysicalDevice *physical_device,
 #endif
   device_extensions.push_back(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
   device_extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-  device_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
   if (!extra_device_extensions.empty()) {
     device_extensions.insert(device_extensions.end(),
                              extra_device_extensions.begin(),
@@ -82,12 +81,6 @@ Device::Device(PhysicalDevice *physical_device,
     createInfo.enabledLayerCount = 0;
   }
 
-  VkPhysicalDeviceBufferDeviceAddressFeaturesEXT
-      physicalDeviceBufferDeviceAddressFeatures{};
-  physicalDeviceBufferDeviceAddressFeatures.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
-  physicalDeviceBufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
-
   VkPhysicalDeviceDescriptorIndexingFeaturesEXT
       physicalDeviceDescriptorIndexingFeatures{};
   physicalDeviceDescriptorIndexingFeatures.sType =
@@ -99,9 +92,7 @@ Device::Device(PhysicalDevice *physical_device,
       .descriptorBindingVariableDescriptorCount = VK_TRUE;
 
   physicalDeviceDescriptorIndexingFeatures.pNext = extraDeviceFeatures;
-  physicalDeviceBufferDeviceAddressFeatures.pNext =
-      &physicalDeviceDescriptorIndexingFeatures;
-  createInfo.pNext = &physicalDeviceBufferDeviceAddressFeatures;
+  createInfo.pNext = &physicalDeviceDescriptorIndexingFeatures;
 
   if (vkCreateDevice(physical_device->GetHandle(), &createInfo, nullptr,
                      &handle_) != VK_SUCCESS) {

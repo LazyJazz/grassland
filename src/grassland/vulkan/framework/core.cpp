@@ -81,6 +81,13 @@ Core::Core(const CoreSettings &core_settings) {
   physicalDeviceAccelerationStructureFeatures.accelerationStructure = VK_TRUE;
   physicalDeviceAccelerationStructureFeatures.pNext =
       &physicalDeviceRayTracingPipelineFeatures;
+  VkPhysicalDeviceBufferDeviceAddressFeaturesEXT
+      physicalDeviceBufferDeviceAddressFeatures{};
+  physicalDeviceBufferDeviceAddressFeatures.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
+  physicalDeviceBufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+  physicalDeviceBufferDeviceAddressFeatures.pNext =
+      &physicalDeviceAccelerationStructureFeatures;
 
   device_ = std::make_unique<Device>(
       physical_device_.get(),
@@ -89,11 +96,12 @@ Core::Core(const CoreSettings &core_settings) {
           ? std::vector<
                 const char *>{VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
                               VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
-                              VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME}
+                              VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+                              VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME}
           : std::vector<const char *>{},
       core_settings_.validation_layer,
       core_settings_.raytracing_pipeline_required
-          ? &physicalDeviceAccelerationStructureFeatures
+          ? &physicalDeviceBufferDeviceAddressFeatures
           : nullptr);
 
   if (core_settings_.has_window) {

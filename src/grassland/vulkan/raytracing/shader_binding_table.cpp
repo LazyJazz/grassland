@@ -1,5 +1,7 @@
 #include "grassland/vulkan/raytracing/shader_binding_table.h"
 
+#include "cstring"
+
 namespace grassland::vulkan::raytracing {
 ShaderBindingTable::ShaderBindingTable(
     RayTracingPipeline *ray_tracing_pipeline) {
@@ -55,14 +57,14 @@ ShaderBindingTable::ShaderBindingTable(
 
   // Copy the shader handles from the host buffer to the binding tables
   auto *data = static_cast<uint8_t *>(buffer_->Map());
-  memcpy(data + ray_gen_offset_, shader_handle_storage.data(),
-         handle_size_aligned);
-  memcpy(data + miss_offset_,
-         shader_handle_storage.data() + handle_size_aligned,
-         handle_size_aligned);
-  memcpy(data + closest_hit_offset_,
-         shader_handle_storage.data() + handle_size_aligned * 2,
-         handle_size_aligned);
+  std::memcpy(data + ray_gen_offset_, shader_handle_storage.data(),
+              handle_size_aligned);
+  std::memcpy(data + miss_offset_,
+              shader_handle_storage.data() + handle_size_aligned,
+              handle_size_aligned);
+  std::memcpy(data + closest_hit_offset_,
+              shader_handle_storage.data() + handle_size_aligned * 2,
+              handle_size_aligned);
   buffer_->Unmap();
 }
 
