@@ -1,11 +1,10 @@
-
-file(GLOB shader_files ./*.vert ./*.frag ./*.comp ./*.rgen ./*.rchit ./*.rint ./*.rmiss)
-
 file(GLOB shader_extra_files ./*.glsl)
 
 if (APPLE)
+    file(GLOB shader_files ./*.vert ./*.frag ./*.comp)
     set(spv_version vulkan1.1)
 else()
+    file(GLOB shader_files ./*.vert ./*.frag ./*.comp ./*.rgen ./*.rchit ./*.rint ./*.rmiss)
     set(spv_version vulkan1.2)
 endif()
 

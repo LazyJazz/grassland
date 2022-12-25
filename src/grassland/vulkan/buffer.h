@@ -44,6 +44,7 @@ class Buffer {
                     void *dst_data,
                     VkDeviceSize size = 0xffffffffffffffffull,
                     VkDeviceSize offset = 0);
+  [[nodiscard]] VkDeviceAddress GetDeviceAddress() const;
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkBuffer)
