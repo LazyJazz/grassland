@@ -35,13 +35,15 @@ class PhysicalDevice {
 
   [[nodiscard]] VkPhysicalDeviceFeatures GetFeatures() const;
   [[nodiscard]] VkPhysicalDeviceProperties GetProperties() const;
+  [[nodiscard]] VkPhysicalDeviceRayTracingPipelinePropertiesKHR
+  GetRayTracingProperties() const;
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkPhysicalDevice)
   VkPhysicalDeviceProperties2 properties_{};
   VkPhysicalDeviceFeatures2 features_{};
   VkPhysicalDeviceMemoryProperties memory_properties_{};
-  VkPhysicalDeviceRayTracingPipelinePropertiesKHR ray_tracing_properties{};
+  VkPhysicalDeviceRayTracingPipelinePropertiesKHR ray_tracing_properties_{};
   VkPhysicalDeviceRayTracingPipelineFeaturesKHR ray_tracing_features_{};
 };
 

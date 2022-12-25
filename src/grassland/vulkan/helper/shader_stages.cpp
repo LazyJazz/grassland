@@ -11,7 +11,7 @@ const VkPipelineShaderStageCreateInfo *ShaderStages::Data() const {
 }
 
 void ShaderStages::AddShaderModule(
-    ShaderModule *shader_module,
+    const ShaderModule *shader_module,
     VkShaderStageFlagBits shader_stage_flag_bits) {
   VkPipelineShaderStageCreateInfo stage_info{};
   stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

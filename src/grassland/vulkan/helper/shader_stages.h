@@ -5,7 +5,7 @@
 namespace grassland::vulkan::helper {
 class ShaderStages {
  public:
-  void AddShaderModule(ShaderModule *shader_module,
+  void AddShaderModule(const ShaderModule *shader_module,
                        VkShaderStageFlagBits shader_stage_flag_bits);
   [[nodiscard]] uint32_t Size() const;
   [[nodiscard]] const VkPipelineShaderStageCreateInfo *Data() const;

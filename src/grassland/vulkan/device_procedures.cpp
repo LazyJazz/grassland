@@ -65,6 +65,25 @@ void DeviceProcedures::vkDestroyAccelerationStructureKHR(
                                             pAllocator);
 }
 
+VkDeviceAddress DeviceProcedures::vkGetAccelerationStructureDeviceAddressKHR(
+    VkDevice device,
+    const VkAccelerationStructureDeviceAddressInfoKHR *pInfo) {
+  return vkGetAccelerationStructureDeviceAddressKHR_(device, pInfo);
+}
+
+VkResult DeviceProcedures::vkCreateRayTracingPipelinesKHR(
+    VkDevice device,
+    VkDeferredOperationKHR deferredOperation,
+    VkPipelineCache pipelineCache,
+    uint32_t createInfoCount,
+    const VkRayTracingPipelineCreateInfoKHR *pCreateInfos,
+    const VkAllocationCallbacks *pAllocator,
+    VkPipeline *pPipelines) {
+  return vkCreateRayTracingPipelinesKHR_(device, deferredOperation,
+                                         pipelineCache, createInfoCount,
+                                         pCreateInfos, pAllocator, pPipelines);
+}
+
 void DeviceProcedures::SetDevice(Device *device) {
   device_ = device;
   GET_PROCEDURE(device_, vkGetBufferDeviceAddressKHR);
@@ -73,12 +92,33 @@ void DeviceProcedures::SetDevice(Device *device) {
   GET_PROCEDURE(device_, vkCmdBuildAccelerationStructuresKHR);
   GET_PROCEDURE(device_, vkDestroyAccelerationStructureKHR);
   GET_PROCEDURE(device_, vkGetAccelerationStructureDeviceAddressKHR);
+  GET_PROCEDURE(device_, vkCreateRayTracingPipelinesKHR);
+  GET_PROCEDURE(device_, vkGetRayTracingShaderGroupHandlesKHR);
+  GET_PROCEDURE(device_, vkCmdTraceRaysKHR);
+}
+VkResult DeviceProcedures::vkGetRayTracingShaderGroupHandlesKHR(
+    VkDevice device,
+    VkPipeline pipeline,
+    uint32_t firstGroup,
+    uint32_t groupCount,
+    size_t dataSize,
+    void *pData) {
+  return vkGetRayTracingShaderGroupHandlesKHR_(device, pipeline, firstGroup,
+                                               groupCount, dataSize, pData);
 }
 
-VkDeviceAddress DeviceProcedures::vkGetAccelerationStructureDeviceAddressKHR(
-    VkDevice device,
-    const VkAccelerationStructureDeviceAddressInfoKHR *pInfo) {
-  return vkGetAccelerationStructureDeviceAddressKHR_(device, pInfo);
+void DeviceProcedures::vkCmdTraceRaysKHR(
+    VkCommandBuffer commandBuffer,
+    const VkStridedDeviceAddressRegionKHR *pRaygenShaderBindingTable,
+    const VkStridedDeviceAddressRegionKHR *pMissShaderBindingTable,
+    const VkStridedDeviceAddressRegionKHR *pHitShaderBindingTable,
+    const VkStridedDeviceAddressRegionKHR *pCallableShaderBindingTable,
+    uint32_t width,
+    uint32_t height,
+    uint32_t depth) {
+  vkCmdTraceRaysKHR_(commandBuffer, pRaygenShaderBindingTable,
+                     pMissShaderBindingTable, pHitShaderBindingTable,
+                     pCallableShaderBindingTable, width, height, depth);
 }
 
 }  // namespace grassland::vulkan
@@ -136,4 +176,45 @@ vkGetAccelerationStructureDeviceAddressKHR(
     const VkAccelerationStructureDeviceAddressInfoKHR *pInfo) {
   return grassland::vulkan::DeviceProcedures::GetStaticInstance()
       ->vkGetAccelerationStructureDeviceAddressKHR(device, pInfo);
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL vkCreateRayTracingPipelinesKHR(
+    VkDevice device,
+    VkDeferredOperationKHR deferredOperation,
+    VkPipelineCache pipelineCache,
+    uint32_t createInfoCount,
+    const VkRayTracingPipelineCreateInfoKHR *pCreateInfos,
+    const VkAllocationCallbacks *pAllocator,
+    VkPipeline *pPipelines) {
+  return grassland::vulkan::DeviceProcedures::GetStaticInstance()
+      ->vkCreateRayTracingPipelinesKHR(device, deferredOperation, pipelineCache,
+                                       createInfoCount, pCreateInfos,
+                                       pAllocator, pPipelines);
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL
+vkGetRayTracingShaderGroupHandlesKHR(VkDevice device,
+                                     VkPipeline pipeline,
+                                     uint32_t firstGroup,
+                                     uint32_t groupCount,
+                                     size_t dataSize,
+                                     void *pData) {
+  return grassland::vulkan::DeviceProcedures::GetStaticInstance()
+      ->vkGetRayTracingShaderGroupHandlesKHR(device, pipeline, firstGroup,
+                                             groupCount, dataSize, pData);
+}
+
+VKAPI_ATTR void VKAPI_CALL vkCmdTraceRaysKHR(
+    VkCommandBuffer commandBuffer,
+    const VkStridedDeviceAddressRegionKHR *pRaygenShaderBindingTable,
+    const VkStridedDeviceAddressRegionKHR *pMissShaderBindingTable,
+    const VkStridedDeviceAddressRegionKHR *pHitShaderBindingTable,
+    const VkStridedDeviceAddressRegionKHR *pCallableShaderBindingTable,
+    uint32_t width,
+    uint32_t height,
+    uint32_t depth) {
+  grassland::vulkan::DeviceProcedures::GetStaticInstance()->vkCmdTraceRaysKHR(
+      commandBuffer, pRaygenShaderBindingTable, pMissShaderBindingTable,
+      pHitShaderBindingTable, pCallableShaderBindingTable, width, height,
+      depth);
 }
