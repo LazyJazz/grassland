@@ -1,5 +1,6 @@
 #include "grassland/vulkan/raytracing/bottom_level_acceleration_structure.h"
 
+#include "cstring"
 #include "grassland/vulkan/helper/helper.h"
 
 namespace grassland::vulkan::raytracing {
