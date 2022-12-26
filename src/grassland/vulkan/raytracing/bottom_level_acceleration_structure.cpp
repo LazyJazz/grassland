@@ -1,6 +1,7 @@
 #include "grassland/vulkan/raytracing/bottom_level_acceleration_structure.h"
 
 #include "cstring"
+#include "glm/detail/type_vec3.hpp"
 #include "grassland/vulkan/helper/helper.h"
 
 namespace grassland::vulkan::raytracing {
@@ -8,9 +9,9 @@ namespace grassland::vulkan::raytracing {
 BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(
     Device *device,
     CommandPool *command_pool,
-    void *vertices_data,
+    const void *vertices_data,
     uint32_t vertex_buffer_size,
-    uint32_t *indices,
+    const uint32_t *indices,
     uint32_t num_index,
     uint32_t stride)
     : device_(device) {

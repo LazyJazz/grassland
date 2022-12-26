@@ -32,9 +32,7 @@ void RayTracingApp::OnInit() {
   std::vector<uint32_t> indices = {0, 1, 2};
   bottom_level_acceleration_structure_ = std::make_unique<
       grassland::vulkan::raytracing::BottomLevelAccelerationStructure>(
-      core_->GetDevice(), core_->GetCommandPool(), vertices.data(),
-      sizeof(glm::vec3) * vertices.size(), indices.data(), indices.size(),
-      sizeof(glm::vec3));
+      core_->GetDevice(), core_->GetCommandPool(), vertices, indices);
   top_level_acceleration_structure_ = std::make_unique<
       grassland::vulkan::raytracing::TopLevelAccelerationStructure>(
       core_->GetDevice(), core_->GetCommandPool(),
