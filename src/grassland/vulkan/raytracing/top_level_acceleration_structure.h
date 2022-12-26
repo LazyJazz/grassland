@@ -12,6 +12,10 @@ class TopLevelAccelerationStructure {
       const std::vector<
           std::pair<BottomLevelAccelerationStructure *, glm::mat4>> &objects);
   ~TopLevelAccelerationStructure();
+  void UpdateAccelerationStructure(
+      CommandPool *command_pool,
+      const std::vector<
+          std::pair<BottomLevelAccelerationStructure *, glm::mat4>> &objects);
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkAccelerationStructureKHR);
