@@ -79,6 +79,16 @@ void RayTracingApp::OnClose() {
 }
 
 void RayTracingApp::OnUpdate() {
+  static float theta = 0.0f;
+  theta += glm::radians(0.1f);
+
+  top_level_acceleration_structure_->UpdateAccelerationStructure(
+      core_->GetCommandPool(),
+      std::vector<std::pair<
+          grassland::vulkan::raytracing::BottomLevelAccelerationStructure *,
+          glm::mat4>>{
+          {bottom_level_acceleration_structure_.get(),
+           glm::rotate(glm::mat4{1.0f}, theta, glm::vec3{0.0f, 1.0f, 0.0f})}});
 }
 
 void RayTracingApp::OnRender() {
