@@ -4,8 +4,8 @@ namespace grassland::vulkan::raytracing {
 RayTracingPipeline::RayTracingPipeline(Device *device,
                                        PipelineLayout *pipeline_layout,
                                        const ShaderModule &ray_gen_shader,
-                                       const ShaderModule &closest_hit_shader,
-                                       const ShaderModule &miss_shader)
+                                       const ShaderModule &miss_shader,
+                                       const ShaderModule &closest_hit_shader)
     : device_(device) {
   helper::ShaderStages shader_stages;
   std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups;

@@ -2,6 +2,7 @@
 #include <grassland/vulkan/framework/core.h>
 #include <grassland/vulkan/framework/data_buffer.h>
 #include <grassland/vulkan/framework/texture_image.h>
+#include <grassland/vulkan/raytracing/raytracing.h>
 
 namespace grassland::vulkan::framework {
 class UniformBinding {
@@ -127,5 +128,24 @@ class UniformBindingStorageTextures : public UniformBinding {
 
   std::vector<TextureImage *> texture_images_;
   std::vector<VkDescriptorImageInfo> image_infos_;
+};
+
+class UniformBindingAccelerationStructure : public UniformBinding {
+ public:
+  UniformBindingAccelerationStructure(raytracing::TopLevelAccelerationStructure
+                                          *top_level_acceleration_structure,
+                                      VkShaderStageFlags access_stage_flags);
+  ~UniformBindingAccelerationStructure() override = default;
+
+ private:
+  [[nodiscard]] VkDescriptorSetLayoutBinding GetBinding() const override;
+  [[nodiscard]] VkWriteDescriptorSet GetWriteDescriptorSet(
+      int frame_index) override;
+  void BeforeDraw(CommandBuffer *command_buffer,
+                  int frame_index) const override;
+  raytracing::TopLevelAccelerationStructure *top_level_acceleration_structure_{
+      nullptr};
+  VkWriteDescriptorSetAccelerationStructureKHR
+      descriptor_write_acceleration_structure_{};
 };
 }  // namespace grassland::vulkan::framework

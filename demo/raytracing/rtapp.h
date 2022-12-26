@@ -28,13 +28,6 @@ class RayTracingApp {
       top_level_acceleration_structure_;
   std::unique_ptr<grassland::vulkan::framework::StaticBuffer<CameraObject>>
       camera_object_buffer_;
-  std::unique_ptr<grassland::vulkan::DescriptorSetLayout>
-      descriptor_set_layout_;
-  std::unique_ptr<grassland::vulkan::PipelineLayout> pipeline_layout_;
-  std::unique_ptr<grassland::vulkan::DescriptorPool> descriptor_pool_;
-  std::unique_ptr<grassland::vulkan::DescriptorSet> descriptor_set_;
-  std::unique_ptr<grassland::vulkan::raytracing::RayTracingPipeline>
-      ray_tracing_pipeline_;
-  std::unique_ptr<grassland::vulkan::raytracing::ShaderBindingTable>
-      shader_binding_table_;
+  std::unique_ptr<grassland::vulkan::framework::RayTracingRenderNode>
+      ray_tracing_render_node_;
 };

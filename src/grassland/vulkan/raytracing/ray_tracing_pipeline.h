@@ -10,8 +10,8 @@ class RayTracingPipeline {
   RayTracingPipeline(Device *device,
                      PipelineLayout *pipeline_layout,
                      const ShaderModule &ray_gen_shader,
-                     const ShaderModule &closest_hit_shader,
-                     const ShaderModule &miss_shader);
+                     const ShaderModule &miss_shader,
+                     const ShaderModule &closest_hit_shader);
   ~RayTracingPipeline();
 
  private:
