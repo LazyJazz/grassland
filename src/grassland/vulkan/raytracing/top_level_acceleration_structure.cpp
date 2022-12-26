@@ -72,8 +72,7 @@ TopLevelAccelerationStructure::TopLevelAccelerationStructure(
       VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
   acceleration_structure_build_geometry_info.flags =
       VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-  acceleration_structure_build_geometry_info.geometryCount =
-      acceleration_structure_instances.size();
+  acceleration_structure_build_geometry_info.geometryCount = 1;
   acceleration_structure_build_geometry_info.pGeometries =
       &acceleration_structure_geometry;
 
@@ -129,7 +128,7 @@ TopLevelAccelerationStructure::TopLevelAccelerationStructure(
   acceleration_build_geometry_info.mode =
       VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
   acceleration_build_geometry_info.dstAccelerationStructure = handle_;
-  acceleration_build_geometry_info.geometryCount = primitive_count;
+  acceleration_build_geometry_info.geometryCount = 1;
   acceleration_build_geometry_info.pGeometries =
       &acceleration_structure_geometry;
   acceleration_build_geometry_info.scratchData.deviceAddress =
@@ -236,8 +235,7 @@ void TopLevelAccelerationStructure::UpdateAccelerationStructure(
       VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
   acceleration_structure_build_geometry_info.flags =
       VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-  acceleration_structure_build_geometry_info.geometryCount =
-      acceleration_structure_instances.size();
+  acceleration_structure_build_geometry_info.geometryCount = 1;
   acceleration_structure_build_geometry_info.pGeometries =
       &acceleration_structure_geometry;
 
@@ -275,7 +273,7 @@ void TopLevelAccelerationStructure::UpdateAccelerationStructure(
       VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
   acceleration_build_geometry_info.srcAccelerationStructure = handle_;
   acceleration_build_geometry_info.dstAccelerationStructure = handle_;
-  acceleration_build_geometry_info.geometryCount = primitive_count;
+  acceleration_build_geometry_info.geometryCount = 1;
   acceleration_build_geometry_info.pGeometries =
       &acceleration_structure_geometry;
   acceleration_build_geometry_info.scratchData.deviceAddress =

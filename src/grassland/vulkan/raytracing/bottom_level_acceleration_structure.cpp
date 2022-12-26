@@ -69,7 +69,8 @@ BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(
       VK_FORMAT_R32G32B32_SFLOAT;
   acceleration_structure_geometry.geometry.triangles.vertexData =
       vertex_data_device_address;
-  acceleration_structure_geometry.geometry.triangles.maxVertex = 3;
+  acceleration_structure_geometry.geometry.triangles.maxVertex =
+      vertex_buffer_size / stride;
   acceleration_structure_geometry.geometry.triangles.vertexStride = stride;
   acceleration_structure_geometry.geometry.triangles.indexType =
       VK_INDEX_TYPE_UINT32;
