@@ -293,7 +293,52 @@ VkWriteDescriptorSet UniformBindingStorageTextures::GetWriteDescriptorSet(
 
   return descriptorWrite;
 }
+
 void UniformBindingStorageTextures::BeforeDraw(CommandBuffer *command_buffer,
                                                int frame_index) const {
+}
+
+UniformBindingAccelerationStructure::UniformBindingAccelerationStructure(
+    raytracing::TopLevelAccelerationStructure *top_level_acceleration_structure,
+    VkShaderStageFlags access_stage_flags)
+    : UniformBinding(access_stage_flags) {
+  top_level_acceleration_structure_ = top_level_acceleration_structure;
+}
+
+VkDescriptorSetLayoutBinding UniformBindingAccelerationStructure::GetBinding()
+    const {
+  VkDescriptorSetLayoutBinding result{};
+  result.descriptorCount = 1;
+  result.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+  result.stageFlags = access_stage_flags_;
+  result.pImmutableSamplers = nullptr;
+  return result;
+}
+
+VkWriteDescriptorSet UniformBindingAccelerationStructure::GetWriteDescriptorSet(
+    int frame_index) {
+  descriptor_write_acceleration_structure_.sType =
+      VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+  descriptor_write_acceleration_structure_.accelerationStructureCount = 1;
+  descriptor_write_acceleration_structure_.pAccelerationStructures =
+      &top_level_acceleration_structure_->GetHandle();
+  VkWriteDescriptorSet descriptorWrite{};
+
+  descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite.dstSet = nullptr;
+  descriptorWrite.dstBinding = 0;
+  descriptorWrite.dstArrayElement = 0;
+  descriptorWrite.descriptorType =
+      VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+  descriptorWrite.descriptorCount = 1;
+  descriptorWrite.pImageInfo = nullptr;
+  descriptorWrite.pNext = &descriptor_write_acceleration_structure_;
+
+  return descriptorWrite;
+}
+
+void UniformBindingAccelerationStructure::BeforeDraw(
+    CommandBuffer *command_buffer,
+    int frame_index) const {
 }
 }  // namespace grassland::vulkan::framework
