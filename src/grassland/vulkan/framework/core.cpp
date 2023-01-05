@@ -45,23 +45,38 @@ Core::Core(const CoreSettings &core_settings) {
     surface_ = std::make_unique<Surface>(instance_.get(), window_);
   }
 
-  physical_device_ = std::make_unique<PhysicalDevice>(PickPhysicalDevice(
-      instance_.get(), [&core_settings](PhysicalDevice physical_device) {
-        if (core_settings.raytracing_pipeline_required &&
-            !physical_device.HasRayTracingPipeline()) {
-          return -1;
-        }
-        int score = 0;
-        if (core_settings.has_window &&
-            !physical_device.HasPresentationSupport()) {
-          return -1;
-        }
-        score += int(physical_device.DeviceMemorySize() >> 20);
-        if (physical_device.IsDiscreteGPU()) {
-          score *= 2;
-        }
-        return score;
-      }));
+  auto physic_device_eval = [&core_settings](PhysicalDevice physical_device) {
+    if (core_settings.raytracing_pipeline_required &&
+        !physical_device.HasRayTracingPipeline()) {
+      return -1;
+    }
+    int score = 0;
+    if (core_settings.has_window && !physical_device.HasPresentationSupport()) {
+      return -1;
+    }
+    score += int(physical_device.DeviceMemorySize() >> 20);
+    if (physical_device.IsDiscreteGPU()) {
+      score *= 2;
+    }
+    return score;
+  };
+
+  auto physical_devices = GetPhysicalDevices(instance_.get());
+  std::vector<PhysicalDevice> available_physical_devices;
+  for (auto physical_device : physical_devices) {
+    if (physic_device_eval(physical_device) >= 0) {
+      available_physical_devices.push_back(physical_device);
+    }
+  }
+
+  if (0 <= core_settings_.selected_device &&
+      core_settings_.selected_device < available_physical_devices.size()) {
+    physical_device_ = std::make_unique<PhysicalDevice>(
+        available_physical_devices[core_settings_.selected_device]);
+  } else {
+    physical_device_ = std::make_unique<PhysicalDevice>(
+        PickPhysicalDevice(instance_.get(), physic_device_eval));
+  }
 
   physical_device_->PrintDeviceProperties();
 

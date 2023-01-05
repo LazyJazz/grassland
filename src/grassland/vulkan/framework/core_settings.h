@@ -11,5 +11,6 @@ struct CoreSettings {
   uint32_t frames_in_flight{3};
   bool raytracing_pipeline_required{false};
   bool validation_layer{kDefaultEnableValidationLayers};
+  int selected_device{-1};
 };
 }  // namespace grassland::vulkan::framework
