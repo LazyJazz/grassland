@@ -69,10 +69,10 @@ Core::Core(const CoreSettings &core_settings) {
     }
   }
 
-  if (0 <= core_settings_.selected_device_ &&
-      core_settings_.selected_device_ < available_physical_devices.size()) {
+  if (0 <= core_settings_.selected_device &&
+      core_settings_.selected_device < available_physical_devices.size()) {
     physical_device_ = std::make_unique<PhysicalDevice>(
-        available_physical_devices[core_settings_.selected_device_]);
+        available_physical_devices[core_settings_.selected_device]);
   } else {
     physical_device_ = std::make_unique<PhysicalDevice>(
         PickPhysicalDevice(instance_.get(), physic_device_eval));
