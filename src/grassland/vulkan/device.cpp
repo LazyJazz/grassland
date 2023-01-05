@@ -1,5 +1,6 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/device.h>
+#include <grassland/vulkan/device_procedures.h>
 #include <grassland/vulkan/queue.h>
 
 #include <set>
@@ -12,13 +13,15 @@ Device::Device(PhysicalDevice *physical_device,
     : Device(physical_device,
              nullptr,
              extra_device_extensions,
-             enable_validation_layers) {
+             enable_validation_layers,
+             nullptr) {
 }
 
 Device::Device(PhysicalDevice *physical_device,
                Surface *surface,
                const std::vector<const char *> &extra_device_extensions,
-               bool enable_validation_layers)
+               bool enable_validation_layers,
+               void *extraDeviceFeatures)
     : handle_{} {
   physical_device_ = physical_device;
   surface_ = surface;
@@ -87,6 +90,8 @@ Device::Device(PhysicalDevice *physical_device,
   physicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
   physicalDeviceDescriptorIndexingFeatures
       .descriptorBindingVariableDescriptorCount = VK_TRUE;
+
+  physicalDeviceDescriptorIndexingFeatures.pNext = extraDeviceFeatures;
   createInfo.pNext = &physicalDeviceDescriptorIndexingFeatures;
 
   if (vkCreateDevice(physical_device->GetHandle(), &createInfo, nullptr,
@@ -101,6 +106,8 @@ Device::Device(PhysicalDevice *physical_device,
     present_queue_ = std::make_unique<Queue>(
         this, physical_device_->PresentFamilyIndex(surface_));
   }
+
+  DeviceProcedures::GetStaticInstance()->SetDevice(this);
 }
 
 Device::~Device() {

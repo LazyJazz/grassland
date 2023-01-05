@@ -41,8 +41,8 @@ PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle) {
   handle_ = handle;
   if (handle_) {
     properties_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-    properties_.pNext = &ray_tracing_properties;
-    ray_tracing_properties.sType =
+    properties_.pNext = &ray_tracing_properties_;
+    ray_tracing_properties_.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
     vkGetPhysicalDeviceProperties2(handle_, &properties_);
     features_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -209,6 +209,11 @@ uint64_t PhysicalDevice::DeviceMemorySize() const {
                        : 0ull;
   }
   return memory_size;
+}
+
+VkPhysicalDeviceRayTracingPipelinePropertiesKHR
+PhysicalDevice::GetRayTracingProperties() const {
+  return ray_tracing_properties_;
 }
 
 std::vector<PhysicalDevice> GetPhysicalDevices(Instance *instance) {
