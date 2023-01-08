@@ -54,9 +54,9 @@ Core::Core(const CoreSettings &core_settings) {
     if (core_settings.has_window && !physical_device.HasPresentationSupport()) {
       return -1;
     }
-    score += int(physical_device.DeviceMemorySize() >> 20);
+    score += int(physical_device.GetProperties().limits.maxImageDimension2D);
     if (physical_device.IsDiscreteGPU()) {
-      score *= 2;
+      score += 32768;
     }
     return score;
   };
