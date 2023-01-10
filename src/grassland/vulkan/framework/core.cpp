@@ -319,7 +319,7 @@ void Core::EndCommandRecordAndSubmit() {
                                     &presentInfo);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-      glfwPollEvents();
+      LAND_WARN("Present failed.");
     }
   }
 }
@@ -396,10 +396,13 @@ void Core::SetDropCallback(
 
 void Core::GLFWFrameSizeFunc(GLFWwindow *window, int width, int height) {
   auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
-  core->core_settings_.window_width = width;
-  core->core_settings_.window_height = height;
-  core->swapchain_.reset();
-  core->swapchain_ = std::make_unique<Swapchain>(core->GetDevice(), window);
+
+  if (width && height) {
+    core->core_settings_.window_width = width;
+    core->core_settings_.window_height = height;
+    core->swapchain_.reset();
+    core->swapchain_ = std::make_unique<Swapchain>(core->GetDevice(), window);
+  }
 
   if (!core->custom_window_size_function_.empty()) {
     for (auto &func : core->custom_window_size_function_) {
@@ -469,12 +472,18 @@ int Core::GetWindowHeight() const {
 int Core::GetFramebufferWidth() const {
   int width;
   glfwGetFramebufferSize(window_, &width, nullptr);
+  if (!width) {
+    width = core_settings_.window_width;
+  }
   return width;
 }
 
 int Core::GetFramebufferHeight() const {
   int height;
   glfwGetFramebufferSize(window_, nullptr, &height);
+  if (!height) {
+    height = core_settings_.window_height;
+  }
   return height;
 }
 
