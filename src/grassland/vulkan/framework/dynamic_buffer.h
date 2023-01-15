@@ -16,6 +16,8 @@ class DynamicBuffer : public DataBuffer {
   void Sync(int frame_index) override;
   [[nodiscard]] size_t Size() const;
   Ty &operator[](int64_t index);
+  Ty *Map();
+  void Resize(size_t size);
 
  private:
   void RequestMapState(bool requested_map_state);
@@ -23,6 +25,7 @@ class DynamicBuffer : public DataBuffer {
   Ty *mapped_ptr_{nullptr};
   std::unique_ptr<Buffer> host_buffer_;
   std::vector<std::unique_ptr<Buffer>> device_buffers_;
+  VkBufferUsageFlags usage_{};
 };
 
 template <class Ty>
@@ -32,6 +35,7 @@ DynamicBuffer<Ty>::DynamicBuffer(Core *core,
     : DataBuffer(core) {
   size_ = size;
   usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  usage_ = usage;
   host_buffer_ = std::make_unique<Buffer>(
       core_->GetDevice(), sizeof(Ty) * size,
       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -75,13 +79,37 @@ Ty &DynamicBuffer<Ty>::operator[](int64_t index) {
 }
 
 template <class Ty>
+Ty *DynamicBuffer<Ty>::Map() {
+  this->RequestMapState(true);
+  return mapped_ptr_;
+}
+
+template <class Ty>
 void DynamicBuffer<Ty>::Sync(int frame_index) {
   this->RequestMapState(false);
   CopyBuffer(core_->GetCommandPool(), host_buffer_->GetHandle(),
              GetBuffer(frame_index)->GetHandle(), size_ * sizeof(Ty), 0, 0);
 }
+
 template <class Ty>
 VkDeviceSize DynamicBuffer<Ty>::BufferSize() const {
   return size_ * sizeof(Ty);
+}
+
+template <class Ty>
+void DynamicBuffer<Ty>::Resize(size_t size) {
+  size_ = size;
+  core_->GetDevice()->WaitIdle();
+  host_buffer_ = std::make_unique<Buffer>(
+      core_->GetDevice(), sizeof(Ty) * size,
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  device_buffers_.clear();
+  for (int i = 0; i < core_->GetCoreSettings().frames_in_flight; i++) {
+    device_buffers_.push_back(
+        std::make_unique<Buffer>(core_->GetDevice(), sizeof(Ty) * size, usage_,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
+  }
 }
 }  // namespace grassland::vulkan::framework

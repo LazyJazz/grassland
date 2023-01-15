@@ -30,6 +30,7 @@ class RayTracingRenderNode {
                   const std::string &miss_shader_path,
                   const std::string &closest_hit_shader_path);
   void BuildRenderNode();
+  void UpdateDescriptorSetBinding(int binding_index);
   void Draw();
   void Draw(uint32_t width, uint32_t height);
 
