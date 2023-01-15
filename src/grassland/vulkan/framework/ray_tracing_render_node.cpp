@@ -181,4 +181,19 @@ void RayTracingRenderNode::Draw(uint32_t width, uint32_t height) {
   }
 }
 
+void RayTracingRenderNode::UpdateDescriptorSetBinding(int binding_index) {
+  for (int desc_set_index = 0;
+       desc_set_index < core_->GetCoreSettings().frames_in_flight;
+       desc_set_index++) {
+    auto &uniform_binding = uniform_bindings_[binding_index];
+    auto write_descriptor =
+        uniform_binding->GetWriteDescriptorSet(desc_set_index);
+    write_descriptor.dstBinding = binding_index;
+    write_descriptor.dstSet = descriptor_sets_[desc_set_index]->GetHandle();
+
+    vkUpdateDescriptorSets(core_->GetDevice()->GetHandle(), 1,
+                           &write_descriptor, 0, nullptr);
+  }
+}
+
 }  // namespace grassland::vulkan::framework
