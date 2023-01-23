@@ -84,8 +84,14 @@ Core::Core(const CoreSettings &core_settings) {
     LAND_ERROR("[Vulkan] failed to find available device.");
   }
 
+  VkPhysicalDeviceRayQueryFeaturesKHR physical_device_ray_query_features{};
+  physical_device_ray_query_features.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+  physical_device_ray_query_features.rayQuery = VK_TRUE;
   VkPhysicalDeviceRayTracingPipelineFeaturesKHR
       physicalDeviceRayTracingPipelineFeatures{};
+  physicalDeviceRayTracingPipelineFeatures.pNext =
+      &physical_device_ray_query_features;
   physicalDeviceRayTracingPipelineFeatures.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
   physicalDeviceRayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
@@ -112,7 +118,8 @@ Core::Core(const CoreSettings &core_settings) {
                 const char *>{VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
                               VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
                               VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
-                              VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME}
+                              VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+                              VK_KHR_RAY_QUERY_EXTENSION_NAME}
           : std::vector<const char *>{},
       core_settings_.validation_layer,
       core_settings_.raytracing_pipeline_required
