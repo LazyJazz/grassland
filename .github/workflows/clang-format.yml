@@ -18,7 +18,7 @@ env:
 jobs:
   clang_format:
     name: Run clang-format
-    runs-on: [self-hosted, clang-format]
+    runs-on: [self-hosted, Linux]
     strategy:
       matrix:
         check_path:
