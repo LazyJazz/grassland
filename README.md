@@ -6,8 +6,9 @@ Using Vulkan and Direct3D 12 as its backend. (Working in Progress)
 
 ## Build
 
-![auto judge](../../actions/workflows/linux-build.yml/badge.svg)
-![auto judge](../../actions/workflows/windows-build.yml/badge.svg)
+[![Windows Build](https://github.com/LazyJazz/grassland/actions/workflows/windows-build.yml/badge.svg)](https://github.com/LazyJazz/grassland/actions/workflows/windows-build.yml)
+[![Linux Build](https://github.com/LazyJazz/grassland/actions/workflows/linux-build.yml/badge.svg)](https://github.com/LazyJazz/grassland/actions/workflows/linux-build.yml)
+[![macOS Build](https://github.com/LazyJazz/grassland/actions/workflows/macos-build.yml/badge.svg)](https://github.com/LazyJazz/grassland/actions/workflows/macos-build.yml)
 
 1. Clone project `git clone git@github.com:LazyJazz/grassland.git`
 2. Enter directory `cd grassland`
