@@ -62,9 +62,8 @@ void RayTracingApp::OnInit() {
                                               VK_SHADER_STAGE_RAYGEN_BIT_KHR);
   ray_tracing_render_node_->AddUniformBinding(camera_object_buffer_.get(),
                                               VK_SHADER_STAGE_RAYGEN_BIT_KHR);
-  ray_tracing_render_node_->SetShaders("../shaders/raytracing.rgen.spv",
-                                       "../shaders/raytracing.rmiss.spv",
-                                       "../shaders/raytracing.rchit.spv");
+  ray_tracing_render_node_->SetShaders(
+      "raytracing.rgen.spv", "raytracing.rmiss.spv", "raytracing.rchit.spv");
   ray_tracing_render_node_->BuildRenderNode();
 }
 

@@ -109,10 +109,10 @@ void App::OnInit() {
 
   pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(
       device_.get(), descriptor_set_layout_.get());
-  vulkan::ShaderModule vert_shader(
-      device_.get(), "../shaders/color_shader_0.5_alpha.vert.spv");
-  vulkan::ShaderModule frag_shader(
-      device_.get(), "../shaders/color_shader_0.5_alpha.frag.spv");
+  vulkan::ShaderModule vert_shader(device_.get(),
+                                   "color_shader_0.5_alpha.vert.spv");
+  vulkan::ShaderModule frag_shader(device_.get(),
+                                   "color_shader_0.5_alpha.frag.spv");
   vulkan::helper::ShaderStages shader_stages;
   shader_stages.AddShaderModule(&vert_shader, VK_SHADER_STAGE_VERTEX_BIT);
   shader_stages.AddShaderModule(&frag_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
