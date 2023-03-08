@@ -1,8 +1,5 @@
 
 function(add_demo demo_name)
-    set(exe_name ${demo_name}_demo)
-    add_executable(${exe_name})
-    set_target_properties(${exe_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${demo_name})
     if (${demo_name} MATCHES "cuda$")
         if(CUDA_FOUND)
             file(GLOB demo_sources ${demo_name}/*.cpp ${demo_name}/*.hpp ${demo_name}/*.c ${demo_name}/*.h ${demo_name}/*.cu ${demo_name}/*.cuh)
@@ -13,6 +10,10 @@ function(add_demo demo_name)
     else()
         file(GLOB demo_sources ${demo_name}/*.cpp ${demo_name}/*.hpp ${demo_name}/*.c ${demo_name}/*.h)
     endif()
+
+    set(exe_name ${demo_name}_demo)
+    add_executable(${exe_name})
+    set_target_properties(${exe_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${demo_name})
 
     foreach(demo_source ${demo_sources})
         target_sources(${exe_name} PRIVATE ${demo_source})
