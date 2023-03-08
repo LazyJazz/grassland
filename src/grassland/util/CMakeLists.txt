@@ -8,4 +8,4 @@ set(GRASSLAND_LIBS ${GRASSLAND_LIBS} PARENT_SCOPE)
 
 add_library(${CURRENT_LIB_NAME} ${source_files})
 target_include_directories(${CURRENT_LIB_NAME} PRIVATE ${GRASSLAND_INCLUDE_DIR} ${GRASSLAND_EXTERNAL_INCLUDE_DIRS})
-target_link_libraries(${CURRENT_LIB_NAME} PRIVATE spdlog)
+target_link_libraries(${CURRENT_LIB_NAME} PRIVATE spdlog::spdlog)
