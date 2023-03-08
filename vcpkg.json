@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "grassland",
+  "version-string": "0.1.0",
+  "description": "Grassland",
+  "dependencies": [
+    "glfw3",
+    "freetype",
+    "glm",
+    "stb",
+    "spdlog",
+    "imgui",
+    "abseil",
+    "gtest"
+  ]
+}
