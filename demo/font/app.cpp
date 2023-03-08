@@ -31,10 +31,8 @@ void FontViewer::OnInit() {
                                  VK_SHADER_STAGE_VERTEX_BIT);
   render_node_->VertexInput({VK_FORMAT_R32G32_SFLOAT});
   render_node_->AddColorAttachment(VK_FORMAT_B8G8R8A8_UNORM);
-  render_node_->AddShader("../shaders/font_shader.vert.spv",
-                          VK_SHADER_STAGE_VERTEX_BIT);
-  render_node_->AddShader("../shaders/font_shader.frag.spv",
-                          VK_SHADER_STAGE_FRAGMENT_BIT);
+  render_node_->AddShader("font_shader.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+  render_node_->AddShader("font_shader.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
   render_node_->BuildRenderNode();
   vertex_buffer_ =
       std::make_unique<grassland::vulkan::framework::StaticBuffer<glm::vec2>>(

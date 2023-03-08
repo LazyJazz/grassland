@@ -59,20 +59,18 @@ int main() {
 
   std::unique_ptr<TextureImage> texture = std::make_unique<TextureImage>(
       &core, core_settings.window_width, core_settings.window_height);
-  texture->ReadImage("../textures/xor_grid.png");
+  texture->ReadImage("../../textures/xor_grid.png");
   std::unique_ptr<grassland::vulkan::Sampler> sampler =
       std::make_unique<grassland::vulkan::Sampler>(core.GetDevice());
 
   render_node->AddColorAttachment(core.GetSwapchain()->GetFormat());
   render_node->AddDepthAttachment();
-  render_node->AddShader("../shaders/color_shader.vert.spv",
-                         VK_SHADER_STAGE_VERTEX_BIT);
-  render_node->AddShader("../shaders/color_shader.frag.spv",
-                         VK_SHADER_STAGE_FRAGMENT_BIT);
+  render_node->AddShader("color_shader.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+  render_node->AddShader("color_shader.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
   render_node->AddUniformBinding(uniform_buffer.get(),
                                  VK_SHADER_STAGE_VERTEX_BIT);
-  // render_node->AddUniformBinding(texture.get(), sampler.get(),
-  // VK_SHADER_STAGE_FRAGMENT_BIT);
+  render_node->AddUniformBinding(texture.get(), sampler.get(),
+                                 VK_SHADER_STAGE_FRAGMENT_BIT);
   render_node->VertexInput(
       {VK_FORMAT_R32G32B32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT});
   render_node->BuildRenderNode();

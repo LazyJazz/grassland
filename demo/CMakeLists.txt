@@ -32,14 +32,13 @@ function(add_demo demo_name)
     endif()
 
     if (shader_files)
-        message("${demo_name} found shader.")
+        message("[${demo_name}] Shader file detected.")
         foreach (shader ${shader_files})
             get_filename_component(file_name ${shader} NAME)
             get_filename_component(full_path ${shader} ABSOLUTE)
             set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/${demo_name})
             set(output_file ${output_dir}/${file_name}.spv)
             set(compiled_shaders ${compiled_shaders} ${output_file})
-            message("output spv shader: ${output_file}")
             set_source_files_properties(${shader} PROPERTIES HEADER_FILE_ONLY TRUE)
             add_custom_command(
                     OUTPUT ${output_file}
