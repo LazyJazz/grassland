@@ -27,10 +27,21 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure CMake & Build
+      - name: Install vcpkg
+        run: ${{github.workspace}}/external/vcpkg/bootstrap-vcpkg.sh
+
+      - name: Install packages
+        run: ${{github.workspace}}/external/vcpkg/vcpkg install
+
+      - name: Configure CMake & Build MSVC
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: ${{github.workspace}}/.github/test/windows-cmake.bat ${{github.workspace}}/build ${{env.BUILD_TYPE}}
+        run: ${{github.workspace}}/.github/test/windows-cmake-msvc.bat ${{github.workspace}} ${{env.BUILD_TYPE}}
+
+      - name: Configure CMake & Build Clang
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: ${{github.workspace}}/.github/test/windows-cmake-clang.bat ${{github.workspace}} ${{env.BUILD_TYPE}}
   build-clang:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
@@ -41,8 +52,3 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-
-      - name: Configure CMake & Build
-        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: ${{github.workspace}}/.github/test/windows-cmake-clang.bat ${{github.workspace}} ${{env.BUILD_TYPE}}
