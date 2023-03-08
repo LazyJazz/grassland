@@ -2,12 +2,26 @@ cmake_minimum_required(VERSION 3.22)
 
 project(grassland)
 
+find_package(CUDA)
+
+if (CUDA_FOUND)
+    message("CUDA Found.")
+
+    if(NOT DEFINED ${CMAKE_CUDA_ARCHITECTURES})
+        set(CMAKE_CUDA_ARCHITECTURES 52 61 75)
+    endif()
+
+    project(grassland CUDA CXX)
+    add_compile_definitions(GRASSLAND_CUDA_ENABLE)
+    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+
 if (MSVC AND ${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
     message("Using msvc-clang compiler")
     add_compile_options(/EHsc)
 endif()
-
-set(CMAKE_CXX_STANDARD 17)
 
 set(GRASSLAND_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(GRASSLAND_INCLUDE_DIR ${GRASSLAND_SOURCE_DIR}/src)
