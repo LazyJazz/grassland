@@ -1,5 +1,8 @@
 #include "fluid_app.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 FluidApp::FluidApp(const FluidAppSettings &settings) {
   settings_ = settings;
   grassland::vulkan::framework::CoreSettings core_settings{};
@@ -50,9 +53,12 @@ void FluidApp::OnInit() {
                                  VK_SHADER_STAGE_VERTEX_BIT);
   render_node_->BuildRenderNode();
 
-  camera_ = Camera(glm::vec3{0.0f, 0.0f, 5.0f}, glm::vec3{0.0f});
+  camera_ =
+      Camera(glm::vec3{-10.0f, 20.0f, 20.0f}, glm::vec3{10.0f, 10.0f, 10.0f});
   RegisterSphere();
   RegisterCylinder();
+
+  InitParticles();
 }
 
 void FluidApp::OnLoop() {
@@ -64,6 +70,7 @@ void FluidApp::OnClose() {
 }
 
 void FluidApp::OnUpdate() {
+  UpdatePhysicalSystem();
   DrawObjects();
   UpdateCamera();
   UpdateDynamicInfos();
@@ -72,10 +79,65 @@ void FluidApp::OnUpdate() {
 void FluidApp::DrawObjects() {
   render_infos_.clear();
   render_objects_.clear();
-  Line({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.05f, {1.0f, 0.0f, 0.0f, 1.0f});
-  Line({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, 0.05f, {0.0f, 1.0f, 0.0f, 1.0f});
-  Line({0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, 0.05f, {0.0f, 0.0f, 1.0f, 1.0f});
-  Sphere({0.0f, 0.0f, 0.0f}, 0.1f, {1.0f, 1.0f, 1.0f, 0.0f});
+  DrawLine({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.03f,
+           {1.0f, 0.0f, 0.0f, 1.0f});
+  DrawLine({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, 0.03f,
+           {0.0f, 1.0f, 0.0f, 1.0f});
+  DrawLine({0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, 0.03f,
+           {0.0f, 0.0f, 1.0f, 1.0f});
+  DrawSphere({0.0f, 0.0f, 0.0f}, 0.1f, {1.0f, 1.0f, 1.0f, 0.0f});
+
+  {
+    const glm::vec3 origin = BOUNDARY_CENTER;
+    const float sphere_radius = BOUNDARY_RADIUS;
+    const float thickness = 0.01f;
+    const glm::vec4 color = {0.5f, 0.6f, 0.8f, 1.0f};
+    float pi = glm::pi<float>();
+    int precision = 12;
+    float inv_precision = 1.0f / precision;
+    for (int i = 0; i < precision; i++) {
+      int i1 = i + 1;
+      float sin_i = std::sin(i * inv_precision * pi),
+            cos_i = std::cos(i * inv_precision * pi);
+      float sin_i1 = std::sin(i1 * inv_precision * pi),
+            cos_i1 = std::cos(i1 * inv_precision * pi);
+      for (int j = 0; j < precision * 2; j++) {
+        float sin_j = std::sin(j * inv_precision * pi);
+        float cos_j = std::cos(j * inv_precision * pi);
+        int j1 = j + 1;
+        float sin_j1 = std::sin(j1 * inv_precision * pi);
+        float cos_j1 = std::cos(j1 * inv_precision * pi);
+        DrawLine(
+            glm::vec3{sin_i1 * sin_j, cos_i1, sin_i1 * cos_j} * sphere_radius +
+                origin,
+            glm::vec3{sin_i * sin_j, cos_i, sin_i * cos_j} * sphere_radius +
+                origin,
+            thickness, color);
+        if (i) {
+          DrawLine(
+              glm::vec3{sin_i * sin_j1, cos_i, sin_i * cos_j1} * sphere_radius +
+                  origin,
+              glm::vec3{sin_i * sin_j, cos_i, sin_i * cos_j} * sphere_radius +
+                  origin,
+              thickness, color);
+          DrawSphere(
+              glm::vec3{sin_i * sin_j, cos_i, sin_i * cos_j} * sphere_radius +
+                  origin,
+              0.05f, glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
+        }
+      }
+    }
+
+    DrawSphere(glm::vec3{0.0f, -1.0f, 0.0f} * sphere_radius + origin, 0.05f,
+               glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
+    DrawSphere(glm::vec3{0.0f, 1.0f, 0.0f} * sphere_radius + origin, 0.05f,
+               glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
+  }
+
+  for (auto &particle : particles_) {
+    DrawSphere(particle.position, RENDER_SIZE,
+               glm::vec4{0.2f, 0.2f, 0.8f, 1.0f});
+  }
 }
 
 void FluidApp::UpdateDynamicInfos() {
@@ -102,10 +164,16 @@ void FluidApp::OnRender() {
   // index_buffer_->Size(), 0, 1);
   render_node_->BeginDraw();
   for (int i = 0; i < render_objects_.size(); i++) {
+    int last_i = i;
+    while (last_i + 1 < render_objects_.size() &&
+           render_objects_[last_i + 1] == render_objects_[i]) {
+      last_i++;
+    }
     render_node_->DrawDirect(object_models_[render_objects_[i]].first.get(),
                              object_models_[render_objects_[i]].second.get(),
                              object_models_[render_objects_[i]].second->Size(),
-                             i);
+                             i, last_i - i + 1);
+    i = last_i;
   }
   render_node_->EndDraw();
   core_->Output(frame_image_.get());
@@ -175,7 +243,7 @@ void FluidApp::RegisterSphere() {
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
   auto pi = glm::radians(180.0f);
-  const auto precision = 60;
+  const auto precision = 20;
   const auto inv_precision = 1.0f / float(precision);
   std::vector<glm::vec2> circle;
   for (int i = 0; i <= precision * 2; i++) {
@@ -238,10 +306,10 @@ void FluidApp::DrawObject(int model_id, glm::mat4 model, glm::vec4 color) {
   render_infos_.push_back({model, color});
 }
 
-void FluidApp::Line(const glm::vec3 &v0,
-                    const glm::vec3 &v1,
-                    float thickness,
-                    const glm::vec4 &color) {
+void FluidApp::DrawLine(const glm::vec3 &v0,
+                        const glm::vec3 &v1,
+                        float thickness,
+                        const glm::vec4 &color) {
   auto y_axis = (v1 - v0) * 0.5f;
   if (glm::length(y_axis) < 1e-4f)
     return;
@@ -260,9 +328,9 @@ void FluidApp::Line(const glm::vec3 &v0,
              color);
 }
 
-void FluidApp::Sphere(const glm::vec3 &origin,
-                      float radius,
-                      const glm::vec4 &color) {
+void FluidApp::DrawSphere(const glm::vec3 &origin,
+                          float radius,
+                          const glm::vec4 &color) {
   DrawObject(
       sphere_model_id_,
       glm::mat4{glm::vec4{radius, 0.0f, 0.0f, 0.0f},

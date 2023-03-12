@@ -1,6 +1,8 @@
 #pragma once
 #include "camera.h"
 #include "grassland/grassland.h"
+#include "params.h"
+#include "particle.h"
 
 struct Vertex {
   glm::vec3 position;
@@ -13,7 +15,7 @@ struct RenderInfo {
 };
 
 struct FluidAppSettings {
-  uint32_t num_particle{65536};
+  uint32_t num_particle{NUM_PARTICLE};
 };
 
 class FluidApp {
@@ -29,15 +31,20 @@ class FluidApp {
   void OnUpdate();
   void OnRender();
 
+  void InitParticles();
+
   void DrawObject(int model_id, glm::mat4 model, glm::vec4 color);
-  void Line(const glm::vec3 &v0,
-            const glm::vec3 &v1,
-            float thickness,
-            const glm::vec4 &color = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
-  void Sphere(const glm::vec3 &origin, float radius, const glm::vec4 &color);
+  void DrawLine(const glm::vec3 &v0,
+                const glm::vec3 &v1,
+                float thickness,
+                const glm::vec4 &color = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
+  void DrawSphere(const glm::vec3 &origin,
+                  float radius,
+                  const glm::vec4 &color);
   void DrawObjects();
   void UpdateCamera();
   void UpdateDynamicInfos();
+  void UpdatePhysicalSystem();
 
   void RegisterSphere();
   void RegisterCylinder();
@@ -65,4 +72,7 @@ class FluidApp {
   Camera camera_{};
   int sphere_model_id_{};
   int cylinder_model_id_{};
+
+  /* Fluid Content */
+  std::vector<Particle> particles_;
 };
