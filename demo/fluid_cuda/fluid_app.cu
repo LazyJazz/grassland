@@ -3,6 +3,7 @@
 #include "curand.h"
 #include "curand_kernel.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include "grid.cuh"
 
 #define BLOCK_SIZE 256
 #define LAUNCH_SIZE(x) ((x + (BLOCK_SIZE - 1)) / BLOCK_SIZE), BLOCK_SIZE
