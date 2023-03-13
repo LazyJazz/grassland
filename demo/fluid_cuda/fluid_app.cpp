@@ -3,11 +3,20 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
-FluidApp::FluidApp(const FluidAppSettings &settings) {
+FluidApp::FluidApp(const FluidAppSettings &settings)
+    : u_mass_grid_(glm::ivec3{GRID_SIZE + 1, GRID_SIZE, GRID_SIZE},
+                   DELTA_X,
+                   glm::vec3{0.0f, 0.5f, 0.5f}),
+      v_mass_grid_(glm::ivec3{GRID_SIZE, GRID_SIZE + 1, GRID_SIZE},
+                   DELTA_X,
+                   glm::vec3{0.5f, 0.0f, 0.5f}),
+      w_mass_grid_(glm::ivec3{GRID_SIZE, GRID_SIZE, GRID_SIZE + 1},
+                   DELTA_X,
+                   glm::vec3{0.5f, 0.5f, 0.0f}) {
   settings_ = settings;
   grassland::vulkan::framework::CoreSettings core_settings{};
-  core_settings.window_width = 1024;
-  core_settings.window_height = 1024;
+  core_settings.window_width = 2048;
+  core_settings.window_height = 2048;
   core_settings.window_title = "Fluid Demo";
   core_ = std::make_unique<grassland::vulkan::framework::Core>(core_settings);
 }

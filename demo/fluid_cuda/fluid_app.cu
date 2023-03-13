@@ -60,7 +60,23 @@ __global__ void AdvectParticleKernel(Particle *particles,int n_particles) {
 void FluidApp::UpdatePhysicalSystem() {
   const int n_particles = settings_.num_particle;
   thrust::device_vector<Particle> dev_particles = particles_;
+  Grid<float> u_grid(glm::ivec3{GRID_SIZE + 1, GRID_SIZE, GRID_SIZE}, DELTA_X, glm::vec3{0.0f, 0.5f, 0.5f});
+  Grid<float> v_grid(glm::ivec3{GRID_SIZE, GRID_SIZE + 1, GRID_SIZE}, DELTA_X, glm::vec3{0.5f, 0.0f, 0.5f});
+  Grid<float> w_grid(glm::ivec3{GRID_SIZE, GRID_SIZE, GRID_SIZE + 1}, DELTA_X, glm::vec3{0.5f, 0.5f, 0.0f});
+  Grid<float> u_weight_grid(glm::ivec3{GRID_SIZE + 1, GRID_SIZE, GRID_SIZE}, DELTA_X, glm::vec3{0.0f, 0.5f, 0.5f});
+  Grid<float> v_weight_grid(glm::ivec3{GRID_SIZE, GRID_SIZE + 1, GRID_SIZE}, DELTA_X, glm::vec3{0.5f, 0.0f, 0.5f});
+  Grid<float> w_weight_grid(glm::ivec3{GRID_SIZE, GRID_SIZE, GRID_SIZE + 1}, DELTA_X, glm::vec3{0.5f, 0.5f, 0.0f});
   ApplyGravity<<<LAUNCH_SIZE(n_particles)>>>(dev_particles.data().get(), n_particles);
   AdvectParticleKernel<<<LAUNCH_SIZE(n_particles)>>>(dev_particles.data().get(), n_particles);
   thrust::copy(dev_particles.begin(), dev_particles.end(), particles_.begin());
+}
+
+__global__ void InitMassCoeKernel(Grid<float> &grid) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int idy = blockIdx.y * blockDim.y + threadIdx.z;
+  int idz = blockIdx.z * blockDim.z + threadIdx.z;
+  int id = grid.IndexConv(idx, idy, idz);
+}
+
+void FluidApp::InitMassCoe() {
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "camera.h"
 #include "grassland/grassland.h"
+#include "grid.cuh"
 #include "params.h"
 #include "particle.h"
 
@@ -31,6 +32,7 @@ class FluidApp {
   void OnUpdate();
   void OnRender();
 
+  void InitMassCoe();
   void InitParticles();
 
   void DrawObject(int model_id, glm::mat4 model, glm::vec4 color);
@@ -75,4 +77,7 @@ class FluidApp {
 
   /* Fluid Content */
   std::vector<Particle> particles_;
+  Grid<float> u_mass_grid_;
+  Grid<float> v_mass_grid_;
+  Grid<float> w_mass_grid_;
 };
