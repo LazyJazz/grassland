@@ -324,48 +324,130 @@ void Fluid2D::SolveParticleDynamics() {
     }
   }
 
-  //   std::cout <<
-  //   "========================================================================================================\n";
-  //   std::cout << std::fixed << std::setprecision(7);
-  //   for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
-  //    for (int x = 0; x < GRID_SIZE_X; x++) {
-  //      std::cout << v_grid[0][x][y] << ' ';
-  //    }
-  //    std::cout << std::endl;
-  //   }
-  //   std::cout <<
-  //   "--------------------------------------------------------------------------------------------------------\n";
-  //   for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
-  //    for (int x = 0; x < GRID_SIZE_X; x++) {
-  //      std::cout << v_grid[1][x][y] << ' ';
-  //    }
-  //    std::cout << std::endl;
-  //   }
-  //   std::cout <<
-  //   "--------------------------------------------------------------------------------------------------------\n";
-  //   std::cout << std::fixed << std::setprecision(7);
-  //   for (int y = 0; y < GRID_SIZE_Y; y++) {
-  //    for (int x = 0; x < GRID_SIZE_X + 1; x++) {
-  //      std::cout << u_grid[0][x][y] << ' ';
-  //    }
-  //    std::cout << std::endl;
-  //   }
-  //   std::cout <<
-  //   "--------------------------------------------------------------------------------------------------------\n";
-  //   for (int y = 0; y < GRID_SIZE_Y; y++) {
-  //    for (int x = 0; x < GRID_SIZE_X + 1; x++) {
-  //      std::cout << u_grid[1][x][y] << ' ';
-  //    }
-  //    std::cout << std::endl;
-  //   }
-  std::cout << "---------------------------------------------------------------"
-               "-----------------------------------------\n";
-  for (int y = 0; y < GRID_SIZE_Y; y++) {
-    for (int x = 0; x < GRID_SIZE_X; x++) {
-      std::cout << level_set[x][y] << ' ';
+  {
+    std::memset(u_weight_grid, 0, sizeof(u_weight_grid));
+    std::memset(v_weight_grid, 0, sizeof(v_weight_grid));
+    const int precision = 16;
+    const float inv_precision = 1.0f / (float)precision;
+
+    for (int x = 0; x < GRID_SIZE_X + 1; x++) {
+      for (int y = 0; y < GRID_SIZE_Y; y++) {
+        glm::vec2 grid_point_pos{x * DELTA_X, y * DELTA_X};
+        for (int k = 0; k < precision; k++) {
+          float rel_scale = (k + 0.5f) * inv_precision;
+          auto sample_point =
+              grid_point_pos + glm::vec2{0.0f, rel_scale * DELTA_X};
+          if (InsideContainer(sample_point)) {
+            auto level_set_inter = level_set[x][y] * (1.0f - rel_scale) +
+                                   level_set[x][y + 1] * rel_scale;
+            if (level_set_inter > 0.0f) {
+              u_weight_grid[TYPE_LIQ][x][y] += inv_precision;
+            } else {
+              u_weight_grid[TYPE_AIR][x][y] += inv_precision;
+            }
+          }
+        }
+      }
     }
-    std::cout << std::endl;
+
+    for (int x = 0; x < GRID_SIZE_X; x++) {
+      for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
+        glm::vec2 grid_point_pos{x * DELTA_X, y * DELTA_X};
+        for (int k = 0; k < precision; k++) {
+          float rel_scale = (k + 0.5f) * inv_precision;
+          auto sample_point =
+              grid_point_pos + glm::vec2{rel_scale * DELTA_X, 0.0f};
+          if (InsideContainer(sample_point)) {
+            auto level_set_inter = level_set[x][y] * (1.0f - rel_scale) +
+                                   level_set[x + 1][y] * rel_scale;
+            if (level_set_inter > 0.0f) {
+              v_weight_grid[TYPE_LIQ][x][y] += inv_precision;
+            } else {
+              v_weight_grid[TYPE_AIR][x][y] += inv_precision;
+            }
+          }
+        }
+      }
+    }
   }
+
+  //    std::cout <<
+  //        "========================================================================================================\n";
+  //    std::cout << std::fixed << std::setprecision(7);
+  //    for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X; x++) {
+  //        std::cout << v_grid[0][x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
+  //    std::cout <<
+  //        "--------------------------------------------------------------------------------------------------------\n";
+  //    for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X; x++) {
+  //        std::cout << v_grid[1][x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
+  //    std::cout <<
+  //        "--------------------------------------------------------------------------------------------------------\n";
+  //    std::cout << std::fixed << std::setprecision(7);
+  //    for (int y = 0; y < GRID_SIZE_Y; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X + 1; x++) {
+  //        std::cout << u_grid[0][x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
+  //    std::cout <<
+  //        "--------------------------------------------------------------------------------------------------------\n";
+  //    for (int y = 0; y < GRID_SIZE_Y; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X + 1; x++) {
+  //        std::cout << u_grid[1][x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
+
+  //    std::cout <<
+  //        "========================================================================================================\n";
+  //    std::cout << std::fixed << std::setprecision(7);
+  //    for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X; x++) {
+  //        std::cout << v_weight_grid[0][x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
+  //    std::cout <<
+  //        "--------------------------------------------------------------------------------------------------------\n";
+  //    for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X; x++) {
+  //        std::cout << v_weight_grid[1][x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
+  //    std::cout <<
+  //        "--------------------------------------------------------------------------------------------------------\n";
+  //    std::cout << std::fixed << std::setprecision(7);
+  //    for (int y = 0; y < GRID_SIZE_Y; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X + 1; x++) {
+  //        std::cout << u_weight_grid[0][x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
+  //    std::cout <<
+  //        "--------------------------------------------------------------------------------------------------------\n";
+  //    for (int y = 0; y < GRID_SIZE_Y; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X + 1; x++) {
+  //        std::cout << u_weight_grid[1][x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
+  //    std::cout <<
+  //        "--------------------------------------------------------------------------------------------------------\n";
+  //    for (int y = 0; y < GRID_SIZE_Y; y++) {
+  //      for (int x = 0; x < GRID_SIZE_X; x++) {
+  //        std::cout << level_set[x][y] << ' ';
+  //      }
+  //      std::cout << std::endl;
+  //    }
 
   for (auto &particle : particles) {
     particle.position += particle.velocity * delta_t;
