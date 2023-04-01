@@ -371,40 +371,117 @@ void Fluid2D::SolveParticleDynamics() {
     }
   }
 
-  //    std::cout <<
-  //        "========================================================================================================\n";
-  //    std::cout << std::fixed << std::setprecision(7);
-  //    for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
-  //      for (int x = 0; x < GRID_SIZE_X; x++) {
-  //        std::cout << v_grid[0][x][y] << ' ';
+  std::cout << std::fixed << std::setprecision(7);
+  std::memset(divergence, 0, sizeof(divergence));
+  for (int y = 0; y < GRID_SIZE_Y; y++) {
+    for (int x = 0; x < GRID_SIZE_X; x++) {
+      int id = y * GRID_SIZE_X + x;
+      divergence[id] += u_weight_grid[0][x][y] * u_grid[0][x][y] +
+                        u_weight_grid[1][x][y] * u_grid[1][x][y];
+      divergence[id] += v_weight_grid[0][x][y] * v_grid[0][x][y] +
+                        v_weight_grid[1][x][y] * v_grid[1][x][y];
+      divergence[id] -= u_weight_grid[0][x + 1][y] * u_grid[0][x + 1][y] +
+                        u_weight_grid[1][x + 1][y] * u_grid[1][x + 1][y];
+      divergence[id] -= v_weight_grid[0][x][y + 1] * v_grid[0][x][y + 1] +
+                        v_weight_grid[1][x][y + 1] * v_grid[1][x][y + 1];
+    }
+  }
+
+  SolvePressure();
+  //  SolvePressureImpactToDivergence(pressure, buffer);
+  //  for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+  //    std::cout << buffer[i] << ' ' << divergence[i] << std::endl;
+  //  }
+  for (int y = 0; y < GRID_SIZE_Y; y++) {
+    for (int x = 1; x < GRID_SIZE_X; x++) {
+      int id = y * GRID_SIZE_X + x;
+      u_grid[TYPE_AIR][x][y] =
+          (pressure[id - 1] - pressure[id]) / (RHO_AIR * DELTA_X) * delta_t;
+      u_grid[TYPE_LIQ][x][y] =
+          (pressure[id - 1] - pressure[id]) / (RHO_LIQ * DELTA_X) * delta_t;
+    }
+  }
+
+  for (int y = 1; y < GRID_SIZE_Y; y++) {
+    for (int x = 0; x < GRID_SIZE_X; x++) {
+      int id = y * GRID_SIZE_X + x;
+      v_grid[TYPE_AIR][x][y] = (pressure[id - GRID_SIZE_X] - pressure[id]) /
+                               (RHO_AIR * DELTA_X) * delta_t;
+      v_grid[TYPE_LIQ][x][y] = (pressure[id - GRID_SIZE_X] - pressure[id]) /
+                               (RHO_LIQ * DELTA_X) * delta_t;
+    }
+  }
+
+  for (auto particle : particles) {
+    auto u_pos =
+        glm::vec2{u_grid_transform * glm::vec3{particle.position, 1.0f}};
+    auto v_pos =
+        glm::vec2{v_grid_transform * glm::vec3{particle.position, 1.0f}};
+    glm::ivec2 u_ipos{u_pos + 0.5f};
+    glm::ivec2 v_ipos{v_pos + 0.5f};
+    glm::vec2 vel_change{}, vel_weight{};
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        glm::ivec2 offset{i, j};
+        auto u_opos = u_ipos + offset;
+        auto v_opos = v_ipos + offset;
+        if (u_opos.x >= 0 && u_opos.x < GRID_SIZE_X + 1 && u_opos.y >= 0 &&
+            u_opos.y < GRID_SIZE_Y) {
+          auto weight = kernel_func(u_pos - glm::vec2{u_opos});
+          vel_weight.x += weight;
+          vel_change.x += weight * u_grid[particle.type][u_opos.x][u_opos.y];
+        }
+        if (v_opos.x >= 0 && v_opos.x < GRID_SIZE_X && v_opos.y >= 0 &&
+            v_opos.y < GRID_SIZE_Y + 1) {
+          auto weight = kernel_func(v_pos - glm::vec2{v_opos});
+          vel_weight.y += weight;
+          vel_change.y += weight * v_grid[particle.type][v_opos.x][v_opos.y];
+        }
+      }
+    }
+    if (std::abs(vel_weight.x) > 1e-4f) {
+      vel_change.x /= vel_weight.x;
+    }
+    if (std::abs(vel_weight.y) > 1e-4f) {
+      vel_change.y /= vel_weight.y;
+    }
+    particle.velocity += vel_change;
+  }
+
+  //      std::cout <<
+  //          "========================================================================================================\n";
+  //      std::cout << std::fixed << std::setprecision(7);
+  //      for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
+  //        for (int x = 0; x < GRID_SIZE_X; x++) {
+  //          std::cout << v_grid[0][x][y] << ' ';
+  //        }
+  //        std::cout << std::endl;
   //      }
-  //      std::cout << std::endl;
-  //    }
-  //    std::cout <<
-  //        "--------------------------------------------------------------------------------------------------------\n";
-  //    for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
-  //      for (int x = 0; x < GRID_SIZE_X; x++) {
-  //        std::cout << v_grid[1][x][y] << ' ';
+  //      std::cout <<
+  //          "--------------------------------------------------------------------------------------------------------\n";
+  //      for (int y = 0; y < GRID_SIZE_Y + 1; y++) {
+  //        for (int x = 0; x < GRID_SIZE_X; x++) {
+  //          std::cout << v_grid[1][x][y] << ' ';
+  //        }
+  //        std::cout << std::endl;
   //      }
-  //      std::cout << std::endl;
-  //    }
-  //    std::cout <<
-  //        "--------------------------------------------------------------------------------------------------------\n";
-  //    std::cout << std::fixed << std::setprecision(7);
-  //    for (int y = 0; y < GRID_SIZE_Y; y++) {
-  //      for (int x = 0; x < GRID_SIZE_X + 1; x++) {
-  //        std::cout << u_grid[0][x][y] << ' ';
+  //      std::cout <<
+  //          "--------------------------------------------------------------------------------------------------------\n";
+  //      std::cout << std::fixed << std::setprecision(7);
+  //      for (int y = 0; y < GRID_SIZE_Y; y++) {
+  //        for (int x = 0; x < GRID_SIZE_X + 1; x++) {
+  //          std::cout << u_grid[0][x][y] << ' ';
+  //        }
+  //        std::cout << std::endl;
   //      }
-  //      std::cout << std::endl;
-  //    }
-  //    std::cout <<
-  //        "--------------------------------------------------------------------------------------------------------\n";
-  //    for (int y = 0; y < GRID_SIZE_Y; y++) {
-  //      for (int x = 0; x < GRID_SIZE_X + 1; x++) {
-  //        std::cout << u_grid[1][x][y] << ' ';
+  //      std::cout <<
+  //          "--------------------------------------------------------------------------------------------------------\n";
+  //      for (int y = 0; y < GRID_SIZE_Y; y++) {
+  //        for (int x = 0; x < GRID_SIZE_X + 1; x++) {
+  //          std::cout << u_grid[1][x][y] << ' ';
+  //        }
+  //        std::cout << std::endl;
   //      }
-  //      std::cout << std::endl;
-  //    }
 
   //    std::cout <<
   //        "========================================================================================================\n";
@@ -451,5 +528,104 @@ void Fluid2D::SolveParticleDynamics() {
 
   for (auto &particle : particles) {
     particle.position += particle.velocity * delta_t;
+  }
+}
+
+void Fluid2D::SolvePressureImpactToDivergence(const float *pressure,
+                                              float *delta_divergence) {
+  std::memset(delta_divergence, 0, sizeof(float) * GRID_SIZE_X * GRID_SIZE_Y);
+  for (int y = 0; y < GRID_SIZE_Y; y++) {
+    for (int x = 0; x < GRID_SIZE_X; x++) {
+      int id = y * GRID_SIZE_X + x;
+      if (x) {
+        auto value = pressure[id] * delta_t *
+                     (u_weight_grid[TYPE_AIR][x][y] / RHO_AIR +
+                      u_weight_grid[TYPE_LIQ][x][y] / RHO_LIQ) /
+                     DELTA_X;
+        delta_divergence[id] += value;
+        delta_divergence[id - 1] -= value;
+      }
+      if (y) {
+        auto value = pressure[id] * delta_t *
+                     (v_weight_grid[TYPE_AIR][x][y] / RHO_AIR +
+                      v_weight_grid[TYPE_LIQ][x][y] / RHO_LIQ) /
+                     DELTA_X;
+        delta_divergence[id] += value;
+        delta_divergence[id - GRID_SIZE_X] -= value;
+      }
+      if (x < GRID_SIZE_X - 1) {
+        auto value = pressure[id] * delta_t *
+                     (u_weight_grid[TYPE_AIR][x + 1][y] / RHO_AIR +
+                      u_weight_grid[TYPE_LIQ][x + 1][y] / RHO_LIQ) /
+                     DELTA_X;
+        delta_divergence[id] += value;
+        delta_divergence[id + 1] -= value;
+      }
+      if (y < GRID_SIZE_Y - 1) {
+        auto value = pressure[id] * delta_t *
+                     (v_weight_grid[TYPE_AIR][x][y + 1] / RHO_AIR +
+                      v_weight_grid[TYPE_LIQ][x][y + 1] / RHO_LIQ) /
+                     DELTA_X;
+        delta_divergence[id] += value;
+        delta_divergence[id + GRID_SIZE_X] -= value;
+      }
+    }
+  }
+}
+
+void Fluid2D::SolvePressure() {
+  auto addv = [](const float *a, const float *b, float *res) {
+    for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+      res[i] = a[i] + b[i];
+    }
+  };
+
+  auto mulv = [](const float *a, const float *b, float *res) {
+    for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+      res[i] = a[i] * b[i];
+    }
+  };
+  auto mulf = [](const float *a, float s, float *res) {
+    for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+      res[i] = a[i] * s;
+    }
+  };
+  auto subv = [](const float *a, const float *b, float *res) {
+    for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+      res[i] = a[i] - b[i];
+    }
+  };
+  auto dot = [](const float *a, const float *b) {
+    float ans = 0.0f;
+    for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+      ans += a[i] * b[i];
+    }
+    return ans;
+  };
+  auto len = [](const float *a) {
+    float ans = 0.0f;
+    for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+      ans += a[i] * a[i];
+    }
+    return sqrt(ans);
+  };
+  SolvePressureImpactToDivergence(pressure, buffer);
+  subv(divergence, buffer, r_vec);
+  std::memcpy(p_vec, r_vec, sizeof(float) * GRID_SIZE_X * GRID_SIZE_Y);
+  while (true) {
+    SolvePressureImpactToDivergence(p_vec, Ap_vec);
+    float rk2 = dot(r_vec, r_vec);
+    float ak = rk2 / dot(p_vec, Ap_vec);
+    mulf(p_vec, ak, buffer);
+    addv(pressure, buffer, pressure);
+    mulf(Ap_vec, ak, buffer);
+    subv(r_vec, buffer, r_vec);
+    auto rlen = len(r_vec);
+    if (rlen < 1e-2f) {
+      break;
+    }
+    float bk = dot(r_vec, r_vec) / rk2;
+    mulf(p_vec, bk, buffer);
+    addv(r_vec, buffer, p_vec);
   }
 }

@@ -49,6 +49,9 @@ class Fluid2D {
   void ComposeScene();
   void UpdateRenderAssets();
 
+  void SolvePressure();
+  void SolvePressureImpactToDivergence(const float *pressure,
+                                       float *delta_divergence);
   void SolveParticleDynamics();
 
   static bool InsideContainer(glm::vec2 pos);
@@ -79,6 +82,12 @@ class Fluid2D {
   float u_weight_grid[2][GRID_SIZE_X + 1][GRID_SIZE_Y];
   float v_weight_grid[2][GRID_SIZE_X][GRID_SIZE_Y + 1];
   float level_set[GRID_SIZE_X + 1][GRID_SIZE_Y + 1];
+  float divergence[GRID_SIZE_X * GRID_SIZE_Y];
+  float pressure[GRID_SIZE_X * GRID_SIZE_Y];
+  float buffer[GRID_SIZE_X * GRID_SIZE_Y];
+  float r_vec[GRID_SIZE_X * GRID_SIZE_Y];
+  float p_vec[GRID_SIZE_X * GRID_SIZE_Y];
+  float Ap_vec[GRID_SIZE_X * GRID_SIZE_Y];
 
   glm::mat3 u_grid_transform{1.0f / DELTA_X, 0.0f, 0.0f,  0.0f, 1.0f / DELTA_X,
                              0.0f,           0.0f, -0.5f, 1.0f};
