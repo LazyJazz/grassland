@@ -2,6 +2,6 @@
 #include "iostream"
 
 int main() {
-  auto fluid_app = std::make_unique<Fluid2D>(8192);
+  auto fluid_app = std::make_unique<Fluid2D>(8192 / 2);
   fluid_app->Run();
 }

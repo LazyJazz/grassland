@@ -5,9 +5,9 @@
 
 using namespace grassland;
 
-#define GRID_SIZE_X 20
-#define GRID_SIZE_Y 40
-#define DELTA_X 1.0f
+#define GRID_SIZE_X 40
+#define GRID_SIZE_Y 80
+#define DELTA_X 0.5f
 #define RHO_AIR 0.01f
 #define RHO_LIQ 1.0f
 
@@ -53,6 +53,8 @@ class Fluid2D {
   void SolvePressureImpactToDivergence(const float *pressure,
                                        float *delta_divergence);
   void SolveParticleDynamics();
+  void PrintAMatrix();
+  void PrintMatrixAndOpen(float *matrix);
 
   static bool InsideContainer(glm::vec2 pos);
 

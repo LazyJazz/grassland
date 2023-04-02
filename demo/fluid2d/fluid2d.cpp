@@ -387,11 +387,15 @@ void Fluid2D::SolveParticleDynamics() {
     }
   }
 
+  PrintAMatrix();
   SolvePressure();
-  //  SolvePressureImpactToDivergence(pressure, buffer);
-  //  for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
-  //    std::cout << buffer[i] << ' ' << divergence[i] << std::endl;
-  //  }
+  //    SolvePressureImpactToDivergence(pressure, buffer);
+  //    for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+  //      std::cout << buffer[i] << ' ' << divergence[i] << std::endl;
+  //    }
+  // PrintMatrixAndOpen(pressure);
+  //  PrintMatrixAndOpen(buffer);
+
   for (int y = 0; y < GRID_SIZE_Y; y++) {
     for (int x = 1; x < GRID_SIZE_X; x++) {
       int id = y * GRID_SIZE_X + x;
@@ -412,7 +416,7 @@ void Fluid2D::SolveParticleDynamics() {
     }
   }
 
-  for (auto particle : particles) {
+  for (auto &particle : particles) {
     auto u_pos =
         glm::vec2{u_grid_transform * glm::vec3{particle.position, 1.0f}};
     auto v_pos =
@@ -426,13 +430,15 @@ void Fluid2D::SolveParticleDynamics() {
         auto u_opos = u_ipos + offset;
         auto v_opos = v_ipos + offset;
         if (u_opos.x >= 0 && u_opos.x < GRID_SIZE_X + 1 && u_opos.y >= 0 &&
-            u_opos.y < GRID_SIZE_Y) {
+            u_opos.y < GRID_SIZE_Y &&
+            u_weight_grid[particle.type][u_opos.x][u_opos.y] > 1e-4f) {
           auto weight = kernel_func(u_pos - glm::vec2{u_opos});
           vel_weight.x += weight;
           vel_change.x += weight * u_grid[particle.type][u_opos.x][u_opos.y];
         }
         if (v_opos.x >= 0 && v_opos.x < GRID_SIZE_X && v_opos.y >= 0 &&
-            v_opos.y < GRID_SIZE_Y + 1) {
+            v_opos.y < GRID_SIZE_Y + 1 &&
+            v_weight_grid[particle.type][v_opos.x][v_opos.y] > 1e-4f) {
           auto weight = kernel_func(v_pos - glm::vec2{v_opos});
           vel_weight.y += weight;
           vel_change.y += weight * v_grid[particle.type][v_opos.x][v_opos.y];
@@ -621,11 +627,44 @@ void Fluid2D::SolvePressure() {
     mulf(Ap_vec, ak, buffer);
     subv(r_vec, buffer, r_vec);
     auto rlen = len(r_vec);
-    if (rlen < 1e-2f) {
+    if (rlen < 1e-3f) {
       break;
     }
     float bk = dot(r_vec, r_vec) / rk2;
     mulf(p_vec, bk, buffer);
     addv(r_vec, buffer, p_vec);
   }
+}
+
+#include "fstream"
+
+void Fluid2D::PrintAMatrix() {
+  //  std::ofstream fout("matrix.csv");
+  //  std::memset(pressure, 0, sizeof(pressure));
+  //  fout << std::fixed << std::setprecision(7);
+  //  for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+  //    if (i)
+  //      pressure[i - 1] = 0.0f;
+  //    pressure[i] = 1.0f;
+  //    SolvePressureImpactToDivergence(pressure, buffer);
+  //    for (int j = 0; j < GRID_SIZE_X * GRID_SIZE_Y; j++) {
+  //      fout << buffer[j] << ',';
+  //    }
+  //    fout << std::endl;
+  //  }
+  //  fout.close();
+  //  exit(0);
+}
+void Fluid2D::PrintMatrixAndOpen(float *matrix) {
+  std::ofstream file("matrix.csv");
+  file << std::fixed << std::setprecision(8);
+  for (int y = 0; y < GRID_SIZE_Y; y++) {
+    for (int x = 0; x < GRID_SIZE_X; x++) {
+      int id = y * GRID_SIZE_X + x;
+      file << matrix[id] << ",";
+    }
+    file << std::endl;
+  }
+  file.close();
+  std::system("start matrix.csv");
 }
