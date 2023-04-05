@@ -1,6 +1,6 @@
 #pragma once
 
-#define NUM_PARTICLE (65536 >> 3)
+#define NUM_PARTICLE (8192 << 1)
 #define RENDER_SIZE 0.1f
 #define GRAVITY       \
   glm::vec3 {         \
@@ -20,3 +20,4 @@
 #define RHO_LIQ 1.0f
 #define GRID_POINT_ID(x, y, z) \
   ((x)*GRID_SIZE_Y * GRID_SIZE_Z + (y)*GRID_SIZE_Z + (z))
+#define PIC_SCALE 0.03f

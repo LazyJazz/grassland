@@ -547,7 +547,7 @@ __global__ void CalcImpactToVelFieldKernel(GridDev<float> field,
   index[dim]--;
   delta_speed += pressure[GRID_POINT_ID(index.x, index.y, index.z)];
   delta_speed *= delta_t / (DELTA_X * rho);
-  field(idx, idy, idz) = delta_speed;
+  field(idx, idy, idz) = field(idx, idy, idz) * PIC_SCALE + delta_speed;
 }
 
 __global__ void Grid2ParticleKernel(Particle *particles,
@@ -591,6 +591,7 @@ __global__ void Grid2ParticleKernel(Particle *particles,
     }
   }
   if (accum_weight > 1e-4f) {
+    particle.velocity[dim] *= 1.0f - PIC_SCALE;
     particle.velocity[dim] += accum_vel / accum_weight;
   }
   particles[id] = particle;
@@ -877,7 +878,7 @@ void FluidApp::SolvePressure() {
     saxpy(-ak, Ap_vec_, r_vec_, r_vec_);
     float new_rk2 = dot(r_vec_, r_vec_);
     //    printf("%f\n", new_rk2);
-    if (new_rk2 < 1e-4f) {
+    if (new_rk2 < 1e-5f) {
       break;
     }
     float bk = new_rk2 / rk2;
