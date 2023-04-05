@@ -15,8 +15,8 @@ __host__ __device__ bool InsideFreeVolume(glm::vec3 position);
 FluidApp::FluidApp(const FluidAppSettings &settings) {
   settings_ = settings;
   grassland::vulkan::framework::CoreSettings core_settings{};
-  core_settings.window_width = 2048;
-  core_settings.window_height = 2048;
+  core_settings.window_width = 1024;
+  core_settings.window_height = 1024;
   core_settings.window_title = "Fluid Demo";
   core_ = std::make_unique<grassland::vulkan::framework::Core>(core_settings);
 }
@@ -156,6 +156,14 @@ void FluidApp::OnRender() {
   render_node_->EndDraw();
   core_->Output(frame_image_.get());
   core_->EndCommandRecordAndSubmit();
+  static int frame = 0;
+  if (!frame) {
+    std::system("mkdir imgs");
+  }
+  if (frame % 4 == 0) {
+    frame_image_->WriteImage(("imgs/frame_" + std::to_string(frame / 4) + ".png").c_str());
+  }
+  frame++;
 }
 
 void FluidApp::UpdateCamera() {
