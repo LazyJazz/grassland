@@ -15,8 +15,8 @@ __host__ __device__ bool InsideFreeVolume(glm::vec3 position);
 FluidApp::FluidApp(const FluidAppSettings &settings) {
   settings_ = settings;
   grassland::vulkan::framework::CoreSettings core_settings{};
-  core_settings.window_width = 1024;
-  core_settings.window_height = 1024;
+  core_settings.window_width = 2048;
+  core_settings.window_height = 2048;
   core_settings.window_title = "Fluid Demo";
   core_ = std::make_unique<grassland::vulkan::framework::Core>(core_settings);
 }
@@ -81,6 +81,8 @@ void FluidApp::OnInit() {
   v_weight_field_[1] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y + 1, GRID_SIZE_Z);
   w_weight_field_[1] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z + 1);
   level_set_ = Grid<float>(GRID_SIZE_X + 1, GRID_SIZE_Y + 1, GRID_SIZE_Z + 1);
+  core_->ImGuiInit(frame_image_.get(), "../../fonts/NotoSansSC-Regular.otf",
+                   24.0f);
 }
 
 void FluidApp::OnLoop() {
@@ -92,6 +94,7 @@ void FluidApp::OnClose() {
 }
 
 void FluidApp::OnUpdate() {
+  UpdateImGui();
   UpdatePhysicalSystem();
   DrawObjects();
   UpdateCamera();
@@ -110,10 +113,11 @@ void FluidApp::DrawObjects() {
   DrawSphere({0.0f, 0.0f, 0.0f}, 0.1f, {1.0f, 1.0f, 1.0f, 0.0f});
 
   for (auto &particle : particles_) {
-    if (InsideFreeVolume(particle.position)) {
-      DrawSphere(particle.position, RENDER_SIZE,
-                 (particle.type == TYPE_AIR) ? glm::vec4{1.0f, 0.5f, 0.5f, 1.0f}
-                                             : glm::vec4{0.5f, 0.5f, 1.0f, 1.0f});
+    if (show_escaped_particles || InsideFreeVolume(particle.position)) {
+      DrawSphere(particle.position, (particle.type == TYPE_AIR) ? air_particle_size
+                                                                : liq_particle_size,
+                 (particle.type == TYPE_AIR) ? air_particle_color
+                                             : liq_particle_color);
     }
   }
 }
@@ -154,19 +158,24 @@ void FluidApp::OnRender() {
     i = last_i;
   }
   render_node_->EndDraw();
+  core_->ImGuiRender();
   core_->Output(frame_image_.get());
   core_->EndCommandRecordAndSubmit();
-  static int frame = 0;
-  if (!frame) {
-    std::system("mkdir imgs");
-  }
-  if (frame % 4 == 0) {
-    frame_image_->WriteImage(("imgs/frame_" + std::to_string(frame / 4) + ".png").c_str());
-  }
-  frame++;
+//  static int frame = 0;
+//  if (!frame) {
+//    std::system("mkdir imgs");
+//  }
+//  if (frame % 4 == 0) {
+//    frame_image_->WriteImage(("imgs/frame_" + std::to_string(frame / 4) + ".png").c_str());
+//  }
+//  frame++;
 }
 
 void FluidApp::UpdateCamera() {
+  auto &io = ImGui::GetIO();
+  if (io.WantCaptureMouse) {
+    return;
+  }
   glm::vec3 offset{};
   glm::vec3 rotation{};
 
@@ -886,7 +895,7 @@ void FluidApp::SolvePressure() {
     saxpy(-ak, Ap_vec_, r_vec_, r_vec_);
     float new_rk2 = dot(r_vec_, r_vec_);
     //    printf("%f\n", new_rk2);
-    if (new_rk2 < 1e-5f) {
+    if (new_rk2 < r_vec_.size() * 1e-8f) {
       break;
     }
     float bk = new_rk2 / rk2;
@@ -910,4 +919,21 @@ void FluidApp::PlotMatrix() {
   }
   file.close();
   std::system("start grid.csv");
+}
+
+void FluidApp::UpdateImGui() {
+  ImGui_ImplVulkan_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+  ImGui::SetNextWindowPos(ImVec2(), ImGuiCond_Once);
+  if (ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
+    ImGui::SliderFloat("Air Particle Size", &air_particle_size, 0.0f, 0.1f);
+    ImGui::ColorEdit3("Air Particle Color", &air_particle_color[0], ImGuiColorEditFlags_Float);
+    ImGui::SliderFloat("Liquid Particle Size", &liq_particle_size, 0.0f, 0.1f);
+    ImGui::ColorEdit3("Liquid Particle Color", &liq_particle_color[0], ImGuiColorEditFlags_Float);
+    ImGui::Checkbox("Show Escaped Particles", &show_escaped_particles);
+
+    ImGui::End();
+  }
+  ImGui::Render();
 }

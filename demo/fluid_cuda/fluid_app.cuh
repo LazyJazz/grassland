@@ -55,6 +55,7 @@ class FluidApp {
 
   void RegisterSphere();
   void RegisterCylinder();
+  void UpdateImGui();
 
   int RegisterModel(const std::vector<Vertex> &vertices,
                     const std::vector<uint32_t> &indices);
@@ -99,4 +100,10 @@ class FluidApp {
   thrust::device_vector<float> r_vec_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
   thrust::device_vector<float> p_vec_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
   thrust::device_vector<float> Ap_vec_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
+
+  glm::vec4 air_particle_color{1.0f, 0.5f, 0.5f, 1.0f};
+  glm::vec4 liq_particle_color{0.5f, 0.5f, 1.0f, 1.0f};
+  float air_particle_size{RENDER_SIZE};
+  float liq_particle_size{RENDER_SIZE};
+  bool show_escaped_particles{false};
 };
