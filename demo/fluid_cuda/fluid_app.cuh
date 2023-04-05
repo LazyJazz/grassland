@@ -1,9 +1,8 @@
 #pragma once
 #include "camera.h"
 #include "grassland/grassland.h"
-#include "grid.cuh"
+#include "grid.h"
 #include "params.h"
-#include "particle.h"
 
 struct Vertex {
   glm::vec3 position;
@@ -19,6 +18,12 @@ struct FluidAppSettings {
   uint32_t num_particle{NUM_PARTICLE};
 };
 
+struct Particle {
+  glm::vec3 position;
+  glm::vec3 velocity;
+  int type;
+};
+
 class FluidApp {
  public:
   FluidApp(const FluidAppSettings &settings = FluidAppSettings());
@@ -32,9 +37,6 @@ class FluidApp {
   void OnUpdate();
   void OnRender();
 
-  void InitMassCoe();
-  void InitParticles();
-
   void DrawObject(int model_id, glm::mat4 model, glm::vec4 color);
   void DrawLine(const glm::vec3 &v0,
                 const glm::vec3 &v1,
@@ -46,13 +48,19 @@ class FluidApp {
   void DrawObjects();
   void UpdateCamera();
   void UpdateDynamicInfos();
+
   void UpdatePhysicalSystem();
+  void CalcPressureImpactToDivergence(const thrust::device_vector<float> &pressure, thrust::device_vector<float>& delta_divergence);
+  void SolvePressure();
 
   void RegisterSphere();
   void RegisterCylinder();
 
   int RegisterModel(const std::vector<Vertex> &vertices,
                     const std::vector<uint32_t> &indices);
+
+  void InitParticles();
+  void PlotMatrix();
 
   FluidAppSettings settings_{};
   std::unique_ptr<grassland::vulkan::framework::Core> core_;
@@ -76,8 +84,19 @@ class FluidApp {
   int cylinder_model_id_{};
 
   /* Fluid Content */
+  float delta_t_{1e-2f};
   std::vector<Particle> particles_;
-  Grid<float> u_mass_grid_;
-  Grid<float> v_mass_grid_;
-  Grid<float> w_mass_grid_;
+  Grid<float> u_field_[2];
+  Grid<float> v_field_[2];
+  Grid<float> w_field_[2];
+  Grid<float> u_weight_field_[2];
+  Grid<float> v_weight_field_[2];
+  Grid<float> w_weight_field_[2];
+  Grid<float> level_set_;
+  thrust::device_vector<float> pressure_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
+  thrust::device_vector<float> divergence_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
+  thrust::device_vector<float> buffer_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
+  thrust::device_vector<float> r_vec_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
+  thrust::device_vector<float> p_vec_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
+  thrust::device_vector<float> Ap_vec_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
 };

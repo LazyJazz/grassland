@@ -1,4 +1,4 @@
-#include "fluid_app.h"
+#include "fluid_app.cuh"
 #include "grassland/grassland.h"
 
 int main() {
