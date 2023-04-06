@@ -68,18 +68,9 @@ void FluidApp::OnInit() {
   RegisterCylinder();
 
   InitParticles();
-  u_field_[0] = Grid<float>(GRID_SIZE_X + 1, GRID_SIZE_Y, GRID_SIZE_Z);
-  v_field_[0] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y + 1, GRID_SIZE_Z);
-  w_field_[0] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z + 1);
-  u_weight_field_[0] = Grid<float>(GRID_SIZE_X + 1, GRID_SIZE_Y, GRID_SIZE_Z);
-  v_weight_field_[0] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y + 1, GRID_SIZE_Z);
-  w_weight_field_[0] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z + 1);
-  u_field_[1] = Grid<float>(GRID_SIZE_X + 1, GRID_SIZE_Y, GRID_SIZE_Z);
-  v_field_[1] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y + 1, GRID_SIZE_Z);
-  w_field_[1] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z + 1);
-  u_weight_field_[1] = Grid<float>(GRID_SIZE_X + 1, GRID_SIZE_Y, GRID_SIZE_Z);
-  v_weight_field_[1] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y + 1, GRID_SIZE_Z);
-  w_weight_field_[1] = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z + 1);
+  u_field_ = Grid<MACGridContent>(GRID_SIZE_X + 1, GRID_SIZE_Y, GRID_SIZE_Z);
+  v_field_ = Grid<MACGridContent>(GRID_SIZE_X, GRID_SIZE_Y + 1, GRID_SIZE_Z);
+  w_field_ = Grid<MACGridContent>(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z + 1);
   level_set_ = Grid<float>(GRID_SIZE_X + 1, GRID_SIZE_Y + 1, GRID_SIZE_Z + 1);
   core_->ImGuiInit(frame_image_.get(), "../../fonts/NotoSansSC-Regular.otf",
                    24.0f);
@@ -376,17 +367,12 @@ __global__ void AdvectKernel(Particle *particles,
 }
 
 __global__ void Particle2GridKernel(Particle *particles,
-                                    GridDev<float> field0,
-                                    GridDev<float> field1,
-                                    GridDev<float> weight_field0,
-                                    GridDev<float> weight_field1,
+                                    GridDev<MACGridContent> field,
                                     int num_particle,
                                     int dim) {
   int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= num_particle)
     return;
-  GridDev<float> field[2] = {field0, field1};
-  GridDev<float> weight_field[2] = {weight_field0, weight_field1};
   Particle particle = particles[id];
   glm::vec3 offset{0.5f, 0.5f, 0.5f};
   offset[dim] = 0.0f;
@@ -395,35 +381,38 @@ __global__ void Particle2GridKernel(Particle *particles,
   glm::ivec3 index = nearest_grid_pos;
   for (int dx = -1; dx <= 1; dx++) {
     index.x = nearest_grid_pos.x + dx;
-    if (index.x < 0 || index.x >= field[0].size_x_)
+    if (index.x < 0 || index.x >= field.size_x_)
       continue;
     for (int dy = -1; dy <= 1; dy++) {
       index.y = nearest_grid_pos.y + dy;
-      if (index.y < 0 || index.y >= field[0].size_y_)
+      if (index.y < 0 || index.y >= field.size_y_)
         continue;
       for (int dz = -1; dz <= 1; dz++) {
         index.z = nearest_grid_pos.z + dz;
-        if (index.z < 0 || index.z >= field[0].size_z_)
+        if (index.z < 0 || index.z >= field.size_z_)
           continue;
         float weight = KernelFunction(grid_pos - glm::vec3{index});
-        atomicAdd(&field[particle.type](index),
+        atomicAdd(&field(index).vel[particle.type],
                   weight * particle.velocity[dim]);
-        atomicAdd(&weight_field[particle.type](index), weight);
+        atomicAdd(&field(index).weight[particle.type], weight);
       }
     }
   }
 }
 
-__global__ void NormalizeByWeightKernel(GridDev<float> field,
-                                        GridDev<float> weight_field) {
+__global__ void NormalizeByWeightKernel(GridDev<MACGridContent> field) {
   int size = field.size_x_ * field.size_y_ * field.size_z_;
   int id = blockIdx.x * blockDim.x + threadIdx.x;
   if (id >= size)
     return;
-  float weight = weight_field.buffer_[id];
-  if (weight > 1e-6f) {
-    field.buffer_[id] /= weight;
+  MACGridContent content = field.buffer_[id];
+  if (content.weight[0] > 1e-6f) {
+    content.vel[0] /= content.weight[0];
   }
+  if (content.weight[1] > 1e-6f) {
+    content.vel[1] /= content.weight[1];
+  }
+  field.buffer_[id] = content;
 }
 
 __global__ void BuildLevelSetKernel(GridDev<float> level_set,
@@ -460,16 +449,15 @@ __host__ __device__ bool InsideFreeVolume(glm::vec3 position) {
                       glm::vec2{SIZE_X * 0.5f, SIZE_Z * 0.5f}) < SIZE_X * 0.2f);
 }
 
-__global__ void CalcBorderScaleKernel(GridDev<float> air_weight_field,
-                                      GridDev<float> liq_weight_field,
+__global__ void CalcBorderScaleKernel(GridDev<MACGridContent> field,
                                       GridDev<float> level_set,
                                       int dim) {
   int id = blockIdx.x * blockDim.x + threadIdx.x;
-  int idx = id / (air_weight_field.size_y_ * air_weight_field.size_z_);
-  int idy = (id / air_weight_field.size_z_) % air_weight_field.size_y_;
-  int idz = id % air_weight_field.size_z_;
-  if (id >= air_weight_field.size_x_ * air_weight_field.size_y_ *
-                air_weight_field.size_z_)
+  int idx = id / (field.size_y_ * field.size_z_);
+  int idy = (id / field.size_z_) % field.size_y_;
+  int idz = id % field.size_z_;
+  if (id >= field.size_x_ * field.size_y_ *
+                field.size_z_)
     return;
 
   int precision = 8;
@@ -505,23 +493,14 @@ __global__ void CalcBorderScaleKernel(GridDev<float> air_weight_field,
       }
     }
   }
-  air_weight_field.buffer_[id] = air_weight;
-  liq_weight_field.buffer_[id] = liq_weight;
+  field.buffer_[id].weight[TYPE_AIR] = air_weight;
+  field.buffer_[id].weight[TYPE_LIQ] = liq_weight;
 }
 
 __global__ void PrepareReverseDivergence(float *divergence,
-                                         GridDev<float> u_field0,
-                                         GridDev<float> u_field1,
-                                         GridDev<float> v_field0,
-                                         GridDev<float> v_field1,
-                                         GridDev<float> w_field0,
-                                         GridDev<float> w_field1,
-                                         GridDev<float> u_weight_field0,
-                                         GridDev<float> u_weight_field1,
-                                         GridDev<float> v_weight_field0,
-                                         GridDev<float> v_weight_field1,
-                                         GridDev<float> w_weight_field0,
-                                         GridDev<float> w_weight_field1) {
+                                         GridDev<MACGridContent> u_field,
+                                         GridDev<MACGridContent> v_field,
+                                         GridDev<MACGridContent> w_field) {
   int id = blockIdx.x * blockDim.x + threadIdx.x;
   int idx = id / (GRID_SIZE_Y * GRID_SIZE_Z);
   int idy = (id / GRID_SIZE_Z) % GRID_SIZE_Y;
@@ -529,24 +508,29 @@ __global__ void PrepareReverseDivergence(float *divergence,
   if (id >= GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z)
     return;
   float diver = 0.0f;
-  diver += u_field0(idx, idy, idz) * u_weight_field0(idx, idy, idz) -
-           u_field0(idx + 1, idy, idz) * u_weight_field0(idx + 1, idy, idz);
-  diver += u_field1(idx, idy, idz) * u_weight_field1(idx, idy, idz) -
-           u_field1(idx + 1, idy, idz) * u_weight_field1(idx + 1, idy, idz);
-  diver += v_field0(idx, idy, idz) * v_weight_field0(idx, idy, idz) -
-           v_field0(idx, idy + 1, idz) * v_weight_field0(idx, idy + 1, idz);
-  diver += v_field1(idx, idy, idz) * v_weight_field1(idx, idy, idz) -
-           v_field1(idx, idy + 1, idz) * v_weight_field1(idx, idy + 1, idz);
-  diver += w_field0(idx, idy, idz) * w_weight_field0(idx, idy, idz) -
-           w_field0(idx, idy, idz + 1) * w_weight_field0(idx, idy, idz + 1);
-  diver += w_field1(idx, idy, idz) * w_weight_field1(idx, idy, idz) -
-           w_field1(idx, idy, idz + 1) * w_weight_field1(idx, idy, idz + 1);
+  MACGridContent field0 = u_field(idx, idy, idz);
+  MACGridContent field1 = u_field(idx + 1, idy, idz);
+  diver += field0.vel[0] * field0.weight[0] -
+           field1.vel[0] * field1.weight[0];
+  diver += field0.vel[1] * field0.weight[1] -
+           field1.vel[1] * field1.weight[1];
+  field0 = v_field(idx, idy, idz);
+  field1 = v_field(idx, idy + 1, idz);
+  diver += field0.vel[0] * field0.weight[0] -
+           field1.vel[0] * field1.weight[0];
+  diver += field0.vel[1] * field0.weight[1] -
+           field1.vel[1] * field1.weight[1];
+  field0 = w_field(idx, idy, idz);
+  field1 = w_field(idx, idy, idz + 1);
+  diver += field0.vel[0] * field0.weight[0] -
+           field1.vel[0] * field1.weight[0];
+  diver += field0.vel[1] * field0.weight[1] -
+           field1.vel[1] * field1.weight[1];
   divergence[id] = diver;
 }
 
-__global__ void CalcImpactToVelFieldKernel(GridDev<float> field,
+__global__ void CalcImpactToVelFieldKernel(GridDev<MACGridContent> field,
                                            float *pressure,
-                                           float rho,
                                            float delta_t,
                                            int dim) {
   int id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -563,22 +547,20 @@ __global__ void CalcImpactToVelFieldKernel(GridDev<float> field,
   float delta_speed = -pressure[GRID_POINT_ID(index.x, index.y, index.z)];
   index[dim]--;
   delta_speed += pressure[GRID_POINT_ID(index.x, index.y, index.z)];
-  delta_speed *= delta_t / (DELTA_X * rho);
-  field(idx, idy, idz) = field(idx, idy, idz) * PIC_SCALE + delta_speed;
+  delta_speed *= delta_t / DELTA_X;
+  MACGridContent content = field(idx, idy, idz);
+  content.vel[0] = content.vel[0] * PIC_SCALE + delta_speed / RHO_AIR;
+  content.vel[1] = content.vel[1] * PIC_SCALE + delta_speed / RHO_LIQ;
+  field(idx, idy, idz) = content;
 }
 
 __global__ void Grid2ParticleKernel(Particle *particles,
-                                    GridDev<float> field0,
-                                    GridDev<float> field1,
-                                    GridDev<float> weight_field0,
-                                    GridDev<float> weight_field1,
+                                    GridDev<MACGridContent> field,
                                     int num_particle,
                                     int dim) {
   int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= num_particle)
     return;
-  GridDev<float> field[2] = {field0, field1};
-  GridDev<float> weight_field[2] = {weight_field0, weight_field1};
   Particle particle = particles[id];
   glm::vec3 offset{0.5f, 0.5f, 0.5f};
   offset[dim] = 0.0f;
@@ -589,21 +571,21 @@ __global__ void Grid2ParticleKernel(Particle *particles,
   float accum_vel = 0.0f;
   for (int dx = -1; dx <= 1; dx++) {
     index.x = nearest_grid_pos.x + dx;
-    if (index.x < 0 || index.x >= field[0].size_x_)
+    if (index.x < 0 || index.x >= field.size_x_)
       continue;
     for (int dy = -1; dy <= 1; dy++) {
       index.y = nearest_grid_pos.y + dy;
-      if (index.y < 0 || index.y >= field[0].size_y_)
+      if (index.y < 0 || index.y >= field.size_y_)
         continue;
       for (int dz = -1; dz <= 1; dz++) {
         index.z = nearest_grid_pos.z + dz;
-        if (index.z < 0 || index.z >= field[0].size_z_)
+        if (index.z < 0 || index.z >= field.size_z_)
           continue;
-        if (!weight_field[particle.type](index))
+        if (!field(index).weight[particle.type])
           continue;
         float weight = KernelFunction(grid_pos - glm::vec3{index});
         accum_weight += weight;
-        accum_vel += weight * field[particle.type](index);
+        accum_vel += weight * field(index).vel[particle.type];
       }
     }
   }
@@ -617,53 +599,34 @@ void FluidApp::UpdatePhysicalSystem() {
   thrust::device_vector<Particle> dev_particles = particles_;
   ApplyGravityKernel<<<LAUNCH_SIZE(particles_.size())>>>(
       dev_particles.data().get(), delta_t_, particles_.size());
-  for (int i = 0; i < 2; i++) {
-    u_field_[i].ClearData();
-    v_field_[i].ClearData();
-    w_field_[i].ClearData();
-    u_weight_field_[i].ClearData();
-    v_weight_field_[i].ClearData();
-    w_weight_field_[i].ClearData();
-  }
+  u_field_.ClearData();
+  v_field_.ClearData();
+  w_field_.ClearData();
   Particle2GridKernel<<<LAUNCH_SIZE(particles_.size())>>>(
-      dev_particles.data().get(), u_field_[0], u_field_[1], u_weight_field_[0],
-      u_weight_field_[1], particles_.size(), 0);
+      dev_particles.data().get(), u_field_, particles_.size(), 0);
   NormalizeByWeightKernel<<<LAUNCH_SIZE((GRID_SIZE_X + 1) * GRID_SIZE_Y *
-                                        GRID_SIZE_Z)>>>(u_field_[0],
-                                                        u_weight_field_[0]);
-  NormalizeByWeightKernel<<<LAUNCH_SIZE((GRID_SIZE_X + 1) * GRID_SIZE_Y *
-                                        GRID_SIZE_Z)>>>(u_field_[1],
-                                                        u_weight_field_[1]);
+                                        GRID_SIZE_Z)>>>(u_field_);
   Particle2GridKernel<<<LAUNCH_SIZE(particles_.size())>>>(
-      dev_particles.data().get(), v_field_[0], v_field_[1], v_weight_field_[0],
-      v_weight_field_[1], particles_.size(), 1);
+      dev_particles.data().get(), v_field_, particles_.size(), 1);
   NormalizeByWeightKernel<<<LAUNCH_SIZE(GRID_SIZE_X * (GRID_SIZE_Y + 1) *
-                                        GRID_SIZE_Z)>>>(v_field_[0],
-                                                        v_weight_field_[0]);
-  NormalizeByWeightKernel<<<LAUNCH_SIZE(GRID_SIZE_X * (GRID_SIZE_Y + 1) *
-                                        GRID_SIZE_Z)>>>(v_field_[1],
-                                                        v_weight_field_[1]);
+                                        GRID_SIZE_Z)>>>(v_field_);
   Particle2GridKernel<<<LAUNCH_SIZE(particles_.size())>>>(
-      dev_particles.data().get(), w_field_[0], w_field_[1], w_weight_field_[0],
-      w_weight_field_[1], particles_.size(), 2);
+      dev_particles.data().get(), w_field_, particles_.size(), 2);
   NormalizeByWeightKernel<<<LAUNCH_SIZE(GRID_SIZE_X * GRID_SIZE_Y *
                                         (GRID_SIZE_Z + 1))>>>(
-      w_field_[0], w_weight_field_[0]);
-  NormalizeByWeightKernel<<<LAUNCH_SIZE(GRID_SIZE_X * GRID_SIZE_Y *
-                                        (GRID_SIZE_Z + 1))>>>(
-      w_field_[1], w_weight_field_[1]);
+      w_field_);
   //  v_field_[0].PlotCSV(GRID_SIZE_X / 2);
   //  v_field_[1].PlotCSV(GRID_SIZE_X / 2);
   //  v_weight_field_[0].PlotCSV(GRID_SIZE_X / 2);
   //  v_weight_field_[1].PlotCSV(GRID_SIZE_X / 2);
   BuildLevelSetKernel<<<LAUNCH_SIZE(level_set_.Size())>>>(
       level_set_, dev_particles.data().get(), particles_.size());
-  CalcBorderScaleKernel<<<LAUNCH_SIZE(u_weight_field_[0].Size())>>>(
-      u_weight_field_[TYPE_AIR], u_weight_field_[TYPE_LIQ], level_set_, 0);
-  CalcBorderScaleKernel<<<LAUNCH_SIZE(v_weight_field_[0].Size())>>>(
-      v_weight_field_[TYPE_AIR], v_weight_field_[TYPE_LIQ], level_set_, 1);
-  CalcBorderScaleKernel<<<LAUNCH_SIZE(w_weight_field_[0].Size())>>>(
-      w_weight_field_[TYPE_AIR], w_weight_field_[TYPE_LIQ], level_set_, 2);
+  CalcBorderScaleKernel<<<LAUNCH_SIZE(u_field_.Size())>>>(
+      u_field_, level_set_, 0);
+  CalcBorderScaleKernel<<<LAUNCH_SIZE(v_field_.Size())>>>(
+      v_field_, level_set_, 1);
+  CalcBorderScaleKernel<<<LAUNCH_SIZE(w_field_.Size())>>>(
+      w_field_, level_set_, 2);
   //    u_weight_field_[0].PlotCSV(GRID_SIZE_X / 2);
   //    u_weight_field_[1].PlotCSV(GRID_SIZE_X / 2);
   //    v_weight_field_[0].PlotCSV(GRID_SIZE_X / 2);
@@ -671,10 +634,7 @@ void FluidApp::UpdatePhysicalSystem() {
   //    w_weight_field_[0].PlotCSV(GRID_SIZE_X / 2);
   //    w_weight_field_[1].PlotCSV(GRID_SIZE_X / 2);
   PrepareReverseDivergence<<<LAUNCH_SIZE(divergence_.size())>>>(
-      divergence_.data().get(), u_field_[0], u_field_[1], v_field_[0],
-      v_field_[1], w_field_[0], w_field_[1], u_weight_field_[0],
-      u_weight_field_[1], v_weight_field_[0], v_weight_field_[1],
-      w_weight_field_[0], w_weight_field_[1]);
+      divergence_.data().get(), u_field_, v_field_, w_field_);
 
   // PlotMatrix();
 
@@ -699,28 +659,19 @@ void FluidApp::UpdatePhysicalSystem() {
   //  file.close();
   //  std::system("start grid.csv");
   //  std::system("pause");
-  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(u_field_[0].Size())>>>(
-      u_field_[0], pressure_.data().get(), RHO_AIR, delta_t_, 0);
-  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(u_field_[1].Size())>>>(
-      u_field_[1], pressure_.data().get(), RHO_LIQ, delta_t_, 0);
-  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(v_field_[0].Size())>>>(
-      v_field_[0], pressure_.data().get(), RHO_AIR, delta_t_, 1);
-  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(v_field_[1].Size())>>>(
-      v_field_[1], pressure_.data().get(), RHO_LIQ, delta_t_, 1);
-  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(w_field_[0].Size())>>>(
-      w_field_[0], pressure_.data().get(), RHO_AIR, delta_t_, 2);
-  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(w_field_[1].Size())>>>(
-      w_field_[1], pressure_.data().get(), RHO_LIQ, delta_t_, 2);
+  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(u_field_.Size())>>>(
+      u_field_, pressure_.data().get(), delta_t_, 0);
+  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(v_field_.Size())>>>(
+      v_field_, pressure_.data().get(), delta_t_, 1);
+  CalcImpactToVelFieldKernel<<<LAUNCH_SIZE(w_field_.Size())>>>(
+      w_field_, pressure_.data().get(), delta_t_, 2);
 
   Grid2ParticleKernel<<<LAUNCH_SIZE(particles_.size())>>>(
-      dev_particles.data().get(), u_field_[0], u_field_[1], u_weight_field_[0],
-      u_weight_field_[1], particles_.size(), 0);
+      dev_particles.data().get(), u_field_, particles_.size(), 0);
   Grid2ParticleKernel<<<LAUNCH_SIZE(particles_.size())>>>(
-      dev_particles.data().get(), v_field_[0], v_field_[1], v_weight_field_[0],
-      v_weight_field_[1], particles_.size(), 1);
+      dev_particles.data().get(), v_field_, particles_.size(), 1);
   Grid2ParticleKernel<<<LAUNCH_SIZE(particles_.size())>>>(
-      dev_particles.data().get(), w_field_[0], w_field_[1], w_weight_field_[0],
-      w_weight_field_[1], particles_.size(), 2);
+      dev_particles.data().get(), w_field_, particles_.size(), 2);
   AdvectKernel<<<LAUNCH_SIZE(particles_.size())>>>(dev_particles.data().get(),
                                                    delta_t_, particles_.size());
   thrust::copy(dev_particles.begin(), dev_particles.end(), particles_.begin());
@@ -759,12 +710,9 @@ void FluidApp::InitParticles() {
 __global__ void CalcPressureImpactToDivergenceKernel(
     const float *pressure,
     float *delta_div,
-    GridDev<float> u_weight_field0,
-    GridDev<float> u_weight_field1,
-    GridDev<float> v_weight_field0,
-    GridDev<float> v_weight_field1,
-    GridDev<float> w_weight_field0,
-    GridDev<float> w_weight_field1,
+    GridDev<MACGridContent> u_field,
+    GridDev<MACGridContent> v_field,
+    GridDev<MACGridContent> w_field,
     float delta_t) {
   int id = blockIdx.x * blockDim.x + threadIdx.x;
   int idx = id / (GRID_SIZE_Y * GRID_SIZE_Z);
@@ -776,48 +724,48 @@ __global__ void CalcPressureImpactToDivergenceKernel(
   float self = 0.0f;
   if (idx) {
     float value = delta_t * p *
-                  (u_weight_field0(idx, idy, idz) / RHO_AIR +
-                   u_weight_field1(idx, idy, idz) / RHO_LIQ) /
+                  (u_field(idx, idy, idz).weight[TYPE_AIR] / RHO_AIR +
+                   u_field(idx, idy, idz).weight[TYPE_LIQ] / RHO_LIQ) /
                   DELTA_X;
     self += value;
     atomicAdd(delta_div + (id - GRID_SIZE_Z * GRID_SIZE_Y), -value);
   }
   if (idx < GRID_SIZE_X - 1) {
     float value = delta_t * p *
-                  (u_weight_field0(idx + 1, idy, idz) / RHO_AIR +
-                   u_weight_field1(idx + 1, idy, idz) / RHO_LIQ) /
+                  (u_field(idx + 1, idy, idz).weight[TYPE_AIR] / RHO_AIR +
+                   u_field(idx + 1, idy, idz).weight[TYPE_LIQ] / RHO_LIQ) /
                   DELTA_X;
     self += value;
     atomicAdd(delta_div + (id + GRID_SIZE_Z * GRID_SIZE_Y), -value);
   }
   if (idy) {
     float value = delta_t * p *
-                  (v_weight_field0(idx, idy, idz) / RHO_AIR +
-                   v_weight_field1(idx, idy, idz) / RHO_LIQ) /
+                  (v_field(idx, idy, idz).weight[TYPE_AIR] / RHO_AIR +
+                   v_field(idx, idy, idz).weight[TYPE_LIQ] / RHO_LIQ) /
                   DELTA_X;
     self += value;
     atomicAdd(delta_div + (id - GRID_SIZE_Z), -value);
   }
   if (idy < GRID_SIZE_Y - 1) {
     float value = delta_t * p *
-                  (v_weight_field0(idx, idy + 1, idz) / RHO_AIR +
-                   v_weight_field1(idx, idy + 1, idz) / RHO_LIQ) /
+                  (v_field(idx, idy + 1, idz).weight[TYPE_AIR] / RHO_AIR +
+                   v_field(idx, idy + 1, idz).weight[TYPE_LIQ] / RHO_LIQ) /
                   DELTA_X;
     self += value;
     atomicAdd(delta_div + (id + GRID_SIZE_Z), -value);
   }
   if (idz) {
     float value = delta_t * p *
-                  (w_weight_field0(idx, idy, idz) / RHO_AIR +
-                   w_weight_field1(idx, idy, idz) / RHO_LIQ) /
+                  (w_field(idx, idy, idz).weight[TYPE_AIR] / RHO_AIR +
+                   w_field(idx, idy, idz).weight[TYPE_LIQ] / RHO_LIQ) /
                   DELTA_X;
     self += value;
     atomicAdd(delta_div + (id - 1), -value);
   }
   if (idz < GRID_SIZE_Z - 1) {
     float value = delta_t * p *
-                  (w_weight_field0(idx, idy, idz + 1) / RHO_AIR +
-                   w_weight_field1(idx, idy, idz + 1) / RHO_LIQ) /
+                  (w_field(idx, idy, idz + 1).weight[TYPE_AIR] / RHO_AIR +
+                   w_field(idx, idy, idz + 1).weight[TYPE_LIQ] / RHO_LIQ) /
                   DELTA_X;
     self += value;
     atomicAdd(delta_div + (id + 1), -value);
@@ -830,9 +778,7 @@ void FluidApp::CalcPressureImpactToDivergence(
     thrust::device_vector<float> &delta_divergence) {
   thrust::fill(delta_divergence.begin(), delta_divergence.end(), 0);
   CalcPressureImpactToDivergenceKernel<<<LAUNCH_SIZE(pressure.size())>>>(
-      pressure.data().get(), delta_divergence.data().get(), u_weight_field_[0],
-      u_weight_field_[1], v_weight_field_[0], v_weight_field_[1],
-      w_weight_field_[0], w_weight_field_[1], delta_t_);
+      pressure.data().get(), delta_divergence.data().get(), u_field_, v_field_, w_field_, delta_t_);
 }
 
 template <typename T>

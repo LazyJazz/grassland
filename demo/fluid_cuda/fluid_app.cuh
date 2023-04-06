@@ -24,6 +24,11 @@ struct Particle {
   int type;
 };
 
+struct MACGridContent {
+  float vel[2]{};
+  float weight[2]{};
+};
+
 class FluidApp {
  public:
   FluidApp(const FluidAppSettings &settings = FluidAppSettings());
@@ -87,12 +92,9 @@ class FluidApp {
   /* Fluid Content */
   float delta_t_{1e-2f};
   std::vector<Particle> particles_;
-  Grid<float> u_field_[2];
-  Grid<float> v_field_[2];
-  Grid<float> w_field_[2];
-  Grid<float> u_weight_field_[2];
-  Grid<float> v_weight_field_[2];
-  Grid<float> w_weight_field_[2];
+  Grid<MACGridContent> u_field_;
+  Grid<MACGridContent> v_field_;
+  Grid<MACGridContent> w_field_;
   Grid<float> level_set_;
   thrust::device_vector<float> pressure_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
   thrust::device_vector<float> divergence_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
