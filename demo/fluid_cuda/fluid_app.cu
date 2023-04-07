@@ -15,8 +15,8 @@ __host__ __device__ bool InsideFreeVolume(glm::vec3 position);
 FluidApp::FluidApp(const FluidAppSettings &settings) {
   settings_ = settings;
   grassland::vulkan::framework::CoreSettings core_settings{};
-  core_settings.window_width = 2048;
-  core_settings.window_height = 2048;
+  core_settings.window_width = 1024;
+  core_settings.window_height = 1024;
   core_settings.window_title = "Fluid Demo";
   core_ = std::make_unique<grassland::vulkan::framework::Core>(core_settings);
 }
@@ -149,7 +149,7 @@ void FluidApp::OnRender() {
     i = last_i;
   }
   render_node_->EndDraw();
-  core_->ImGuiRender();
+  //core_->ImGuiRender();
   core_->Output(frame_image_.get());
   core_->EndCommandRecordAndSubmit();
 //  static int frame = 0;
@@ -586,8 +586,8 @@ __global__ void CalcImpactToVelFieldKernel(GridDev<MACGridContent> field,
   delta_speed += pressure[GRID_POINT_ID(index.x, index.y, index.z)];
   delta_speed *= delta_t / DELTA_X;
   MACGridContent content = field(idx, idy, idz);
-  content.vel[0] = content.vel[0] * PIC_SCALE + delta_speed / RHO_AIR;
-  content.vel[1] = content.vel[1] * PIC_SCALE + delta_speed / RHO_LIQ;
+  content.vel[0] = content.vel[0] * PIC_SCALE + delta_speed / content.rho;
+  content.vel[1] = content.vel[1] * PIC_SCALE + delta_speed / content.rho;
   field(idx, idy, idz) = content;
 }
 
@@ -765,49 +765,49 @@ __global__ void CalcPressureImpactToDivergenceKernel(
   float self = 0.0f;
   if (idx) {
     float value = delta_t * p *
-                  (u_field(idx, idy, idz).weight[TYPE_AIR] / RHO_AIR +
-                   u_field(idx, idy, idz).weight[TYPE_LIQ] / RHO_LIQ) /
-                  DELTA_X;
+                  (u_field(idx, idy, idz).weight[TYPE_AIR] +
+                   u_field(idx, idy, idz).weight[TYPE_LIQ]) /
+                  (DELTA_X * u_field(idx, idy, idz).rho);
     self += value;
     atomicAdd(delta_div + (id - GRID_SIZE_Z * GRID_SIZE_Y), -value);
   }
   if (idx < GRID_SIZE_X - 1) {
     float value = delta_t * p *
-                  (u_field(idx + 1, idy, idz).weight[TYPE_AIR] / RHO_AIR +
-                   u_field(idx + 1, idy, idz).weight[TYPE_LIQ] / RHO_LIQ) /
-                  DELTA_X;
+                  (u_field(idx + 1, idy, idz).weight[TYPE_AIR] +
+                   u_field(idx + 1, idy, idz).weight[TYPE_LIQ]) /
+                  (DELTA_X * u_field(idx + 1, idy, idz).rho);
     self += value;
     atomicAdd(delta_div + (id + GRID_SIZE_Z * GRID_SIZE_Y), -value);
   }
   if (idy) {
     float value = delta_t * p *
-                  (v_field(idx, idy, idz).weight[TYPE_AIR] / RHO_AIR +
-                   v_field(idx, idy, idz).weight[TYPE_LIQ] / RHO_LIQ) /
-                  DELTA_X;
+                  (v_field(idx, idy, idz).weight[TYPE_AIR] +
+                   v_field(idx, idy, idz).weight[TYPE_LIQ]) /
+                  (DELTA_X * v_field(idx, idy, idz).rho);
     self += value;
     atomicAdd(delta_div + (id - GRID_SIZE_Z), -value);
   }
   if (idy < GRID_SIZE_Y - 1) {
     float value = delta_t * p *
-                  (v_field(idx, idy + 1, idz).weight[TYPE_AIR] / RHO_AIR +
-                   v_field(idx, idy + 1, idz).weight[TYPE_LIQ] / RHO_LIQ) /
-                  DELTA_X;
+                  (v_field(idx, idy + 1, idz).weight[TYPE_AIR] +
+                   v_field(idx, idy + 1, idz).weight[TYPE_LIQ]) /
+                  (DELTA_X * v_field(idx, idy + 1, idz).rho);
     self += value;
     atomicAdd(delta_div + (id + GRID_SIZE_Z), -value);
   }
   if (idz) {
     float value = delta_t * p *
-                  (w_field(idx, idy, idz).weight[TYPE_AIR] / RHO_AIR +
-                   w_field(idx, idy, idz).weight[TYPE_LIQ] / RHO_LIQ) /
-                  DELTA_X;
+                  (w_field(idx, idy, idz).weight[TYPE_AIR] +
+                   w_field(idx, idy, idz).weight[TYPE_LIQ]) /
+                  (DELTA_X * w_field(idx, idy, idz).rho);
     self += value;
     atomicAdd(delta_div + (id - 1), -value);
   }
   if (idz < GRID_SIZE_Z - 1) {
     float value = delta_t * p *
-                  (w_field(idx, idy, idz + 1).weight[TYPE_AIR] / RHO_AIR +
-                   w_field(idx, idy, idz + 1).weight[TYPE_LIQ] / RHO_LIQ) /
-                  DELTA_X;
+                  (w_field(idx, idy, idz + 1).weight[TYPE_AIR] +
+                   w_field(idx, idy, idz + 1).weight[TYPE_LIQ]) /
+                  (DELTA_X * w_field(idx, idy, idz + 1).rho);
     self += value;
     atomicAdd(delta_div + (id + 1), -value);
   }

@@ -110,7 +110,7 @@ class FluidApp {
 
   glm::vec4 air_particle_color{1.0f, 0.5f, 0.5f, 1.0f};
   glm::vec4 liq_particle_color{0.5f, 0.5f, 1.0f, 1.0f};
-  float air_particle_size{RENDER_SIZE};
-  float liq_particle_size{RENDER_SIZE};
+  float air_particle_size{0.04};
+  float liq_particle_size{0.1};
   bool show_escaped_particles{false};
 };

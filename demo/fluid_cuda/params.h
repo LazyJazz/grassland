@@ -1,7 +1,7 @@
 #pragma once
 
-#define NUM_PARTICLE (8192 << 4)
-#define RENDER_SIZE 0.1f
+#define NUM_PARTICLE (8192 << 2)
+#define RENDER_SIZE 0.05f
 #define GRAVITY       \
   glm::vec3 {         \
     0.0f, -9.8f, 0.0f \
