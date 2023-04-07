@@ -27,6 +27,11 @@ struct Particle {
 struct MACGridContent {
   float vel[2]{};
   float weight[2]{};
+  float rho{};
+  friend std::ostream& operator << (std::ostream& os, const MACGridContent& content) {
+    os << content.rho;
+    return os;
+  }
 };
 
 class FluidApp {

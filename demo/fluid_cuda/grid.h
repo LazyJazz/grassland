@@ -23,6 +23,10 @@ class Grid {
                                                  int idz) const;
   void ClearData();
   void PlotCSV(int x);
+  template <class RetTy>
+  void PlotCSV(int x,
+               std::function<RetTy(const thrust::device_reference<Ty> &)>
+                   converter) const;
   int Size() const;
 
  private:

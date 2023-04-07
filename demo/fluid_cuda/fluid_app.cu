@@ -495,6 +495,43 @@ __global__ void CalcBorderScaleKernel(GridDev<MACGridContent> field,
   }
   field.buffer_[id].weight[TYPE_AIR] = air_weight;
   field.buffer_[id].weight[TYPE_LIQ] = liq_weight;
+
+  glm::ivec3 dim_axis{0};
+  dim_axis[dim] = 1;
+  int dim_size[3] = {GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z};
+  if (i_pos[dim] > 0 && i_pos[dim] < dim_size[dim]) {
+    float v00_1 = level_set(i_pos - dim_axis);
+    float v01_1 = level_set(i_pos + j_axis - dim_axis);
+    float v10_1 = level_set(i_pos + i_axis - dim_axis);
+    float v11_1 = level_set(i_pos + i_axis + j_axis - dim_axis);
+    float l0 = (v00_1 + v01_1 + v10_1 + v11_1 + v00 + v01 + v10 + v11) * 0.125f;
+    v00_1 = level_set(i_pos + dim_axis);
+    v01_1 = level_set(i_pos + j_axis + dim_axis);
+    v10_1 = level_set(i_pos + i_axis + dim_axis);
+    v11_1 = level_set(i_pos + i_axis + j_axis + dim_axis);
+    float l1 = (v00_1 + v01_1 + v10_1 + v11_1 + v00 + v01 + v10 + v11) * 0.125f;
+    float w = abs(l0) + abs(l1);
+    if (w > 1e-6f) {
+      l0 /= w;
+      l1 /= w;
+      w = 0.0f;
+      if (l0 < 0.0f) {
+        w += RHO_AIR * -l0;
+      } else {
+        w += RHO_LIQ * l0;
+      }
+      if (l1 < 0.0f) {
+        w += RHO_AIR * -l1;
+      } else {
+        w += RHO_LIQ * l1;
+      }
+    } else {
+      w = (RHO_AIR + RHO_LIQ) * 0.5f;
+    }
+    field.buffer_[id].rho = w;
+  } else {
+    field.buffer_[id].rho = (RHO_AIR + RHO_LIQ) * 0.5f;
+  }
 }
 
 __global__ void PrepareReverseDivergence(float *divergence,
@@ -595,6 +632,7 @@ __global__ void Grid2ParticleKernel(Particle *particles,
   }
   particles[id] = particle;
 }
+
 void FluidApp::UpdatePhysicalSystem() {
   thrust::device_vector<Particle> dev_particles = particles_;
   ApplyGravityKernel<<<LAUNCH_SIZE(particles_.size())>>>(
@@ -627,6 +665,9 @@ void FluidApp::UpdatePhysicalSystem() {
       v_field_, level_set_, 1);
   CalcBorderScaleKernel<<<LAUNCH_SIZE(w_field_.Size())>>>(
       w_field_, level_set_, 2);
+//  u_field_.PlotCSV(GRID_SIZE_X / 2);
+//  v_field_.PlotCSV(GRID_SIZE_X / 2);
+//  w_field_.PlotCSV(GRID_SIZE_X / 2);
   //    u_weight_field_[0].PlotCSV(GRID_SIZE_X / 2);
   //    u_weight_field_[1].PlotCSV(GRID_SIZE_X / 2);
   //    v_weight_field_[0].PlotCSV(GRID_SIZE_X / 2);
