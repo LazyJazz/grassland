@@ -113,4 +113,5 @@ class FluidApp {
   float air_particle_size{0.04};
   float liq_particle_size{0.1};
   bool show_escaped_particles{false};
+  glm::vec3 gravity{GRAVITY};
 };

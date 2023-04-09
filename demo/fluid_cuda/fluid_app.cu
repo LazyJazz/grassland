@@ -149,7 +149,7 @@ void FluidApp::OnRender() {
     i = last_i;
   }
   render_node_->EndDraw();
-  //core_->ImGuiRender();
+  core_->ImGuiRender();
   core_->Output(frame_image_.get());
   core_->EndCommandRecordAndSubmit();
 //  static int frame = 0;
@@ -348,11 +348,11 @@ __device__ float KernelFunction(glm::vec3 v) {
 
 __global__ void ApplyGravityKernel(Particle *particles,
                                    float delta_t,
-                                   int num_particle) {
+                                   int num_particle, glm::vec3 gravity) {
   int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= num_particle)
     return;
-  particles[id].velocity += delta_t * GRAVITY;
+  particles[id].velocity += delta_t * gravity;
 }
 
 __global__ void AdvectKernel(Particle *particles,
@@ -446,7 +446,7 @@ __host__ __device__ bool InsideFreeVolume(glm::vec3 position) {
                                            SIZE_Z * 0.5f}) < SIZE_X * 0.4f) ||
          ((position.y > SIZE_Y * 0.3f && position.y < SIZE_Y * 0.7f) &&
           glm::length(glm::vec2{position.x, position.z} -
-                      glm::vec2{SIZE_X * 0.5f, SIZE_Z * 0.5f}) < SIZE_X * 0.2f);
+                      glm::vec2{SIZE_X * 0.5f, SIZE_Z * 0.5f}) < SIZE_X * 0.4f);
 }
 
 __global__ void CalcBorderScaleKernel(GridDev<MACGridContent> field,
@@ -500,16 +500,18 @@ __global__ void CalcBorderScaleKernel(GridDev<MACGridContent> field,
   dim_axis[dim] = 1;
   int dim_size[3] = {GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z};
   if (i_pos[dim] > 0 && i_pos[dim] < dim_size[dim]) {
-    float v00_1 = level_set(i_pos - dim_axis);
-    float v01_1 = level_set(i_pos + j_axis - dim_axis);
-    float v10_1 = level_set(i_pos + i_axis - dim_axis);
-    float v11_1 = level_set(i_pos + i_axis + j_axis - dim_axis);
-    float l0 = (v00_1 + v01_1 + v10_1 + v11_1 + v00 + v01 + v10 + v11) * 0.125f;
-    v00_1 = level_set(i_pos + dim_axis);
-    v01_1 = level_set(i_pos + j_axis + dim_axis);
-    v10_1 = level_set(i_pos + i_axis + dim_axis);
-    v11_1 = level_set(i_pos + i_axis + j_axis + dim_axis);
-    float l1 = (v00_1 + v01_1 + v10_1 + v11_1 + v00 + v01 + v10 + v11) * 0.125f;
+//    float v00_1 = level_set(i_pos - dim_axis);
+//    float v01_1 = level_set(i_pos + j_axis - dim_axis);
+//    float v10_1 = level_set(i_pos + i_axis - dim_axis);
+//    float v11_1 = level_set(i_pos + i_axis + j_axis - dim_axis);
+//    float l0 = (v00_1 + v01_1 + v10_1 + v11_1 + v00 + v01 + v10 + v11) * 0.125f;
+//    v00_1 = level_set(i_pos + dim_axis);
+//    v01_1 = level_set(i_pos + j_axis + dim_axis);
+//    v10_1 = level_set(i_pos + i_axis + dim_axis);
+//    v11_1 = level_set(i_pos + i_axis + j_axis + dim_axis);
+//    float l1 = (v00_1 + v01_1 + v10_1 + v11_1 + v00 + v01 + v10 + v11) * 0.125f;
+    float l0 = -air_weight;
+    float l1 = liq_weight;
     float w = abs(l0) + abs(l1);
     if (w > 1e-6f) {
       l0 /= w;
@@ -636,7 +638,7 @@ __global__ void Grid2ParticleKernel(Particle *particles,
 void FluidApp::UpdatePhysicalSystem() {
   thrust::device_vector<Particle> dev_particles = particles_;
   ApplyGravityKernel<<<LAUNCH_SIZE(particles_.size())>>>(
-      dev_particles.data().get(), delta_t_, particles_.size());
+      dev_particles.data().get(), delta_t_, particles_.size(), gravity);
   u_field_.ClearData();
   v_field_.ClearData();
   w_field_.ClearData();
@@ -731,11 +733,14 @@ __global__ void InitParticleKernel(Particle *particles, int num_particle) {
                                   curand_uniform(&state) * SIZE_Y,
                                   curand_uniform(&state) * SIZE_Z};
   } while (!InsideFreeVolume(particle.position));
+//  if (particle.position.y > SIZE_Y * 0.7f || glm::length(particle.position - glm::vec3{SIZE_X * 0.5f, SIZE_Y * 0.7f,
+//                                                                              SIZE_Z * 0.5f}) > SIZE_X * 0.4f) {
   if (particle.position.y < SIZE_Y * 0.5f) {
     particle.type = TYPE_AIR;
   } else {
     particle.type = TYPE_LIQ;
   }
+//  particle.type = curand(&state) & 1;
   particle.velocity = {};
   particles[id] = particle;
 }
@@ -919,7 +924,7 @@ void FluidApp::UpdateImGui() {
     ImGui::SliderFloat("Liquid Particle Size", &liq_particle_size, 0.0f, 0.1f);
     ImGui::ColorEdit3("Liquid Particle Color", &liq_particle_color[0], ImGuiColorEditFlags_Float);
     ImGui::Checkbox("Show Escaped Particles", &show_escaped_particles);
-
+    ImGui::SliderFloat3("Gravity", &gravity[0], -10.0f, 10.0f);
     ImGui::End();
   }
   ImGui::Render();
