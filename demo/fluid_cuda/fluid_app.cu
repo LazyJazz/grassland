@@ -71,6 +71,9 @@ void FluidApp::OnInit() {
   u_field_ = Grid<MACGridContent>(GRID_SIZE_X + 1, GRID_SIZE_Y, GRID_SIZE_Z);
   v_field_ = Grid<MACGridContent>(GRID_SIZE_X, GRID_SIZE_Y + 1, GRID_SIZE_Z);
   w_field_ = Grid<MACGridContent>(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z + 1);
+  w_border_coe_ = Grid<float>(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z + 1);
+  v_border_coe_ = Grid<float>(GRID_SIZE_Z, GRID_SIZE_X, GRID_SIZE_Y + 1);
+  u_border_coe_ = Grid<float>(GRID_SIZE_Y, GRID_SIZE_Z, GRID_SIZE_X + 1);
   level_set_ = Grid<float>(GRID_SIZE_X + 1, GRID_SIZE_Y + 1, GRID_SIZE_Z + 1);
   core_->ImGuiInit(frame_image_.get(), "../../fonts/NotoSansSC-Regular.otf",
                    24.0f);
@@ -86,7 +89,8 @@ void FluidApp::OnClose() {
 
 void FluidApp::OnUpdate() {
   UpdateImGui();
-  UpdatePhysicalSystem();
+  if (!pause_)
+    UpdatePhysicalSystem();
   DrawObjects();
   UpdateCamera();
   UpdateDynamicInfos();
@@ -446,7 +450,7 @@ __host__ __device__ bool InsideFreeVolume(glm::vec3 position) {
                                            SIZE_Z * 0.5f}) < SIZE_X * 0.4f) ||
          ((position.y > SIZE_Y * 0.3f && position.y < SIZE_Y * 0.7f) &&
           glm::length(glm::vec2{position.x, position.z} -
-                      glm::vec2{SIZE_X * 0.5f, SIZE_Z * 0.5f}) < SIZE_X * 0.4f);
+                      glm::vec2{SIZE_X * 0.5f, SIZE_Z * 0.5f}) < SIZE_X * 0.2f);
 }
 
 __global__ void CalcBorderScaleKernel(GridDev<MACGridContent> field,
@@ -635,6 +639,24 @@ __global__ void Grid2ParticleKernel(Particle *particles,
   particles[id] = particle;
 }
 
+__global__ void PreprocessBorderCoeKernel(GridDev<MACGridContent> field, GridDev<float> result, int dim) {
+  int id = blockIdx.x * blockDim.x + threadIdx.x;
+  int idx = id / (field.size_y_ * field.size_z_);
+  int idy = (id / field.size_z_) % field.size_y_;
+  int idz = id % field.size_z_;
+  if (id >= field.size_x_ * field.size_y_ * field.size_z_)
+    return;
+  MACGridContent content = field(idx, idy, idz);
+  while (dim < 2) {
+    int temp = idz;
+    idz = idy;
+    idy = idx;
+    idx = temp;
+    dim++;
+  }
+  result(idx, idy, idz) = (content.weight[0] + content.weight[1]) / content.rho;
+}
+
 void FluidApp::UpdatePhysicalSystem() {
   thrust::device_vector<Particle> dev_particles = particles_;
   ApplyGravityKernel<<<LAUNCH_SIZE(particles_.size())>>>(
@@ -680,6 +702,10 @@ void FluidApp::UpdatePhysicalSystem() {
       divergence_.data().get(), u_field_, v_field_, w_field_);
 
   // PlotMatrix();
+
+  PreprocessBorderCoeKernel<<<LAUNCH_SIZE(u_field_.Size())>>>(u_field_, u_border_coe_, 0);
+  PreprocessBorderCoeKernel<<<LAUNCH_SIZE(v_field_.Size())>>>(v_field_, v_border_coe_, 1);
+  PreprocessBorderCoeKernel<<<LAUNCH_SIZE(w_field_.Size())>>>(w_field_, w_border_coe_, 2);
 
   SolvePressure();
   //  CalcPressureImpactToDivergence(pressure_, buffer_);
@@ -752,13 +778,12 @@ void FluidApp::InitParticles() {
       dev_particles.data().get(), settings_.num_particle);
   thrust::copy(dev_particles.begin(), dev_particles.end(), particles_.begin());
 }
-
 __global__ void CalcPressureImpactToDivergenceKernel(
     const float *pressure,
     float *delta_div,
-    GridDev<MACGridContent> u_field,
-    GridDev<MACGridContent> v_field,
-    GridDev<MACGridContent> w_field,
+    GridDev<float> u_field,
+    GridDev<float> v_field,
+    GridDev<float> w_field,
     float delta_t) {
   int id = blockIdx.x * blockDim.x + threadIdx.x;
   int idx = id / (GRID_SIZE_Y * GRID_SIZE_Z);
@@ -769,54 +794,30 @@ __global__ void CalcPressureImpactToDivergenceKernel(
   float p = pressure[id];
   float self = 0.0f;
   if (idx) {
-    float value = delta_t * p *
-                  (u_field(idx, idy, idz).weight[TYPE_AIR] +
-                   u_field(idx, idy, idz).weight[TYPE_LIQ]) /
-                  (DELTA_X * u_field(idx, idy, idz).rho);
+    float value = delta_t * (p - pressure[id - GRID_SIZE_Z * GRID_SIZE_Y]) / DELTA_X * u_field(idy, idz, idx);
     self += value;
-    atomicAdd(delta_div + (id - GRID_SIZE_Z * GRID_SIZE_Y), -value);
   }
   if (idx < GRID_SIZE_X - 1) {
-    float value = delta_t * p *
-                  (u_field(idx + 1, idy, idz).weight[TYPE_AIR] +
-                   u_field(idx + 1, idy, idz).weight[TYPE_LIQ]) /
-                  (DELTA_X * u_field(idx + 1, idy, idz).rho);
+    float value = delta_t * (p - pressure[id + GRID_SIZE_Z * GRID_SIZE_Y]) / DELTA_X * u_field(idy, idz, idx + 1);
     self += value;
-    atomicAdd(delta_div + (id + GRID_SIZE_Z * GRID_SIZE_Y), -value);
   }
   if (idy) {
-    float value = delta_t * p *
-                  (v_field(idx, idy, idz).weight[TYPE_AIR] +
-                   v_field(idx, idy, idz).weight[TYPE_LIQ]) /
-                  (DELTA_X * v_field(idx, idy, idz).rho);
+    float value = delta_t * (p - pressure[id - GRID_SIZE_Z]) / DELTA_X * v_field(idz, idx, idy);
     self += value;
-    atomicAdd(delta_div + (id - GRID_SIZE_Z), -value);
   }
   if (idy < GRID_SIZE_Y - 1) {
-    float value = delta_t * p *
-                  (v_field(idx, idy + 1, idz).weight[TYPE_AIR] +
-                   v_field(idx, idy + 1, idz).weight[TYPE_LIQ]) /
-                  (DELTA_X * v_field(idx, idy + 1, idz).rho);
+    float value = delta_t * (p - pressure[id + GRID_SIZE_Z]) / DELTA_X * v_field(idz, idx, idy + 1);
     self += value;
-    atomicAdd(delta_div + (id + GRID_SIZE_Z), -value);
   }
   if (idz) {
-    float value = delta_t * p *
-                  (w_field(idx, idy, idz).weight[TYPE_AIR] +
-                   w_field(idx, idy, idz).weight[TYPE_LIQ]) /
-                  (DELTA_X * w_field(idx, idy, idz).rho);
+    float value = delta_t * (p - pressure[id - 1]) / DELTA_X * w_field(idx, idy, idz);
     self += value;
-    atomicAdd(delta_div + (id - 1), -value);
   }
   if (idz < GRID_SIZE_Z - 1) {
-    float value = delta_t * p *
-                  (w_field(idx, idy, idz + 1).weight[TYPE_AIR] +
-                   w_field(idx, idy, idz + 1).weight[TYPE_LIQ]) /
-                  (DELTA_X * w_field(idx, idy, idz + 1).rho);
+    float value = delta_t * (p - pressure[id + 1]) / DELTA_X * w_field(idx, idy, idz + 1);
     self += value;
-    atomicAdd(delta_div + (id + 1), -value);
   }
-  atomicAdd(delta_div + id, self);
+  delta_div[id] += self;
 }
 
 void FluidApp::CalcPressureImpactToDivergence(
@@ -824,7 +825,7 @@ void FluidApp::CalcPressureImpactToDivergence(
     thrust::device_vector<float> &delta_divergence) {
   thrust::fill(delta_divergence.begin(), delta_divergence.end(), 0);
   CalcPressureImpactToDivergenceKernel<<<LAUNCH_SIZE(pressure.size())>>>(
-      pressure.data().get(), delta_divergence.data().get(), u_field_, v_field_, w_field_, delta_t_);
+      pressure.data().get(), delta_divergence.data().get(), u_border_coe_, v_border_coe_, w_border_coe_, delta_t_);
 }
 
 template <typename T>
@@ -925,6 +926,9 @@ void FluidApp::UpdateImGui() {
     ImGui::ColorEdit3("Liquid Particle Color", &liq_particle_color[0], ImGuiColorEditFlags_Float);
     ImGui::Checkbox("Show Escaped Particles", &show_escaped_particles);
     ImGui::SliderFloat3("Gravity", &gravity[0], -10.0f, 10.0f);
+    if (ImGui::Button(pause_ ? "Resume" : "Pause")) {
+      pause_ = !pause_;
+    }
     ImGui::End();
   }
   ImGui::Render();

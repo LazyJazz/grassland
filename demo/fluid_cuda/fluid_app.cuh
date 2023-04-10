@@ -100,6 +100,9 @@ class FluidApp {
   Grid<MACGridContent> u_field_;
   Grid<MACGridContent> v_field_;
   Grid<MACGridContent> w_field_;
+  Grid<float> u_border_coe_;
+  Grid<float> v_border_coe_;
+  Grid<float> w_border_coe_;
   Grid<float> level_set_;
   thrust::device_vector<float> pressure_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
   thrust::device_vector<float> divergence_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
@@ -114,4 +117,5 @@ class FluidApp {
   float liq_particle_size{0.1};
   bool show_escaped_particles{false};
   glm::vec3 gravity{GRAVITY};
+  bool pause_{false};
 };
