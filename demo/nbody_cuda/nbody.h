@@ -47,6 +47,6 @@ class NBody {
   std::vector<glm::vec4> positions_;
   std::vector<glm::vec4> velocities_;
   int n_particles_{4096};
-  std::mt19937 random_device_{};
+  std::mt19937 random_device_{uint32_t(std::time(nullptr))};
   glm::mat4 rotation{1.0f};
 };
