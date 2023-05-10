@@ -6,11 +6,11 @@
 #include "random"
 
 Fluid2D::Fluid2D(int n_particles) {
-  vulkan::framework::CoreSettings core_settings;
+  vulkan_legacy::framework::CoreSettings core_settings;
   core_settings.window_title = "Fluid2D";
   core_settings.window_width = 512;
   core_settings.window_height = 1024;
-  core = std::make_unique<vulkan::framework::Core>(core_settings);
+  core = std::make_unique<vulkan_legacy::framework::Core>(core_settings);
   particles.resize(n_particles);
 }
 
@@ -25,15 +25,15 @@ void Fluid2D::Run() {
 }
 
 void Fluid2D::OnInit() {
-  texture_image = std::make_unique<vulkan::framework::TextureImage>(
+  texture_image = std::make_unique<vulkan_legacy::framework::TextureImage>(
       core.get(), 512, 1024, VK_FORMAT_R32G32B32A32_SFLOAT);
-  sampler =
-      std::make_unique<vulkan::Sampler>(core->GetDevice(), VK_FILTER_LINEAR);
-  framebuffer = std::make_unique<vulkan::framework::TextureImage>(
+  sampler = std::make_unique<vulkan_legacy::Sampler>(core->GetDevice(),
+                                                     VK_FILTER_LINEAR);
+  framebuffer = std::make_unique<vulkan_legacy::framework::TextureImage>(
       core.get(), core->GetFramebufferWidth(), core->GetFramebufferHeight(),
       VK_FORMAT_B8G8R8A8_UNORM);
   bkground_render_node =
-      std::make_unique<vulkan::framework::RenderNode>(core.get());
+      std::make_unique<vulkan_legacy::framework::RenderNode>(core.get());
   bkground_render_node->AddColorAttachment(framebuffer.get());
   bkground_render_node->AddShader("bkground.vert.spv",
                                   VK_SHADER_STAGE_VERTEX_BIT);
@@ -48,11 +48,11 @@ void Fluid2D::OnInit() {
       {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}};
   uint32_t indices[] = {0, 1, 2, 1, 2, 3};
   rectangle_vertex_buffer =
-      std::make_unique<vulkan::framework::StaticBuffer<glm::vec2>>(core.get(),
-                                                                   4);
+      std::make_unique<vulkan_legacy::framework::StaticBuffer<glm::vec2>>(
+          core.get(), 4);
   rectangle_index_buffer =
-      std::make_unique<vulkan::framework::StaticBuffer<uint32_t>>(core.get(),
-                                                                  6);
+      std::make_unique<vulkan_legacy::framework::StaticBuffer<uint32_t>>(
+          core.get(), 6);
   rectangle_vertex_buffer->Upload(vertices);
   rectangle_index_buffer->Upload(indices);
 
@@ -81,11 +81,11 @@ void Fluid2D::OnInit() {
       }
     }
   }
-  vulkan::framework::StaticBuffer<glm::vec4> upload_buffer(core.get(),
-                                                           512 * 1024);
+  vulkan_legacy::framework::StaticBuffer<glm::vec4> upload_buffer(core.get(),
+                                                                  512 * 1024);
   upload_buffer.Upload(reinterpret_cast<const glm::vec4 *>(bkground_image));
-  vulkan::UploadImage(core->GetCommandPool(), texture_image->GetImage(),
-                      upload_buffer.GetBuffer(0));
+  vulkan_legacy::UploadImage(core->GetCommandPool(), texture_image->GetImage(),
+                             upload_buffer.GetBuffer(0));
 
   {
     std::vector<glm::vec2> circle_vertices;
@@ -102,21 +102,22 @@ void Fluid2D::OnInit() {
     }
     circle_vertices.emplace_back(0.0f, 0.0f);
     vertex_buffer =
-        std::make_unique<vulkan::framework::StaticBuffer<glm::vec2>>(
+        std::make_unique<vulkan_legacy::framework::StaticBuffer<glm::vec2>>(
             core.get(), circle_vertices.size());
-    index_buffer = std::make_unique<vulkan::framework::StaticBuffer<uint32_t>>(
-        core.get(), circle_indices.size());
+    index_buffer =
+        std::make_unique<vulkan_legacy::framework::StaticBuffer<uint32_t>>(
+            core.get(), circle_indices.size());
     vertex_buffer->Upload(circle_vertices.data());
     index_buffer->Upload(circle_indices.data());
   }
 
-  render_objects =
-      std::make_unique<vulkan::framework::DynamicBuffer<RenderObjectInfo>>(
-          core.get(), 65536);
+  render_objects = std::make_unique<
+      vulkan_legacy::framework::DynamicBuffer<RenderObjectInfo>>(core.get(),
+                                                                 65536);
 
   global_transform_buffer =
-      std::make_unique<vulkan::framework::StaticBuffer<glm::mat4>>(core.get(),
-                                                                   1);
+      std::make_unique<vulkan_legacy::framework::StaticBuffer<glm::mat4>>(
+          core.get(), 1);
   glm::mat4 global_transform{2.0f / core->GetFramebufferWidth(),
                              0.0f,
                              0.0f,
@@ -134,7 +135,8 @@ void Fluid2D::OnInit() {
                              0.0f,
                              1.0f};
   global_transform_buffer->Upload(&global_transform);
-  render_node = std::make_unique<vulkan::framework::RenderNode>(core.get());
+  render_node =
+      std::make_unique<vulkan_legacy::framework::RenderNode>(core.get());
   render_node->AddColorAttachment(framebuffer.get());
   render_node->AddUniformBinding(global_transform_buffer.get(),
                                  VK_SHADER_STAGE_VERTEX_BIT);

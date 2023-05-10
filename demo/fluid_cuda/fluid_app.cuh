@@ -76,18 +76,18 @@ class FluidApp {
   void OutputXYZFile();
 
   FluidAppSettings settings_{};
-  std::unique_ptr<grassland::vulkan::framework::Core> core_;
-  std::unique_ptr<grassland::vulkan::framework::RenderNode> render_node_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::Core> core_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::RenderNode> render_node_;
   std::vector<std::pair<
-      std::unique_ptr<grassland::vulkan::framework::StaticBuffer<Vertex>>,
-      std::unique_ptr<grassland::vulkan::framework::StaticBuffer<uint32_t>>>>
+      std::unique_ptr<grassland::vulkan_legacy::framework::StaticBuffer<Vertex>>,
+      std::unique_ptr<grassland::vulkan_legacy::framework::StaticBuffer<uint32_t>>>>
       object_models_;
-  std::unique_ptr<grassland::vulkan::framework::DynamicBuffer<RenderInfo>>
+  std::unique_ptr<grassland::vulkan_legacy::framework::DynamicBuffer<RenderInfo>>
       render_info_buffer_;
-  std::unique_ptr<grassland::vulkan::framework::DynamicBuffer<CameraObject>>
+  std::unique_ptr<grassland::vulkan_legacy::framework::DynamicBuffer<CameraObject>>
       camera_object_buffer_;
-  std::unique_ptr<grassland::vulkan::framework::TextureImage> frame_image_;
-  std::unique_ptr<grassland::vulkan::framework::TextureImage> depth_buffer_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::TextureImage> frame_image_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::TextureImage> depth_buffer_;
 
   std::vector<int> render_objects_;
   std::vector<RenderInfo> render_infos_;

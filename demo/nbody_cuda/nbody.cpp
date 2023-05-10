@@ -1,11 +1,11 @@
 #include "nbody.h"
 
 NBody::NBody(int n_particles) : n_particles_(n_particles) {
-  vulkan::framework::CoreSettings core_settings;
+  vulkan_legacy::framework::CoreSettings core_settings;
   core_settings.window_width = 1920;
   core_settings.window_height = 1080;
   core_settings.window_title = "NBody";
-  core_ = std::make_unique<vulkan::framework::Core>(core_settings);
+  core_ = std::make_unique<vulkan_legacy::framework::Core>(core_settings);
 }
 
 void NBody::Run() {
@@ -50,14 +50,16 @@ void NBody::OnInit() {
   std::vector<glm::vec2> vertices = {
       {-1.0f, -1.0f}, {-1.0f, 1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}};
   std::vector<uint32_t> indices = {0, 1, 2, 1, 2, 3};
-  vertex_buffer_ = std::make_unique<vulkan::framework::StaticBuffer<glm::vec2>>(
-      core_.get(), vertices.size());
+  vertex_buffer_ =
+      std::make_unique<vulkan_legacy::framework::StaticBuffer<glm::vec2>>(
+          core_.get(), vertices.size());
   vertex_buffer_->Upload(vertices.data());
-  index_buffer_ = std::make_unique<vulkan::framework::StaticBuffer<uint32_t>>(
-      core_.get(), indices.size());
+  index_buffer_ =
+      std::make_unique<vulkan_legacy::framework::StaticBuffer<uint32_t>>(
+          core_.get(), indices.size());
   index_buffer_->Upload(indices.data());
 
-  frame_buffer_ = std::make_unique<vulkan::framework::TextureImage>(
+  frame_buffer_ = std::make_unique<vulkan_legacy::framework::TextureImage>(
       core_.get(), core_->GetFramebufferWidth(), core_->GetFramebufferHeight(),
       VK_FORMAT_B8G8R8A8_UNORM);
 
@@ -66,11 +68,11 @@ void NBody::OnInit() {
     BuildRenderNode();
   });
 
-  global_uniform_object_ =
-      std::make_unique<vulkan::framework::DynamicBuffer<GlobalUniformObject>>(
-          core_.get(), 1);
+  global_uniform_object_ = std::make_unique<
+      vulkan_legacy::framework::DynamicBuffer<GlobalUniformObject>>(core_.get(),
+                                                                    1);
   particle_positions_ =
-      std::make_unique<vulkan::framework::DynamicBuffer<glm::vec4>>(
+      std::make_unique<vulkan_legacy::framework::DynamicBuffer<glm::vec4>>(
           core_.get(), n_particles_);
 
   positions_.resize(n_particles_);
@@ -115,7 +117,8 @@ void NBody::OnClose() {
 }
 
 void NBody::BuildRenderNode() {
-  render_node_ = std::make_unique<vulkan::framework::RenderNode>(core_.get());
+  render_node_ =
+      std::make_unique<vulkan_legacy::framework::RenderNode>(core_.get());
   render_node_->VertexInput({VK_FORMAT_R32G32_SFLOAT});
   render_node_->AddColorAttachment(
       frame_buffer_.get(),

@@ -14,11 +14,11 @@ __host__ __device__ bool InsideFreeVolume(glm::vec3 position);
 
 FluidApp::FluidApp(const FluidAppSettings &settings) {
   settings_ = settings;
-  grassland::vulkan::framework::CoreSettings core_settings{};
+  grassland::vulkan_legacy::framework::CoreSettings core_settings{};
   core_settings.window_width = 1024;
   core_settings.window_height = 1024;
   core_settings.window_title = "Fluid Demo";
-  core_ = std::make_unique<grassland::vulkan::framework::Core>(core_settings);
+  core_ = std::make_unique<grassland::vulkan_legacy::framework::Core>(core_settings);
 
   std::mt19937 rd;
   int cnt = 0;
@@ -44,14 +44,14 @@ void FluidApp::Run() {
 
 void FluidApp::OnInit() {
   camera_object_buffer_ = std::make_unique<
-      grassland::vulkan::framework::DynamicBuffer<CameraObject>>(core_.get(),
+      grassland::vulkan_legacy::framework::DynamicBuffer<CameraObject>>(core_.get(),
                                                                  1);
 
-  frame_image_ = std::make_unique<grassland::vulkan::framework::TextureImage>(
+  frame_image_ = std::make_unique<grassland::vulkan_legacy::framework::TextureImage>(
       core_.get(), core_->GetFramebufferWidth(), core_->GetFramebufferHeight(),
       VK_FORMAT_B8G8R8A8_UNORM);
   render_info_buffer_ =
-      std::make_unique<grassland::vulkan::framework::DynamicBuffer<RenderInfo>>(
+      std::make_unique<grassland::vulkan_legacy::framework::DynamicBuffer<RenderInfo>>(
           core_.get(), 1);
   core_->SetFrameSizeCallback([this](int width, int height) {
     frame_image_->Resize(width, height);
@@ -60,7 +60,7 @@ void FluidApp::OnInit() {
     }
   });
   render_node_ =
-      std::make_unique<grassland::vulkan::framework::RenderNode>(core_.get());
+      std::make_unique<grassland::vulkan_legacy::framework::RenderNode>(core_.get());
   render_node_->AddColorAttachment(frame_image_.get());
   render_node_->AddDepthAttachment();
   render_node_->VertexInput(
@@ -234,9 +234,9 @@ int FluidApp::RegisterModel(const std::vector<Vertex> &vertices,
                             const std::vector<uint32_t> &indices) {
   auto res = object_models_.size();
   object_models_.emplace_back(
-      std::make_unique<grassland::vulkan::framework::StaticBuffer<Vertex>>(
+      std::make_unique<grassland::vulkan_legacy::framework::StaticBuffer<Vertex>>(
           core_.get(), vertices.size()),
-      std::make_unique<grassland::vulkan::framework::StaticBuffer<uint32_t>>(
+      std::make_unique<grassland::vulkan_legacy::framework::StaticBuffer<uint32_t>>(
           core_.get(), indices.size()));
   object_models_[res].first->Upload(vertices.data());
   object_models_[res].second->Upload(indices.data());
