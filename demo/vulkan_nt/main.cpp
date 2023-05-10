@@ -9,7 +9,10 @@ int main() {
   auto window = glfwCreateWindow(800, 600, "Grassland", nullptr, nullptr);
   Instance instance{InstanceSettings{true, true}};
   Surface surface(instance, window);
-  auto handle = instance.Handle();
+  for (auto device : instance.GetEnumeratePhysicalDevices()) {
+    LAND_INFO("{}", device.DeviceName());
+  }
+  Device device(instance.PickDevice(), &surface);
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
   }

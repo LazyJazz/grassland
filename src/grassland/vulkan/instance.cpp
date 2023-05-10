@@ -1,6 +1,8 @@
 #include "instance.h"
 
+#include "enumerate.h"
 #include "iostream"
+#include "physical_device.h"
 
 namespace grassland::vulkan {
 
@@ -154,6 +156,52 @@ Instance::Instance(const InstanceSettings &settings) {
 #endif
 
   GRASSLAND_VULKAN_CHECK(vkCreateInstance(&create_info, nullptr, &instance_));
+}
+
+std::vector<PhysicalDevice> Instance::GetEnumeratePhysicalDevices() const {
+  auto physical_devices =
+      GetEnumerateVector(instance_, vkEnumeratePhysicalDevices);
+  if (physical_devices.empty()) {
+    LAND_ERROR("No Vulkan device found.");
+  }
+  return {physical_devices.begin(), physical_devices.end()};
+}
+
+PhysicalDevice Instance::PickDevice(bool ray_tracing) const {
+  auto physical_devices = GetEnumeratePhysicalDevices();
+  auto result = physical_devices[0];
+  for (int i = 1; i < physical_devices.size(); i++) {
+    auto current_device = physical_devices[i];
+    if (ray_tracing) {
+      if (current_device.GetRayTracingFeatures().rayTracingPipeline &&
+          !result.GetRayTracingFeatures().rayTracingPipeline) {
+        result = current_device;
+      } else {
+        if (current_device.GetProperties().deviceType ==
+                VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+            result.GetProperties().deviceType !=
+                VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+          result = current_device;
+        }
+      }
+    } else {
+      if (current_device.GetProperties().deviceType ==
+              VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+          result.GetProperties().deviceType !=
+              VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+        result = current_device;
+      } else {
+        if (current_device.GetRayTracingFeatures().rayTracingPipeline &&
+            !result.GetRayTracingFeatures().rayTracingPipeline) {
+          result = current_device;
+        }
+      }
+    }
+  }
+  if (ray_tracing && !result.GetRayTracingFeatures().rayTracingPipeline) {
+    LAND_ERROR("No Ray Tracing device found.");
+  }
+  return result;
 }
 
 }  // namespace grassland::vulkan

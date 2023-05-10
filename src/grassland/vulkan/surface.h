@@ -4,6 +4,7 @@
 namespace grassland::vulkan {
 class Surface {
  public:
+  GRASSLAND_CANNOT_COPY(Surface);
   Surface(const Instance &instance, GLFWwindow *window);
   ~Surface();
 

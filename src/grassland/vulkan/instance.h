@@ -11,10 +11,14 @@ struct InstanceSettings {
   bool validation_layer{kDefaultEnableValidationLayers};
 };
 
+class PhysicalDevice;
+
 class Instance {
  public:
   GRASSLAND_CANNOT_COPY(Instance)
   explicit Instance(const InstanceSettings &settings = InstanceSettings{});
+  [[nodiscard]] std::vector<PhysicalDevice> GetEnumeratePhysicalDevices() const;
+  [[nodiscard]] PhysicalDevice PickDevice(bool ray_tracing = false) const;
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkInstance, instance_)
