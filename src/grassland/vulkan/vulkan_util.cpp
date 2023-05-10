@@ -61,7 +61,7 @@ void CheckResult(VkResult result,
                  int line,
                  const char *code) {
   if (result != VK_SUCCESS) {
-    LAND_ERROR("\nERROR: {}\nFILE: {}\nLINE: {}\nCode: {}",
+    LAND_ERROR("\nERROR: {}\nLOCATION: {}:{}\nCode: {}",
                VkResultToString(result), file_name, line, code);
   }
 }
