@@ -13,6 +13,7 @@ int main() {
     LAND_INFO("{}", device.DeviceName());
   }
   Device device(instance.PickDevice(), &surface);
+  Swapchain swapchain(device);
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
   }
