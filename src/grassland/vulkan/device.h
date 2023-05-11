@@ -9,17 +9,46 @@ namespace grassland::vulkan {
 class Device {
  public:
   GRASSLAND_CANNOT_COPY(Device)
-  Device(PhysicalDevice physical_device,
-         Surface *surface = nullptr,
+  Device(class PhysicalDevice physical_device,
+         class Surface *surface = nullptr,
          bool enable_validation_layer = kDefaultEnableValidationLayers,
          const std::vector<const char *> &extra_extensions =
              std::vector<const char *>{},
          void *extra_features = nullptr);
+  ~Device();
+
+  [[nodiscard]] class PhysicalDevice PhysicalDevice() const {
+    return physical_device_;
+  }
+
+  [[nodiscard]] uint32_t GraphicsFamilyIndex() const {
+    return graphics_family_index_;
+  }
+  [[nodiscard]] uint32_t ComputeFamilyIndex() const {
+    return graphics_family_index_;
+  }
+  [[nodiscard]] uint32_t PresentFamilyIndex() const {
+    return present_family_index_;
+  }
+
+  [[nodiscard]] VkQueue GraphicsQueue() const {
+    return graphics_queue_;
+  }
+  [[nodiscard]] VkQueue ComputeQueue() const {
+    return compute_queue_;
+  }
+  [[nodiscard]] VkQueue PresentQueue() const {
+    return present_queue_;
+  }
+
+  [[nodiscard]] const class Surface *Surface() const {
+    return surface_;
+  }
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkDevice, device_)
-  const PhysicalDevice physical_device_{};
-  const Surface *surface_;
+  const class PhysicalDevice physical_device_ {};
+  const class Surface *surface_;
 
   uint32_t graphics_family_index_{};
   uint32_t compute_family_index_{};

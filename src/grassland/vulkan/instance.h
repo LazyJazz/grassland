@@ -17,10 +17,16 @@ class Instance {
  public:
   GRASSLAND_CANNOT_COPY(Instance)
   explicit Instance(const InstanceSettings &settings = InstanceSettings{});
+  ~Instance();
   [[nodiscard]] std::vector<PhysicalDevice> GetEnumeratePhysicalDevices() const;
   [[nodiscard]] PhysicalDevice PickDevice(bool ray_tracing = false) const;
 
  private:
   GRASSLAND_VULKAN_HANDLE(VkInstance, instance_)
+
+  VkDebugUtilsMessengerEXT messenger_{VK_NULL_HANDLE};
+
+  GRASSLAND_VULKAN_PROCEDURE_VAR(vkCreateDebugUtilsMessengerEXT)
+  GRASSLAND_VULKAN_PROCEDURE_VAR(vkDestroyDebugUtilsMessengerEXT)
 };
 }  // namespace grassland::vulkan

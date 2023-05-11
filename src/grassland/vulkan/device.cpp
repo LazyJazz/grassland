@@ -55,8 +55,8 @@ std::vector<VkQueueFamilyProperties>::const_iterator FindQueue(
 }
 }  // namespace
 
-Device::Device(PhysicalDevice physical_device,
-               Surface *surface,
+Device::Device(class PhysicalDevice physical_device,
+               class Surface *surface,
                bool enable_validation_layer,
                const std::vector<const char *> &extra_extensions,
                void *extra_features)
@@ -152,6 +152,10 @@ Device::Device(PhysicalDevice physical_device,
   if (surface_) {
     vkGetDeviceQueue(device_, present_family_index_, 0, &present_queue_);
   }
+}
+
+Device::~Device() {
+  vkDestroyDevice(device_, nullptr);
 }
 
 }  // namespace grassland::vulkan

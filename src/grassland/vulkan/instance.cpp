@@ -56,53 +56,123 @@ bool CheckValidationLayerSupport() {
   return true;
 }
 
+const char *ObjectTypeToString(const VkObjectType objectType) {
+  switch (objectType) {
+#define STR(e)             \
+  case VK_OBJECT_TYPE_##e: \
+    return #e
+    STR(UNKNOWN);
+    STR(INSTANCE);
+    STR(PHYSICAL_DEVICE);
+    STR(DEVICE);
+    STR(QUEUE);
+    STR(SEMAPHORE);
+    STR(COMMAND_BUFFER);
+    STR(FENCE);
+    STR(DEVICE_MEMORY);
+    STR(BUFFER);
+    STR(IMAGE);
+    STR(EVENT);
+    STR(QUERY_POOL);
+    STR(BUFFER_VIEW);
+    STR(IMAGE_VIEW);
+    STR(SHADER_MODULE);
+    STR(PIPELINE_CACHE);
+    STR(PIPELINE_LAYOUT);
+    STR(RENDER_PASS);
+    STR(PIPELINE);
+    STR(DESCRIPTOR_SET_LAYOUT);
+    STR(SAMPLER);
+    STR(DESCRIPTOR_POOL);
+    STR(DESCRIPTOR_SET);
+    STR(FRAMEBUFFER);
+    STR(COMMAND_POOL);
+    STR(SAMPLER_YCBCR_CONVERSION);
+    STR(DESCRIPTOR_UPDATE_TEMPLATE);
+    STR(SURFACE_KHR);
+    STR(SWAPCHAIN_KHR);
+    STR(DISPLAY_KHR);
+    STR(DISPLAY_MODE_KHR);
+    STR(DEBUG_REPORT_CALLBACK_EXT);
+    STR(DEBUG_UTILS_MESSENGER_EXT);
+    STR(ACCELERATION_STRUCTURE_KHR);
+    STR(VALIDATION_CACHE_EXT);
+    STR(PERFORMANCE_CONFIGURATION_INTEL);
+    STR(DEFERRED_OPERATION_KHR);
+    STR(INDIRECT_COMMANDS_LAYOUT_NV);
+#undef STR
+    default:
+      return "unknown";
+  }
+}
+
 VKAPI_ATTR VkBool32 VKAPI_CALL
-DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
-              VkDebugUtilsMessageTypeFlagsEXT message_type,
-              const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-              void *user_data) {
-  if (message_severity <= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-    return VK_FALSE;
+VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
+                    VkDebugUtilsMessageTypeFlagsEXT message_type,
+                    const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+                    void *user_data) {
+  switch (message_severity) {
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+      std::cerr << "VERBOSE: ";
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+      std::cerr << "INFO: ";
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+      std::cerr << "WARNING: ";
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+      std::cerr << "ERROR: ";
+      break;
+    default:;
+      std::cerr << "UNKNOWN: ";
   }
-  std::string message_tag;
-  auto add_tag = [&message_tag](const char *tag) {
-    if (!message_tag.empty()) {
-      message_tag += ", ";
+
+  switch (message_type) {
+    case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+      std::cerr << "GENERAL: ";
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
+      std::cerr << "VALIDATION: ";
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+      std::cerr << "PERFORMANCE: ";
+      break;
+    default:
+      std::cerr << "UNKNOWN: ";
+  }
+
+  std::cerr << callback_data->pMessage;
+
+  if (callback_data->objectCount > 0 &&
+      message_severity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+    std::cerr << "\n\n  Objects (" << callback_data->objectCount << "):\n";
+
+    for (uint32_t i = 0; i != callback_data->objectCount; ++i) {
+      const auto object = callback_data->pObjects[i];
+      std::cerr << "  - Object[" << i << "]: "
+                << "Type: " << ObjectTypeToString(object.objectType) << ", "
+                << "Handle: " << reinterpret_cast<void *>(object.objectHandle)
+                << ", "
+                << "Name: '" << (object.pObjectName ? object.pObjectName : "")
+                << "'"
+                << "\n";
     }
-    message_tag += tag;
-  };
-  if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    add_tag("ERROR");
   }
-  if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-    add_tag("WARNING");
-  }
-  if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-    add_tag("INFO");
-  }
-  if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-    add_tag("VERBOSE");
-  }
-  std::cerr << fmt::format("validation layer ({}): {}", message_tag,
-                           callback_data->pMessage)
-            << std::endl;
+
+  std::cerr << std::endl;
+
   return VK_FALSE;
 }
 
-void PopulateDebugMessengerCreateInfo(
-    VkDebugUtilsMessengerCreateInfoEXT &create_info) {
-  create_info = {};
-  create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-  create_info.messageSeverity =
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-  create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-  create_info.pfnUserCallback = DebugCallback;
-}
+template <class FuncTy>
+FuncTy GetProcedure(VkInstance instance, const char *function_name) {
+  auto func = (FuncTy)vkGetInstanceProcAddr(instance, function_name);
+  return func;
+};
 
+#define GET_PROCEDURE(instance, function_name) \
+  function_name##_ = GetProcedure<PFN_##function_name>(instance, #function_name)
 }  // namespace
 
 Instance::Instance(const InstanceSettings &settings) {
@@ -136,15 +206,10 @@ Instance::Instance(const InstanceSettings &settings) {
   create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   create_info.ppEnabledExtensionNames = extensions.data();
 
-  VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
   if (settings.validation_layer) {
     create_info.enabledLayerCount =
         static_cast<uint32_t>(validationLayers.size());
     create_info.ppEnabledLayerNames = validationLayers.data();
-
-    PopulateDebugMessengerCreateInfo(debug_create_info);
-    create_info.pNext =
-        (VkDebugUtilsMessengerCreateInfoEXT *)&debug_create_info;
   } else {
     create_info.enabledLayerCount = 0;
 
@@ -156,6 +221,27 @@ Instance::Instance(const InstanceSettings &settings) {
 #endif
 
   GRASSLAND_VULKAN_CHECK(vkCreateInstance(&create_info, nullptr, &instance_));
+
+  GET_PROCEDURE(instance_, vkCreateDebugUtilsMessengerEXT);
+  GET_PROCEDURE(instance_, vkDestroyDebugUtilsMessengerEXT);
+
+  if (settings.validation_layer) {
+    VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity =
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    createInfo.pfnUserCallback = VulkanDebugCallback;
+    createInfo.pUserData = nullptr;
+
+    GRASSLAND_VULKAN_CHECK(vkCreateDebugUtilsMessengerEXT_(
+        instance_, &createInfo, nullptr, &messenger_));
+  }
 }
 
 std::vector<PhysicalDevice> Instance::GetEnumeratePhysicalDevices() const {
@@ -202,6 +288,15 @@ PhysicalDevice Instance::PickDevice(bool ray_tracing) const {
     LAND_ERROR("No Ray Tracing device found.");
   }
   return result;
+}
+
+Instance::~Instance() {
+  if (instance_ != VK_NULL_HANDLE) {
+    if (messenger_ != VK_NULL_HANDLE) {
+      vkDestroyDebugUtilsMessengerEXT_(instance_, messenger_, nullptr);
+    }
+    vkDestroyInstance(instance_, nullptr);
+  }
 }
 
 }  // namespace grassland::vulkan

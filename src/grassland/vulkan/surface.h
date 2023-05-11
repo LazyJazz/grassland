@@ -8,8 +8,13 @@ class Surface {
   Surface(const Instance &instance, GLFWwindow *window);
   ~Surface();
 
+  [[nodiscard]] GLFWwindow *Window() const {
+    return window_;
+  }
+
  private:
   GRASSLAND_VULKAN_HANDLE(VkSurfaceKHR, surface_);
   const Instance &instance_;
+  GLFWwindow *window_{};
 };
 }  // namespace grassland::vulkan
