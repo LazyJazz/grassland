@@ -78,9 +78,13 @@ Device::Device(class PhysicalDevice physical_device,
 
   CheckRequiredExtensions(physical_device_.Handle(), device_extensions);
 
+  spdlog::info("Creating Device ({})...", physical_device_.DeviceName());
+
+  spdlog::info("Device extensions:");
   for (auto extension : device_extensions) {
-    LAND_INFO("{}", extension);
+    spdlog::info("- {}", extension);
   }
+  spdlog::info("");
 
   const auto queue_families = GetEnumerateVector(
       physical_device_.Handle(), vkGetPhysicalDeviceQueueFamilyProperties);
@@ -152,6 +156,9 @@ Device::Device(class PhysicalDevice physical_device,
   if (surface_) {
     vkGetDeviceQueue(device_, present_family_index_, 0, &present_queue_);
   }
+
+  vkGetPhysicalDeviceMemoryProperties(physical_device_.Handle(),
+                                      &memory_properties_);
 }
 
 Device::~Device() {

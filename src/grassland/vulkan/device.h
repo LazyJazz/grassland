@@ -45,6 +45,11 @@ class Device {
     return surface_;
   }
 
+  [[nodiscard]] const VkPhysicalDeviceMemoryProperties &
+  PhysicalDeviceMemoryProperties() const {
+    return memory_properties_;
+  }
+
  private:
   GRASSLAND_VULKAN_HANDLE(VkDevice, device_)
   const class PhysicalDevice physical_device_ {};
@@ -57,5 +62,7 @@ class Device {
   VkQueue graphics_queue_{VK_NULL_HANDLE};
   VkQueue compute_queue_{VK_NULL_HANDLE};
   VkQueue present_queue_{VK_NULL_HANDLE};
+
+  VkPhysicalDeviceMemoryProperties memory_properties_{};
 };
 }  // namespace grassland::vulkan

@@ -14,7 +14,7 @@
   VulkanHandleType object_name{VK_NULL_HANDLE};
 
 #define GRASSLAND_VULKAN_DEVICE        \
-  const Device &device_;               \
+  const class Device &device_;         \
                                        \
  public:                               \
   const class Device &Device() const { \
