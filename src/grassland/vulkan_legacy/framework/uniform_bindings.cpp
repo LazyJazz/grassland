@@ -201,6 +201,7 @@ void UniformBindingTextureSamplers::BeforeDraw(CommandBuffer *command_buffer,
                        VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
+
 void UniformBindingTextureSamplers::AfterDraw(
     grassland::vulkan_legacy::CommandBuffer *command_buffer,
     int frame_index) const {
