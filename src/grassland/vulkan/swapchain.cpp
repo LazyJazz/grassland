@@ -57,9 +57,22 @@ Swapchain::Swapchain(const class Device &device, VkPresentModeKHR present_mode)
 
   GRASSLAND_VULKAN_CHECK(
       vkCreateSwapchainKHR(device.Handle(), &createInfo, nullptr, &swapchain_));
+
+  present_mode_ = actual_present_mode;
+  format_ = surface_format.format;
+  extent_ = extent;
+  images_ =
+      GetEnumerateVector(device_.Handle(), swapchain_, vkGetSwapchainImagesKHR);
+  image_views_.reserve(images_.size());
+
+  for (auto image : images_) {
+    image_views_.push_back(std::make_unique<class ImageView>(
+        device_, image, format_, VK_IMAGE_ASPECT_COLOR_BIT));
+  }
 }
 
 Swapchain::~Swapchain() {
+  image_views_.clear();
   if (swapchain_) {
     vkDestroySwapchainKHR(device_.Handle(), swapchain_, nullptr);
   }

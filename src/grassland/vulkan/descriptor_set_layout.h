@@ -1,8 +1,16 @@
-//
-// Created by zijian on 5/11/2023.
-//
+#include "device.h"
 
-#ifndef GRASSLAND_DESCRIPTOR_SET_LAYOUT_H
-#define GRASSLAND_DESCRIPTOR_SET_LAYOUT_H
+namespace grassland::vulkan {
+class DescriptorSetLayout {
+ public:
+  GRASSLAND_CANNOT_COPY(DescriptorSetLayout)
+  DescriptorSetLayout(
+      const class Device &device,
+      const std::vector<VkDescriptorSetLayoutBinding> &bindings);
+  ~DescriptorSetLayout();
 
-#endif  // GRASSLAND_DESCRIPTOR_SET_LAYOUT_H
+ private:
+  GRASSLAND_VULKAN_DEVICE
+  GRASSLAND_VULKAN_HANDLE(VkDescriptorSetLayout, layout_)
+};
+}  // namespace grassland::vulkan

@@ -1,8 +1,23 @@
-//
-// Created by zijian on 5/11/2023.
-//
+#pragma once
+#include "device.h"
 
-#ifndef GRASSLAND_DESCRIPTOR_POOL_H
-#define GRASSLAND_DESCRIPTOR_POOL_H
+namespace grassland::vulkan {
+class DescriptorPool {
+ public:
+  GRASSLAND_CANNOT_COPY(DescriptorPool)
+  DescriptorPool(const class Device &device,
+                 const std::vector<VkDescriptorSetLayoutBinding> &bindings,
+                 size_t max_sets);
+  DescriptorPool(const class Device &device,
+                 const std::vector<VkDescriptorPoolSize> &pool_sizes,
+                 size_t max_sets);
+  ~DescriptorPool();
 
-#endif  // GRASSLAND_DESCRIPTOR_POOL_H
+ private:
+  void CreatePool(const std::vector<VkDescriptorPoolSize> &pool_sizes,
+                  size_t max_sets);
+
+  GRASSLAND_VULKAN_DEVICE
+  GRASSLAND_VULKAN_HANDLE(VkDescriptorPool, descriptor_pool_)
+};
+}  // namespace grassland::vulkan

@@ -1,8 +1,20 @@
-//
-// Created by zijian on 5/11/2023.
-//
+#pragma once
 
-#ifndef GRASSLAND_IMAGE_VIEW_H
-#define GRASSLAND_IMAGE_VIEW_H
+#include "device.h"
+#include "image.h"
 
-#endif  // GRASSLAND_IMAGE_VIEW_H
+namespace grassland::vulkan {
+class ImageView {
+ public:
+  GRASSLAND_CANNOT_COPY(ImageView)
+  explicit ImageView(const class Device &device,
+                     VkImage image,
+                     VkFormat format,
+                     VkImageAspectFlags aspect_flags);
+  ~ImageView();
+
+ private:
+  GRASSLAND_VULKAN_DEVICE
+  GRASSLAND_VULKAN_HANDLE(VkImageView, image_view_)
+};
+}  // namespace grassland::vulkan

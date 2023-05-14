@@ -1,8 +1,20 @@
-//
-// Created by zijian on 5/11/2023.
-//
+#pragma once
 
-#ifndef GRASSLAND_PIPELINE_LAYOUT_H
-#define GRASSLAND_PIPELINE_LAYOUT_H
+#include "descriptor_set_layout.h"
 
-#endif  // GRASSLAND_PIPELINE_LAYOUT_H
+namespace grassland::vulkan {
+class PipelineLayout {
+ public:
+  GRASSLAND_CANNOT_COPY(PipelineLayout)
+  PipelineLayout(const class Device &device,
+                 const DescriptorSetLayout &descriptor_set_layout);
+  PipelineLayout(
+      const class Device &device,
+      const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts);
+  ~PipelineLayout();
+
+ private:
+  GRASSLAND_VULKAN_DEVICE
+  GRASSLAND_VULKAN_HANDLE(VkPipelineLayout, layout_)
+};
+}  // namespace grassland::vulkan
