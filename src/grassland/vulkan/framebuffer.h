@@ -1,8 +1,18 @@
-//
-// Created by zijian on 5/11/2023.
-//
+#pragma once
+#include "render_pass.h"
 
-#ifndef GRASSLAND_FRAMEBUFFER_H
-#define GRASSLAND_FRAMEBUFFER_H
+namespace grassland::vulkan {
+class Framebuffer {
+ public:
+  GRASSLAND_CANNOT_COPY(Framebuffer)
+  Framebuffer(const RenderPass &render_pass,
+              VkExtent2D extent,
+              const std::vector<VkImageView> &color_attachments,
+              VkImageView depth_attachment);
+  ~Framebuffer();
 
-#endif  // GRASSLAND_FRAMEBUFFER_H
+ private:
+  GRASSLAND_VULKAN_DEVICE
+  GRASSLAND_VULKAN_HANDLE(VkFramebuffer, framebuffer_)
+};
+}  // namespace grassland::vulkan

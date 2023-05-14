@@ -61,5 +61,27 @@ RenderPass::RenderPass(const class grassland::vulkan::Device &device,
   VkSubpassDependency dependency{};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
   dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = 0;
+
+  VkRenderPassCreateInfo pass_info{};
+  pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  pass_info.attachmentCount = attachments.size();
+  pass_info.pAttachments = attachments.data();
+  pass_info.dependencyCount = 1;
+  pass_info.pDependencies = &dependency;
+  pass_info.subpassCount = 1;
+  pass_info.pSubpasses = &subpass_desc;
+  GRASSLAND_VULKAN_CHECK(
+      vkCreateRenderPass(device_.Handle(), &pass_info, nullptr, &render_pass_));
 }
+
+RenderPass::~RenderPass() {
+  if (render_pass_ != VK_NULL_HANDLE) {
+    vkDestroyRenderPass(device_.Handle(), render_pass_, nullptr);
+  }
+}
+
 }  // namespace grassland::vulkan

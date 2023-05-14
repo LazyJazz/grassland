@@ -26,6 +26,9 @@ class Swapchain {
   [[nodiscard]] const class ImageView &ImageView(size_t index) const {
     return *image_views_[index];
   }
+  [[nodiscard]] size_t FrameCount() const {
+    return images_.size();
+  }
 
  private:
   static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(

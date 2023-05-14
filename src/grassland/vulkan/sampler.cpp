@@ -54,4 +54,10 @@ Sampler::Sampler(const class grassland::vulkan::Device &device,
       vkCreateSampler(device_.Handle(), &sampler_info, nullptr, &sampler_));
 }
 
+Sampler::~Sampler() {
+  if (sampler_ != VK_NULL_HANDLE) {
+    vkDestroySampler(device_.Handle(), sampler_, nullptr);
+  }
+}
+
 }  // namespace grassland::vulkan

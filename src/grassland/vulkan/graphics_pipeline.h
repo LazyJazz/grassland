@@ -1,8 +1,22 @@
-//
-// Created by zijian on 5/11/2023.
-//
+#pragma once
+#include "pipeline_layout.h"
+#include "render_pass.h"
 
-#ifndef GRASSLAND_GRAPHICS_PIPELINE_H
-#define GRASSLAND_GRAPHICS_PIPELINE_H
+namespace grassland::vulkan {
+class Pipeline {
+ public:
+  GRASSLAND_CANNOT_COPY(Pipeline);
+  Pipeline(
+      const RenderPass &render_pass,
+      const Pipeline &pipeline,
+      const std::vector<VkPipelineShaderStageCreateInfo> &shader_stage_infos,
+      const std::vector<VkVertexInputBindingDescription> &binding_descriptions,
+      const std::vector<VkVertexInputAttributeDescription>
+          &attribute_descriptions, );
+  ~Pipeline();
 
-#endif  // GRASSLAND_GRAPHICS_PIPELINE_H
+ private:
+  GRASSLAND_VULKAN_DEVICE
+  GRASSLAND_VULKAN_HANDLE(VkPipeline, pipeline_)
+};
+}  // namespace grassland::vulkan

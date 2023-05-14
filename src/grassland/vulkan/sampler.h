@@ -5,7 +5,7 @@ namespace grassland::vulkan {
 class Sampler {
  public:
   GRASSLAND_CANNOT_COPY(Sampler)
-  Sampler(
+  explicit Sampler(
       const class Device &device,
       VkFilter filter = VK_FILTER_LINEAR,
       VkSamplerAddressMode address_mode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
