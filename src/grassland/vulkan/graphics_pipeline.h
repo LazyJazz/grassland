@@ -12,7 +12,8 @@ class Pipeline {
       const std::vector<VkPipelineShaderStageCreateInfo> &shader_stage_infos,
       const std::vector<VkVertexInputBindingDescription> &binding_descriptions,
       const std::vector<VkVertexInputAttributeDescription>
-          &attribute_descriptions, );
+          &attribute_descriptions,
+      const std::vector<VkPipelineColorBlendAttachmentState> &blend_states);
   ~Pipeline();
 
  private:
