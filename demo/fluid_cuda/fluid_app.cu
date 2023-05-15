@@ -82,6 +82,7 @@ void FluidApp::OnInit() {
 void FluidApp::OnLoop() {
   OnUpdate();
   OnRender();
+  OutputXYZFile();
 }
 
 void FluidApp::OnClose() {
@@ -932,4 +933,19 @@ void FluidApp::UpdateImGui() {
     ImGui::End();
   }
   ImGui::Render();
+}
+
+void FluidApp::OutputXYZFile() {
+  static int round = 0;
+  if (!round) {
+    std::system("mkdir data");
+  }
+  std::ofstream file("data/" + std::to_string(round) + ".xyz", std::ios::binary);
+  for (auto& particle: particles_) {
+    if (particle.type == TYPE_LIQ && InsideFreeVolume(particle.position)) {
+      file.write(reinterpret_cast<const char*>(&particle.position), sizeof(particle.position));
+    }
+  }
+  file.close();
+  round++;
 }
