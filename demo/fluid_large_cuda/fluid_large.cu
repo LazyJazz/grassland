@@ -31,6 +31,11 @@ FluidLarge::FluidLarge(const char *title, int width, int height, const PhysicSet
     depth_frame_->Resize(width, height);
     stencil_frame_->Resize(width, height);
     render_node_->BuildRenderNode();
+
+    GlobalUniformObject ubo{};
+    ubo.world = glm::lookAt(SceneRange() * 0.5f - glm::vec3{0.0f, 0.0f, 2.0f}, SceneRange() * 0.5f, glm::vec3{0.0f, 1.0f, 0.0f});
+    ubo.camera = glm::perspectiveZO(glm::radians(60.0f), (float)width / (float)height, 0.1f, 10.0f);
+    global_uniform_buffer_->Upload(&ubo, sizeof(ubo));
   });
 
   std::vector<Vertex> vertices = {
@@ -90,7 +95,7 @@ void FluidLarge::OnRender() {
 }
 
 void FluidLarge::OnUpdate() {
-  for (int i = 0; i < 1; i++) {
+  for (int i = 0; i < 10; i++) {
     physic_solver_->UpdateStep();
   }
   physic_solver_->GetInstanceInfoArray(instance_infos_.data());

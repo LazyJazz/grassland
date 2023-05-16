@@ -10,6 +10,7 @@ cudaEvent_t CudaCreateAndRecordEvent() {
 }
 
 DeviceClock::DeviceClock() {
+  cudaDeviceSynchronize();
   start_ = CudaCreateAndRecordEvent();
 }
 
