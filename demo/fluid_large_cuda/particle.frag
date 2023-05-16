@@ -10,6 +10,6 @@ void main() {
   if (length(position) > 1.0)
     discard;
   out_color = color;
-  float scale = instance_index / (400.0 * 800.0 * 400.0);
-  out_color = color * (1.0 - scale) + vec4(scale);
+  //  float scale = instance_index / (400.0 * 800.0 * 400.0);
+  //  out_color = color * (1.0 - scale) + vec4(scale);
 }

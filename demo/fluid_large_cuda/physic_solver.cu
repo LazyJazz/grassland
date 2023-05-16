@@ -167,6 +167,26 @@ __global__ void Particle2GridTransferKernel(
   NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(thrust::make_pair(particle.velocity.z, particle.type), grid_pos + glm::vec3{0.0f, 0.0f, 0.5f}, w_grid, AssignVelocity);
 }
 
+__global__ void ProcessMACGridKernel(Grid<MACGridContent>::DevRef grid) {
+  int id = blockDim.x * blockIdx.x + threadIdx.x;
+  auto cell_range = grid.Range();
+  int num_cell = cell_range.x * cell_range.y * cell_range.z;
+  if (id >= num_cell) return;
+  glm::ivec3 cell_index{id / (cell_range.y * cell_range.z), (id / cell_range.z) % cell_range.y, id % cell_range.z};
+  auto cell_content = grid(cell_index);
+  if (cell_content.w[0] > 1e-6f) {
+    cell_content.v[0] /= cell_content.w[0];
+  } else {
+    cell_content.v[0] = 0.0f;
+  }
+  if (cell_content.w[1] > 1e-6f) {
+    cell_content.v[1] /= cell_content.w[1];
+  } else {
+    cell_content.v[1] = 0.0f;
+  }
+  grid(cell_index) = cell_content;
+}
+
 void PhysicSolver::UpdateStep() {
   DeviceClock dev_clock;
 
@@ -194,6 +214,11 @@ void PhysicSolver::UpdateStep() {
   Particle2GridTransferKernel<<<CALL_GRID(particles_.size())>>>(particles_.data().get(), particles_.size(), level_sets_, u_grid_, v_grid_, w_grid_, physic_settings_.delta_x, cell_range_);
   dev_clock.Record("Trivial Grid2Particle");
 
+    ProcessMACGridKernel<<<CALL_GRID(u_grid_.Size())>>>(u_grid_);
+    ProcessMACGridKernel<<<CALL_GRID(v_grid_.Size())>>>(v_grid_);
+    ProcessMACGridKernel<<<CALL_GRID(w_grid_.Size())>>>(w_grid_);
+  dev_clock.Record("Process MAC Grid");
+
   AdvectionKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), physic_settings_.delta_t, particles_.size());
   dev_clock.Record("Advection");
@@ -220,6 +245,19 @@ void PhysicSolver::UpdateStep() {
   //  }
 
   // OutputXYZFile();
+
+    // GridLinearHost<MACGridContent> u_grid_host(u_grid_);
+    GridLinearHost<MACGridContent> v_grid_host(v_grid_);
+    // GridLinearHost<MACGridContent> w_grid_host(w_grid_);
+    std::ofstream csv_file("grid.csv");
+    for (int y = 0; y < v_grid_host.Range().y; y++) {
+      for (int z = 0; z < v_grid_host.Range().z; z++) {
+        csv_file << v_grid_host(v_grid_host.Range().x / 2, y, z).v[0] << ",";
+      }
+      csv_file << std::endl;
+    }
+    csv_file.close();
+    std::system("start grid.csv");
 }
 
 void PhysicSolver::OutputXYZFile() {

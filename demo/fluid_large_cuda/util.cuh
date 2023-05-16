@@ -1,5 +1,7 @@
 #pragma once
 
+#define EPS 1e-6f
+
 #define BLOCK_SIZE 256
 #define CALL_GRID(x) ((x + BLOCK_SIZE - 1) / BLOCK_SIZE),  BLOCK_SIZE
 #define RANGE_INDEX_XYZ(X, Y, Z, range) ((X) * range.y * range.z + (Y) * range.z + (Z))
@@ -19,4 +21,6 @@
 
 #define BLOCK_BIT_MASK_V3 glm::ivec3{BLOCK_BIT_MASK_X, BLOCK_BIT_MASK_Y, BLOCK_BIT_MASK_Z}
 #define BLOCK_DIM_SIZE_V3 glm::ivec3{BLOCK_DIM_SIZE_X, BLOCK_DIM_SIZE_Y, BLOCK_DIM_SIZE_Z}
-#define BLOCK_BIT_COUNT_V3 glm::ivec3{BLOCK_BIT_COUNT_X, BLOCK_BIT_COUNT_Y, BLOCK_BIT_COUNT_Z};
+#define BLOCK_BIT_COUNT_V3 glm::ivec3{BLOCK_BIT_COUNT_X, BLOCK_BIT_COUNT_Y, BLOCK_BIT_COUNT_Z}
+
+#define VECTOR_ELEMENT_PRODUCT(v) (v.x * v.y * v.z)
