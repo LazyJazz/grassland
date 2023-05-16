@@ -2,8 +2,19 @@
 #include "device_clock.cuh"
 #include "fluid_large.cuh"
 #include "physic_solver.cuh"
-#include "util.cuh"
 #include "thrust/sort.h"
+#include "util.cuh"
+
+template<class VectorType>
+__device__ float KernelFunction(const VectorType& v) {
+  auto len = glm::length(v);
+  if (len < 0.5f) {
+    return 0.75f - len * len;
+  } else if (len < 1.5f) {
+    return 0.5f * (1.5f - len) * (1.5f - len);
+  }
+  return 0.0f;
+}
 
 __global__ void InitParticleKernel(Particle *particles, int num_particle) {
   uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -32,7 +43,7 @@ PhysicSolver::PhysicSolver(const PhysicSettings &physic_settings)
   InitParticleKernel<<<CALL_GRID(particles_.size())>>>(particles_.data().get(),
                                                        particles_.size());
   cell_range_ = SceneRange() / physic_settings_.delta_x;
-  block_range_ = (cell_range_ + 7) / 8;
+  block_range_ = (cell_range_ + BLOCK_BIT_MASK_V3) / BLOCK_DIM_SIZE_V3;
   printf("Cell [%d %d %d]\n", cell_range_.x, cell_range_.y, cell_range_.z);
   printf("Block [%d %d %d] * (8 8 8)\n", block_range_.x, block_range_.y,
          block_range_.z);
@@ -78,7 +89,7 @@ __global__ void ParticleLinearOperationsKernel(Particle *particles,
   auto particle = particles[i];
 
   glm::ivec3 cell_index_3 = particle.position / delta_x;
-  glm::ivec3 block_index_3 = cell_index_3 >> 3;
+  glm::ivec3 block_index_3 = cell_index_3 >> BLOCK_BIT_COUNT_V3;
   int cell_index = RANGE_INDEX(cell_index_3, cell_range);
   int block_index = RANGE_INDEX(block_index_3, block_range);
   if (!InSceneRange(particle.position)) {
@@ -86,9 +97,10 @@ __global__ void ParticleLinearOperationsKernel(Particle *particles,
     block_index = -1;
   }
   particle.velocity += gravity_delta_t;
-//  if (i < 10) {
-//    printf("index: %d %d %d %d %d %d\n", i, cell_index_3.x, cell_index_3.y, cell_index_3.z, cell_index, block_index);
-//  }
+  //  if (i < 10) {
+  //    printf("index: %d %d %d %d %d %d\n", i, cell_index_3.x, cell_index_3.y,
+  //    cell_index_3.z, cell_index, block_index);
+  //  }
   particles[i] = particle;
   cell_indices[i] = cell_index;
   block_indices[i] = block_index;
@@ -105,8 +117,64 @@ __global__ void AdvectionKernel(Particle *particles,
   particles[i] = particle;
 }
 
+template<class ParticleType, class GridEleType, class OpType>
+__device__ void NeighbourGridInteract(const ParticleType& particle, const glm::vec3& grid_pos, typename Grid<GridEleType>::DevRef& grid, OpType op) {
+  glm::ivec3 nearest_index{
+      floor(grid_pos.x),
+      floor(grid_pos.y),
+      floor(grid_pos.z)
+  };
+
+  auto cell_range = grid.Range();
+  for (int dx = -1; dx <= 1; dx++) {
+    for (int dy = -1; dy <= 1; dy++) {
+      for (int dz = -1; dz <= 1; dz++) {
+        auto current_index = nearest_index + glm::ivec3{dx, dy, dz};
+        if (current_index.x < 0 || current_index.y < 0 || current_index.z < 0)
+          continue;
+        if (current_index.x >= cell_range.x || current_index.y >= cell_range.y  || current_index.z >= cell_range.z)
+          continue ;
+        auto weight = KernelFunction(grid_pos - glm::vec3{current_index} - 0.5f);
+        if (weight > 1e-6f) {
+          op(particle, grid(current_index.x, current_index.y, current_index.z), weight);
+        }
+      }
+    }
+  }
+}
+
+__device__ void AssignVelocity(thrust::pair<float, int> v_t, MACGridContent& content, float weight) {
+  atomicAdd(&content.w[v_t.second], weight);
+  atomicAdd(&content.v[v_t.second], v_t.first * weight);
+}
+
+__global__ void Particle2GridTransferKernel(
+    const Particle *particles,
+    int num_particle,
+    Grid<float>::DevRef level_sets,
+    Grid<MACGridContent>::DevRef u_grid,
+    Grid<MACGridContent>::DevRef v_grid,
+    Grid<MACGridContent>::DevRef w_grid,
+    float delta_x,
+    glm::ivec3 cell_range) {
+  int id = blockDim.x * blockIdx.x + threadIdx.x;
+  if (id >= num_particle) return;
+  auto particle = particles[id];
+  if (!InSceneRange(particle.position)) return;
+  auto grid_pos = particle.position / delta_x;
+  NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(thrust::make_pair(particle.velocity.x, particle.type), grid_pos + glm::vec3{0.5f, 0.0f, 0.0f}, u_grid, AssignVelocity);
+  NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(thrust::make_pair(particle.velocity.y, particle.type), grid_pos + glm::vec3{0.0f, 0.5f, 0.0f}, v_grid, AssignVelocity);
+  NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(thrust::make_pair(particle.velocity.z, particle.type), grid_pos + glm::vec3{0.0f, 0.0f, 0.5f}, w_grid, AssignVelocity);
+}
+
 void PhysicSolver::UpdateStep() {
   DeviceClock dev_clock;
+
+  level_sets_.Clear();
+  u_grid_.Clear();
+  v_grid_.Clear();
+  w_grid_.Clear();
+  dev_clock.Record("Clean data");
 
   ParticleLinearOperationsKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), cell_indices_.data().get(),
@@ -115,10 +183,16 @@ void PhysicSolver::UpdateStep() {
       physic_settings_.delta_x, cell_range_, block_range_, particles_.size());
   dev_clock.Record("Particle Linear Operations Kernel");
 
-//  thrust::sort_by_key(cell_indices_.begin(), cell_indices_.end(), particles_.begin());
-//  dev_clock.Record("Sort by Key");
+    thrust::stable_sort_by_key(cell_indices_.begin(), cell_indices_.end(),
+                      particles_.begin());
+    dev_clock.Record("Sort by Cells");
 
+//      thrust::sort_by_key(block_indices_.begin(), block_indices_.end(),
+//                          particles_.begin());
+//      dev_clock.Record("Sort by Blocks");
 
+  Particle2GridTransferKernel<<<CALL_GRID(particles_.size())>>>(particles_.data().get(), particles_.size(), level_sets_, u_grid_, v_grid_, w_grid_, physic_settings_.delta_x, cell_range_);
+  dev_clock.Record("Trivial Grid2Particle");
 
   AdvectionKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), physic_settings_.delta_t, particles_.size());
@@ -129,19 +203,21 @@ void PhysicSolver::UpdateStep() {
       particles_.size());
   dev_clock.Record("Compose Instance Info");
 
-
   dev_clock.Finish();
 
-//  Particle host_particles[10];
-//  int host_cell_indices[10];
-//  int host_block_indices[10];
-//  thrust::copy(cell_indices.begin(), cell_indices.begin() + 10, host_cell_indices);
-//  thrust::copy(block_indices.begin(), block_indices.begin() + 10, host_block_indices);
-//  thrust::copy(particles_.begin(), particles_.begin() + 10, host_particles);
-//  for (int i = 0; i < 10; i++) {
-//    glm::ivec3 cell_index = host_particles[i].position / physic_settings_.delta_x;
-//    printf("%d %d %d %d %d\n", cell_index.x, cell_index.y, cell_index.z, host_cell_indices[i], host_block_indices[i]);
-//  }
+  //  Particle host_particles[10];
+  //  int host_cell_indices[10];
+  //  int host_block_indices[10];
+  //  thrust::copy(cell_indices.begin(), cell_indices.begin() + 10,
+  //  host_cell_indices); thrust::copy(block_indices.begin(),
+  //  block_indices.begin() + 10, host_block_indices);
+  //  thrust::copy(particles_.begin(), particles_.begin() + 10, host_particles);
+  //  for (int i = 0; i < 10; i++) {
+  //    glm::ivec3 cell_index = host_particles[i].position /
+  //    physic_settings_.delta_x; printf("%d %d %d %d %d\n", cell_index.x,
+  //    cell_index.y, cell_index.z, host_cell_indices[i],
+  //    host_block_indices[i]);
+  //  }
 
   // OutputXYZFile();
 }

@@ -20,8 +20,8 @@ struct PhysicSettings {
 };
 
 struct MACGridContent {
-  float v;
-  float w;
+  float v[2];
+  float w[2];
 };
 
 class PhysicSolver {
