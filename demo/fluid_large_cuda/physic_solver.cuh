@@ -33,7 +33,7 @@ class PhysicSolver {
  private:
   thrust::device_vector<Particle> particles_;
   thrust::device_vector<int> cell_indices_;
-  thrust::device_vector<int> block_indices_;
+  thrust::device_vector<int> cell_index_lower_bound_;
   thrust::device_vector<InstanceInfo> dev_instance_infos_;
 
   Grid<float> level_sets_;

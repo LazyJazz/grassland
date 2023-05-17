@@ -24,11 +24,17 @@ class GridLinear {
   [[nodiscard]] glm::ivec3 Range() const {return grid_range_;}
   [[nodiscard]] size_t Size() const {return grid_range_.x * grid_range_.y * grid_range_.z;}
   void Clear();
+  static size_t BufferSize(glm::ivec3 range);
  private:
   friend class GridLinearHost<ElementType>;
   thrust::device_vector<ElementType> elements_;
   glm::ivec3 grid_range_;
 };
+
+template <class ElementType>
+size_t GridLinear<ElementType>::BufferSize(glm::ivec3 range) {
+  return range.x * range.y * range.z;
+}
 
 template <class ElementType>
 __device__ ElementType &GridLinear<ElementType>::DevRef::operator()(

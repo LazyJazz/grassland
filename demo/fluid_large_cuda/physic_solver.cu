@@ -38,7 +38,6 @@ PhysicSolver::PhysicSolver(const PhysicSettings &physic_settings)
     : physic_settings_(physic_settings) {
   particles_.resize(physic_settings_.num_particle);
   cell_indices_.resize(physic_settings_.num_particle);
-  block_indices_.resize(physic_settings_.num_particle);
   dev_instance_infos_.resize(physic_settings_.num_particle);
   InitParticleKernel<<<CALL_GRID(particles_.size())>>>(particles_.data().get(),
                                                        particles_.size());
@@ -47,6 +46,8 @@ PhysicSolver::PhysicSolver(const PhysicSettings &physic_settings)
   printf("Cell [%d %d %d]\n", cell_range_.x, cell_range_.y, cell_range_.z);
   printf("Block [%d %d %d] * (8 8 8)\n", block_range_.x, block_range_.y,
          block_range_.z);
+
+  cell_index_lower_bound_.resize(Grid<int>::BufferSize(cell_range_));
 
   level_sets_ = Grid<float>(cell_range_ + 1);
   u_grid_ = Grid<MACGridContent>(cell_range_ + glm::ivec3{1, 0, 0});
@@ -76,12 +77,11 @@ void PhysicSolver::GetInstanceInfoArray(InstanceInfo *instance_infos) const {
 
 __global__ void ParticleLinearOperationsKernel(Particle *particles,
                                                int *cell_indices,
-                                               int *block_indices,
                                                glm::vec3 gravity_delta_t,
                                                float delta_x,
                                                glm::ivec3 cell_range,
                                                glm::ivec3 block_range,
-                                               size_t num_particle) {
+                                               int num_particle) {
   uint32_t i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i >= num_particle) {
     return;
@@ -89,21 +89,13 @@ __global__ void ParticleLinearOperationsKernel(Particle *particles,
   auto particle = particles[i];
 
   glm::ivec3 cell_index_3 = particle.position / delta_x;
-  glm::ivec3 block_index_3 = cell_index_3 >> BLOCK_BIT_COUNT_V3;
   int cell_index = RANGE_INDEX(cell_index_3, cell_range);
-  int block_index = RANGE_INDEX(block_index_3, block_range);
   if (!InSceneRange(particle.position)) {
     cell_index = -1;
-    block_index = -1;
   }
   particle.velocity += gravity_delta_t;
-  //  if (i < 10) {
-  //    printf("index: %d %d %d %d %d %d\n", i, cell_index_3.x, cell_index_3.y,
-  //    cell_index_3.z, cell_index, block_index);
-  //  }
   particles[i] = particle;
   cell_indices[i] = cell_index;
-  block_indices[i] = block_index;
 }
 
 __global__ void AdvectionKernel(Particle *particles,
@@ -187,6 +179,18 @@ __global__ void ProcessMACGridKernel(Grid<MACGridContent>::DevRef grid) {
   grid(cell_index) = cell_content;
 }
 
+__global__ void LowerBoundKernel(int *array, int num_element, int *lower_bound, int max_val) {
+  int id = blockIdx.x * blockDim.x + threadIdx.x;
+  if (id >= max_val) return;
+  int L = 0, R = num_element;
+  while (L < R) {
+    int m = (L + R) >> 1;
+    if (array[m] < id) L = m + 1;
+    else R = m;
+  }
+  lower_bound[id] = R;
+}
+
 void PhysicSolver::UpdateStep() {
   DeviceClock dev_clock;
 
@@ -198,12 +202,12 @@ void PhysicSolver::UpdateStep() {
 
   ParticleLinearOperationsKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), cell_indices_.data().get(),
-      block_indices_.data().get(),
       physic_settings_.gravity * physic_settings_.delta_t,
       physic_settings_.delta_x, cell_range_, block_range_, particles_.size());
   dev_clock.Record("Particle Linear Operations Kernel");
 
-    thrust::stable_sort_by_key(cell_indices_.begin(), cell_indices_.end(),
+
+    thrust::sort_by_key(cell_indices_.begin(), cell_indices_.end(),
                       particles_.begin());
     dev_clock.Record("Sort by Cells");
 
@@ -211,13 +215,16 @@ void PhysicSolver::UpdateStep() {
 //                          particles_.begin());
 //      dev_clock.Record("Sort by Blocks");
 
+    LowerBoundKernel<<<CALL_GRID(cell_index_lower_bound_.size())>>>(cell_indices_.data().get(), cell_indices_.size(), cell_index_lower_bound_.data().get(), cell_index_lower_bound_.size());
+    dev_clock.Record("Cell Index Lower Bound");
+
   Particle2GridTransferKernel<<<CALL_GRID(particles_.size())>>>(particles_.data().get(), particles_.size(), level_sets_, u_grid_, v_grid_, w_grid_, physic_settings_.delta_x, cell_range_);
   dev_clock.Record("Trivial Grid2Particle");
 
     ProcessMACGridKernel<<<CALL_GRID(u_grid_.Size())>>>(u_grid_);
     ProcessMACGridKernel<<<CALL_GRID(v_grid_.Size())>>>(v_grid_);
     ProcessMACGridKernel<<<CALL_GRID(w_grid_.Size())>>>(w_grid_);
-  dev_clock.Record("Process MAC Grid");
+    dev_clock.Record("Process MAC Grid");
 
   AdvectionKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), physic_settings_.delta_t, particles_.size());
@@ -247,17 +254,19 @@ void PhysicSolver::UpdateStep() {
   // OutputXYZFile();
 
     // GridLinearHost<MACGridContent> u_grid_host(u_grid_);
-    GridLinearHost<MACGridContent> v_grid_host(v_grid_);
-    // GridLinearHost<MACGridContent> w_grid_host(w_grid_);
-    std::ofstream csv_file("grid.csv");
-    for (int y = 0; y < v_grid_host.Range().y; y++) {
-      for (int z = 0; z < v_grid_host.Range().z; z++) {
-        csv_file << v_grid_host(v_grid_host.Range().x / 2, y, z).v[0] << ",";
-      }
-      csv_file << std::endl;
-    }
-    csv_file.close();
-    std::system("start grid.csv");
+//    GridLinearHost<MACGridContent> v_grid_host(v_grid_);
+//    // GridLinearHost<MACGridContent> w_grid_host(w_grid_);
+//    std::ofstream csv_file("grid.csv");
+//    for (int y = 0; y < v_grid_host.Range().y; y++) {
+//      for (int z = 0; z < v_grid_host.Range().z; z++) {
+//        csv_file << v_grid_host(v_grid_host.Range().x / 2, y, z).v[0] << ",";
+//      }
+//      csv_file << std::endl;
+//    }
+//    csv_file.close();
+//    std::system("start grid.csv");
+//    while (!GetAsyncKeyState(VK_ESCAPE));
+//    while (GetAsyncKeyState(VK_ESCAPE));
 }
 
 void PhysicSolver::OutputXYZFile() {
