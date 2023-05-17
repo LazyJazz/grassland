@@ -17,6 +17,9 @@ class GridLinear {
     __device__ ElementType& operator()(int x, int y, int z);
     __device__ const ElementType& operator()(int x, int y, int z) const;
     [[nodiscard]] __device__ glm::ivec3 Range() const {return grid_range_;}
+    [[nodiscard]] __device__ int Size() const {return grid_range_.x * grid_range_.y * grid_range_.z;}
+    [[nodiscard]] int ToIndex(const glm::ivec3& v) const {return RANGE_INDEX(v, grid_range_);}
+    [[nodiscard]] int ToIndex(int x, int y, int z) const {return RANGE_INDEX_XYZ(x, y, z, grid_range_);}
    private:
     ElementType *ptr_elements_;
     glm::ivec3 grid_range_;

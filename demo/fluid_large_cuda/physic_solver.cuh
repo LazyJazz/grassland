@@ -24,6 +24,11 @@ struct MACGridContent {
   float w[2];
 };
 
+struct LevelSet_t {
+  int type;
+  float phi;
+};
+
 class PhysicSolver {
  public:
   explicit PhysicSolver(const PhysicSettings& physic_settings);
@@ -36,7 +41,7 @@ class PhysicSolver {
   thrust::device_vector<int> cell_index_lower_bound_;
   thrust::device_vector<InstanceInfo> dev_instance_infos_;
 
-  Grid<float> level_sets_;
+  Grid<LevelSet_t> level_sets_;
   Grid<MACGridContent> u_grid_;
   Grid<MACGridContent> v_grid_;
   Grid<MACGridContent> w_grid_;
@@ -45,3 +50,5 @@ class PhysicSolver {
   glm::ivec3 cell_range_{};
   glm::ivec3 block_range_{};
 };
+
+__device__ __host__ LevelSet_t LevelSetInterpolate(const LevelSet_t& ls_0, const LevelSet_t& ls_1, float alpha);
