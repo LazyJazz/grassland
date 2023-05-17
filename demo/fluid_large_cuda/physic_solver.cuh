@@ -18,8 +18,8 @@ struct Particle {
 };
 
 struct PhysicSettings {
-  int num_particle{320 * 640 * 320};
-  float delta_x{1.0f / 320.0f};
+  int num_particle{40 * 80 * 40};
+  float delta_x{1.0f / 40.0f};
   float delta_t{1e-2f};
   glm::vec3 gravity{0.0f, -9.8f, 0.0f};
 };

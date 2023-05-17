@@ -1,6 +1,7 @@
 #include "curand_kernel.h"
 #include "device_clock.cuh"
 #include "fluid_large.cuh"
+#include "linear_solvers.cuh"
 #include "physic_solver.cuh"
 #include "thrust/sort.h"
 #include "util.cuh"
@@ -67,7 +68,7 @@ __global__ void InstanceInfoComposeKernel(const Particle *particles,
     return;
   auto particle = particles[i];
   InstanceInfo info{};
-  info.size = 1e-4f;
+  info.size = 3e-3f;
   info.offset = particle.position;
   info.color = particle.type ? glm::vec4{1.0f, 0.5f, 0.5f, 1.0f}
                              : glm::vec4{0.5f, 0.5f, 1.0f, 1.0f};
@@ -404,6 +405,32 @@ __global__ void PreparePoissonEquationKernel(
   }
 }
 
+__global__ void ApplyPressureKernel(const CellCoe *cell_coe,
+                                    const float *pressure,
+                                    float *delta_div,
+                                    glm::ivec3 range) {
+  int id = blockIdx.x * blockDim.x + threadIdx.x;
+  int num_cell = range.x * range.y * range.z;
+  if (id < num_cell) {
+    float div = 0.0f;
+    CellCoe coe = cell_coe[id];
+    div += coe.local * pressure[id];
+    if (id > 1)
+      div += coe.z[0] * pressure[id - 1];
+    if (id > range.z)
+      div += coe.y[0] * pressure[id - range.z];
+    if (id > range.z * range.y)
+      div += coe.x[0] * pressure[id - range.z * range.y];
+    if (id + 1 < num_cell)
+      div += coe.z[1] * pressure[id + 1];
+    if (id + range.z < num_cell)
+      div += coe.y[1] * pressure[id + range.z];
+    if (id + range.z * range.y < num_cell)
+      div += coe.x[1] * pressure[id + range.z * range.y];
+    delta_div[id] = div;
+  }
+}
+
 void PhysicSolver::UpdateStep() {
   DeviceClock dev_clock;
 
@@ -458,6 +485,16 @@ void PhysicSolver::UpdateStep() {
       v_grid_, w_grid_, physic_settings_.delta_x, physic_settings_.delta_t);
   dev_clock.Record("Prepare Poisson Equation");
 
+  ConjugateGradient(
+      [this](const thrust::device_vector<float> &pressure,
+             thrust::device_vector<float> &delta_gradient) {
+        ApplyPressureKernel<<<CALL_GRID(pressure_.Size())>>>(
+            cell_coe_.Vector().data().get(), pressure.data().get(),
+            delta_gradient.data().get(), pressure_.Range());
+      },
+      divergence_.Vector(), pressure_.Vector());
+  dev_clock.Record("Solve Poisson Equation");
+
   AdvectionKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), physic_settings_.delta_t, particles_.size());
   dev_clock.Record("Advection");
@@ -485,31 +522,30 @@ void PhysicSolver::UpdateStep() {
 
   // OutputXYZFile();
 
-  //      GridLinearHost<MACGridContent> u_grid_host(u_grid_);
-  //  GridLinearHost<MACGridContent> v_grid_host(v_grid_);
-  //  //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
+  //        GridLinearHost<MACGridContent> u_grid_host(u_grid_);
+  //    GridLinearHost<MACGridContent> v_grid_host(v_grid_);
+  //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
+
+  // GridLinearHost<LevelSet_t> level_set_host(level_sets_);
+  //    GridLinearHost<float> divergence_host(divergence_);
+  //    GridLinearHost<CellCoe> cell_coe_host(cell_coe_);
+  //      GridLinearHost<float> pressure_host(pressure_);
+  //      auto &print_grid = pressure_host;
+  //      std::ofstream csv_file("grid.csv");
+  //      for (int y = 0; y < print_grid.Range().y; y++) {
+  //      for (int z = 0; z < print_grid.Range().z; z++) {
+  //        auto content = print_grid(print_grid.Range().x / 2, y, z);
+  //        csv_file << std::to_string(content) << ",";
+  //      }
+  //      csv_file << std::endl;
+  //      }
+  //      csv_file.close();
+  //      std::system("start grid.csv");
   //
-  //          //GridLinearHost<LevelSet_t> level_set_host(level_sets_);
-  //  GridLinearHost<float> divergence_host(divergence_);
-  //  GridLinearHost<CellCoe> cell_coe_host(cell_coe_);
-  //    auto &print_grid = divergence_host;
-  //    std::ofstream csv_file("grid.csv");
-  //    for (int y = 0; y < print_grid.Range().y; y++) {
-  //    for (int z = 0; z < print_grid.Range().z; z++) {
-  //      auto content = print_grid(print_grid.Range().x / 2, y, z);
-  //      auto up = v_grid_host(print_grid.Range().x / 2, y, z);
-  //      auto down = v_grid_host(print_grid.Range().x / 2, y + 1, z);
-  //      csv_file << std::to_string(content) << ",";
-  //    }
-  //    csv_file << std::endl;
-  //    }
-  //    csv_file.close();
-  //    std::system("start grid.csv");
-  //
-  //    while (!GetAsyncKeyState(VK_ESCAPE))
-  //      ;
-  //    while (GetAsyncKeyState(VK_ESCAPE))
-  //      ;
+  //      while (!GetAsyncKeyState(VK_ESCAPE))
+  //        ;
+  //      while (GetAsyncKeyState(VK_ESCAPE))
+  //        ;
 }
 
 void PhysicSolver::OutputXYZFile() {
