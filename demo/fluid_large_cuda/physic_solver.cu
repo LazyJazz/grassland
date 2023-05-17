@@ -53,6 +53,10 @@ PhysicSolver::PhysicSolver(const PhysicSettings &physic_settings)
   u_grid_ = Grid<MACGridContent>(cell_range_ + glm::ivec3{1, 0, 0});
   v_grid_ = Grid<MACGridContent>(cell_range_ + glm::ivec3{0, 1, 0});
   w_grid_ = Grid<MACGridContent>(cell_range_ + glm::ivec3{0, 0, 1});
+
+  divergence_ = Grid<float>(cell_range_);
+  pressure_ = Grid<float>(cell_range_);
+  cell_coe_ = Grid<CellCoe>(cell_range_);
 }
 
 __global__ void InstanceInfoComposeKernel(const Particle *particles,
@@ -110,11 +114,11 @@ __global__ void AdvectionKernel(Particle *particles,
 
 template <class ParticleType, class GridEleType, class OpType>
 __device__ void NeighbourGridInteract(const ParticleType &particle,
-                                      const glm::vec3 &grid_pos,
+                                      const glm::vec3 &grid_coord,
                                       typename Grid<GridEleType>::DevRef &grid,
                                       OpType op) {
-  glm::ivec3 nearest_index{floor(grid_pos.x), floor(grid_pos.y),
-                           floor(grid_pos.z)};
+  glm::ivec3 nearest_index{floor(grid_coord.x), floor(grid_coord.y),
+                           floor(grid_coord.z)};
 
   auto cell_range = grid.Range();
   for (int dx = -1; dx <= 1; dx++) {
@@ -127,7 +131,7 @@ __device__ void NeighbourGridInteract(const ParticleType &particle,
             current_index.y >= cell_range.y || current_index.z >= cell_range.z)
           continue;
         auto weight =
-            KernelFunction(grid_pos - glm::vec3{current_index} - 0.5f);
+            KernelFunction(grid_coord - glm::vec3{current_index} - 0.5f);
         if (weight > 1e-6f) {
           op(particle, grid(current_index.x, current_index.y, current_index.z),
              weight);
@@ -157,38 +161,16 @@ __global__ void Particle2GridTransferKernel(const Particle *particles,
   auto particle = particles[id];
   if (!InSceneRange(particle.position))
     return;
-  auto grid_pos = particle.position / delta_x;
+  auto grid_coord = particle.position / delta_x;
   NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(
       thrust::make_pair(particle.velocity.x, particle.type),
-      grid_pos + glm::vec3{0.5f, 0.0f, 0.0f}, u_grid, AssignVelocity);
+      grid_coord + glm::vec3{0.5f, 0.0f, 0.0f}, u_grid, AssignVelocity);
   NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(
       thrust::make_pair(particle.velocity.y, particle.type),
-      grid_pos + glm::vec3{0.0f, 0.5f, 0.0f}, v_grid, AssignVelocity);
+      grid_coord + glm::vec3{0.0f, 0.5f, 0.0f}, v_grid, AssignVelocity);
   NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(
       thrust::make_pair(particle.velocity.z, particle.type),
-      grid_pos + glm::vec3{0.0f, 0.0f, 0.5f}, w_grid, AssignVelocity);
-}
-
-__global__ void ProcessMACGridKernel(Grid<MACGridContent>::DevRef grid) {
-  int id = blockDim.x * blockIdx.x + threadIdx.x;
-  auto cell_range = grid.Range();
-  int num_cell = cell_range.x * cell_range.y * cell_range.z;
-  if (id >= num_cell)
-    return;
-  glm::ivec3 cell_index{id / (cell_range.y * cell_range.z),
-                        (id / cell_range.z) % cell_range.y, id % cell_range.z};
-  auto cell_content = grid(cell_index);
-  if (cell_content.w[0] > 1e-6f) {
-    cell_content.v[0] /= cell_content.w[0];
-  } else {
-    cell_content.v[0] = 0.0f;
-  }
-  if (cell_content.w[1] > 1e-6f) {
-    cell_content.v[1] /= cell_content.w[1];
-  } else {
-    cell_content.v[1] = 0.0f;
-  }
-  grid(cell_index) = cell_content;
+      grid_coord + glm::vec3{0.0f, 0.0f, 0.5f}, w_grid, AssignVelocity);
 }
 
 __global__ void LowerBoundKernel(int *array,
@@ -253,6 +235,68 @@ __global__ void ConstructLevelSetKernel(Grid<LevelSet_t>::DevRef level_set,
   }
 }
 
+__global__ void CalculateBorderComponentKernel(
+    Grid<MACGridContent>::DevRef grid,
+    Grid<LevelSet_t>::DevRef level_set,
+    glm::ivec3 t_axis,
+    glm::ivec3 b_axis,
+    float delta_x) {
+  int id = blockIdx.x * blockDim.x + threadIdx.x;
+  auto grid_range = grid.Range();
+  glm::ivec3 cell_index{id / (grid_range.y * grid_range.z),
+                        (id / grid_range.z) % grid_range.y, id % grid_range.z};
+  if (id < grid.Size()) {
+    LevelSet_t set_value[2][2] = {
+        {level_set(cell_index), level_set(cell_index + t_axis)},
+        {level_set(cell_index + b_axis),
+         level_set(cell_index + t_axis + b_axis)}};
+    glm::vec3 set_value_pos[2][2] = {
+        {glm::vec3{cell_index} * delta_x,
+         glm::vec3{cell_index + t_axis} * delta_x},
+        {glm::vec3{cell_index + b_axis} * delta_x,
+         glm::vec3{cell_index + b_axis + t_axis} * delta_x}};
+
+    const int precision = 8;
+    const float inv_precision = 1.0f / float(precision);
+    int sample_cnt[2]{};
+    for (int i = 0; i < precision; i++) {
+      float ax = (float(i) + 0.5f) * inv_precision;
+      for (int j = 0; j < precision; j++) {
+        float bx = (float(j) + 0.5f) * inv_precision;
+        glm::vec3 pos = set_value_pos[0][0] * (1.0f - ax) * (1.0f - bx) +
+                        set_value_pos[0][1] * (1.0f - ax) * (bx) +
+                        set_value_pos[1][0] * (ax) * (1.0f - bx) +
+                        set_value_pos[1][1] * (ax) * (bx);
+        if (InsideFreeSpace(pos)) {
+          LevelSet_t value = set_value[0][0] * (1.0f - ax) * (1.0f - bx) +
+                             set_value[0][1] * (1.0f - ax) * (bx) +
+                             set_value[1][0] * (ax) * (1.0f - bx) +
+                             set_value[1][1] * (ax) * (bx);
+          if (value.phi[0] < value.phi[1]) {
+            sample_cnt[0]++;
+          } else {
+            sample_cnt[1]++;
+          }
+        }
+      }
+    }
+    MACGridContent content = grid(cell_index);
+    if (content.w[0] > 1e-6f) {
+      content.v[0] /= content.w[0];
+    } else {
+      content.v[0] = 0.0f;
+    }
+    if (content.w[1] > 1e-6f) {
+      content.v[1] /= content.w[1];
+    } else {
+      content.v[1] = 0.0f;
+    }
+    content.w[0] = sample_cnt[0] * inv_precision * inv_precision;
+    content.w[1] = sample_cnt[1] * inv_precision * inv_precision;
+    grid(cell_index) = content;
+  }
+}
+
 void PhysicSolver::UpdateStep() {
   DeviceClock dev_clock;
 
@@ -286,15 +330,21 @@ void PhysicSolver::UpdateStep() {
       physic_settings_.delta_x, cell_range_);
   dev_clock.Record("Trivial Grid2Particle");
 
-  ProcessMACGridKernel<<<CALL_GRID(u_grid_.Size())>>>(u_grid_);
-  ProcessMACGridKernel<<<CALL_GRID(v_grid_.Size())>>>(v_grid_);
-  ProcessMACGridKernel<<<CALL_GRID(w_grid_.Size())>>>(w_grid_);
-  dev_clock.Record("Process MAC Grid");
-
   ConstructLevelSetKernel<<<CALL_GRID(level_sets_.Size())>>>(
       level_sets_, cell_index_lower_bound_.data().get(),
       particles_.data().get(), particles_.size(), physic_settings_.delta_x);
   dev_clock.Record("Construct Level Set");
+
+  CalculateBorderComponentKernel<<<CALL_GRID(u_grid_.Size())>>>(
+      u_grid_, level_sets_, glm::ivec3{0, 1, 0}, glm::ivec3{0, 0, 1},
+      physic_settings_.delta_x);
+  CalculateBorderComponentKernel<<<CALL_GRID(v_grid_.Size())>>>(
+      v_grid_, level_sets_, glm::ivec3{0, 1, 0}, glm::ivec3{0, 0, 1},
+      physic_settings_.delta_x);
+  CalculateBorderComponentKernel<<<CALL_GRID(w_grid_.Size())>>>(
+      w_grid_, level_sets_, glm::ivec3{0, 1, 0}, glm::ivec3{0, 0, 1},
+      physic_settings_.delta_x);
+  dev_clock.Record("Process MAC grid");
 
   AdvectionKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), physic_settings_.delta_t, particles_.size());
@@ -324,24 +374,25 @@ void PhysicSolver::UpdateStep() {
   // OutputXYZFile();
 
   //      GridLinearHost<MACGridContent> u_grid_host(u_grid_);
-  //      GridLinearHost<MACGridContent> v_grid_host(v_grid_);
+  //  GridLinearHost<MACGridContent> v_grid_host(v_grid_);
   //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
 
-  //      GridLinearHost<LevelSet_t> level_set_host(level_sets_);
-  //      std::ofstream csv_file("grid.csv");
-  //      for (int y = 0; y < level_set_host.Range().y; y++) {
-  //        for (int z = 0; z < level_set_host.Range().z; z++) {
-  //          csv_file << level_set_host(level_set_host.Range().x / 2, y,
-  //          z).phi[0] - level_set_host(level_set_host.Range().x / 2, y,
-  //          z).phi[1] <<
-  //          ",";
-  //        }
-  //        csv_file << std::endl;
-  //      }
-  //      csv_file.close();
-  //      std::system("start grid.csv");
-  //      while (!GetAsyncKeyState(VK_ESCAPE));
-  //      while (GetAsyncKeyState(VK_ESCAPE));
+  //        GridLinearHost<LevelSet_t> level_set_host(level_sets_);
+  //  auto &print_grid = v_grid_host;
+  //  std::ofstream csv_file("grid.csv");
+  //  for (int y = 0; y < print_grid.Range().y; y++) {
+  //    for (int z = 0; z < print_grid.Range().z; z++) {
+  //      auto content = print_grid(print_grid.Range().x / 2, y, z);
+  //      csv_file << content.w[0] << ",";
+  //    }
+  //    csv_file << std::endl;
+  //  }
+  //  csv_file.close();
+  //  std::system("start grid.csv");
+  //  while (!GetAsyncKeyState(VK_ESCAPE))
+  //    ;
+  //  while (GetAsyncKeyState(VK_ESCAPE))
+  //    ;
 }
 
 void PhysicSolver::OutputXYZFile() {

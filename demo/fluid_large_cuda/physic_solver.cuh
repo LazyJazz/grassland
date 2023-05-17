@@ -26,6 +26,19 @@ struct MACGridContent {
 
 struct LevelSet_t {
   float phi[2];
+  __device__ __host__ LevelSet_t operator+(const LevelSet_t &b) const {
+    return {phi[0] + b.phi[0], phi[1] + b.phi[1]};
+  }
+  __device__ __host__ LevelSet_t operator*(float s) const {
+    return {phi[0] * s, phi[1] * s};
+  }
+};
+
+struct CellCoe {
+  float local;
+  float x[2];
+  float y[2];
+  float z[2];
 };
 
 class PhysicSolver {
@@ -45,6 +58,10 @@ class PhysicSolver {
   Grid<MACGridContent> u_grid_;
   Grid<MACGridContent> v_grid_;
   Grid<MACGridContent> w_grid_;
+
+  Grid<float> divergence_;
+  Grid<float> pressure_;
+  Grid<CellCoe> cell_coe_;
 
   PhysicSettings physic_settings_;
   glm::ivec3 cell_range_{};
