@@ -972,20 +972,22 @@ void FluidApp::OutputXYZFile() {
   }
   file.close();
 
-  if (round % 40 == 0) {
-    int image_index = round / 40;
-    std::system(("splashsurf reconstruct -i data/" + std::to_string(round) +
-                 ".xyz --particle-radius 1.0 --smoothing-length 0.6 --cube-size "
-                 "0.1 --output-dir obj -o fluid_" +
-                 std::to_string(image_index) + ".obj")
-                    .c_str());
-    std::system(
-        ("copy obj\\fluid_" + std::to_string(image_index) + ".obj obj\\fluid.obj")
-            .c_str());
-    std::system((".\\sparks.exe -vkrt -production -output_file render\\" +
-                 std::to_string(image_index) +
-                 ".png -scene base.xml -num_sample 4096 -width 1024 -height 1024")
-                    .c_str());
-  }
-  round++;
+  //  if (round % 40 == 0) {
+  //    int image_index = round / 40;
+  //    std::system(("splashsurf reconstruct -i data/" + std::to_string(round) +
+  //                 ".xyz --particle-radius 1.0 --smoothing-length 0.6
+  //                 --cube-size " "0.1 --output-dir obj -o fluid_" +
+  //                 std::to_string(image_index) + ".obj")
+  //                    .c_str());
+  //    std::system(
+  //        ("copy obj\\fluid_" + std::to_string(image_index) + ".obj
+  //        obj\\fluid.obj")
+  //            .c_str());
+  //    std::system((".\\sparks.exe -vkrt -production -output_file render\\" +
+  //                 std::to_string(image_index) +
+  //                 ".png -scene base.xml -num_sample 4096 -width 1024 -height
+  //                 1024")
+  //                    .c_str());
+  //  }
+  //  round++;
 }

@@ -9,6 +9,8 @@
 #define TYPE_AIR 0
 #define TYPE_LIQ 1
 
+#define PIC_SCALE 0.03f
+
 struct InstanceInfo;
 
 struct Particle {
@@ -20,7 +22,7 @@ struct Particle {
 struct PhysicSettings {
   int num_particle{40 * 80 * 40};
   float delta_x{1.0f / 40.0f};
-  float delta_t{1e-2f};
+  float delta_t{1e-3f};
   glm::vec3 gravity{0.0f, -9.8f, 0.0f};
 };
 

@@ -62,18 +62,7 @@ PhysicSolver::PhysicSolver(const PhysicSettings &physic_settings)
 
 __global__ void InstanceInfoComposeKernel(const Particle *particles,
                                           InstanceInfo *instance_infos,
-                                          int num_particle) {
-  uint32_t i = blockIdx.x * blockDim.x + threadIdx.x;
-  if (i >= num_particle)
-    return;
-  auto particle = particles[i];
-  InstanceInfo info{};
-  info.size = 3e-3f;
-  info.offset = particle.position;
-  info.color = particle.type ? glm::vec4{1.0f, 0.5f, 0.5f, 1.0f}
-                             : glm::vec4{0.5f, 0.5f, 1.0f, 1.0f};
-  instance_infos[i] = info;
-}
+                                          int num_particle);
 
 void PhysicSolver::GetInstanceInfoArray(InstanceInfo *instance_infos) const {
   thrust::copy(dev_instance_infos_.begin(), dev_instance_infos_.end(),
@@ -113,11 +102,12 @@ __global__ void AdvectionKernel(Particle *particles,
   particles[i] = particle;
 }
 
-template <class ParticleType, class GridEleType, class OpType>
-__device__ void NeighbourGridInteract(const ParticleType &particle,
+template <class ParticleType, class GridEleType, class OpType, class... Args>
+__device__ void NeighbourGridInteract(ParticleType particle,
                                       const glm::vec3 &grid_coord,
                                       typename Grid<GridEleType>::DevRef &grid,
-                                      OpType op) {
+                                      OpType op,
+                                      Args... args) {
   glm::ivec3 nearest_index{floor(grid_coord.x), floor(grid_coord.y),
                            floor(grid_coord.z)};
 
@@ -135,7 +125,7 @@ __device__ void NeighbourGridInteract(const ParticleType &particle,
             KernelFunction(grid_coord - glm::vec3{current_index} - 0.5f);
         if (weight > 1e-6f) {
           op(particle, grid(current_index.x, current_index.y, current_index.z),
-             weight);
+             weight, args...);
         }
       }
     }
@@ -163,13 +153,13 @@ __global__ void Particle2GridTransferKernel(const Particle *particles,
   if (!InSceneRange(particle.position))
     return;
   auto grid_coord = particle.position / delta_x;
-  NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(
+  NeighbourGridInteract<const thrust::pair<float, int> &, MACGridContent>(
       thrust::make_pair(particle.velocity.x, particle.type),
       grid_coord + glm::vec3{0.5f, 0.0f, 0.0f}, u_grid, AssignVelocity);
-  NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(
+  NeighbourGridInteract<const thrust::pair<float, int> &, MACGridContent>(
       thrust::make_pair(particle.velocity.y, particle.type),
       grid_coord + glm::vec3{0.0f, 0.5f, 0.0f}, v_grid, AssignVelocity);
-  NeighbourGridInteract<thrust::pair<float, int>, MACGridContent>(
+  NeighbourGridInteract<const thrust::pair<float, int> &, MACGridContent>(
       thrust::make_pair(particle.velocity.z, particle.type),
       grid_coord + glm::vec3{0.0f, 0.0f, 0.5f}, w_grid, AssignVelocity);
 }
@@ -431,6 +421,90 @@ __global__ void ApplyPressureKernel(const CellCoe *cell_coe,
   }
 }
 
+__global__ void UpdateVelocityFieldKernel(Grid<MACGridContent>::DevRef grid,
+                                          Grid<float>::DevRef pressure,
+                                          glm::ivec3 n_axis,
+                                          float delta_x,
+                                          float delta_t) {
+  int id = blockDim.x * blockIdx.x + threadIdx.x;
+  glm::ivec3 grid_range = grid.Range();
+  glm::ivec3 cell_index{id / (grid_range.y * grid_range.z),
+                        (id / grid_range.z) % grid_range.y, id % grid_range.z};
+  const auto pressure_range = pressure.Range();
+  if (id < grid.Size()) {
+    float pressure_low = 0.0f;
+    float pressure_high = 0.0f;
+    if (cell_index.x < pressure_range.x && cell_index.y < pressure_range.y &&
+        cell_index.z < pressure_range.z) {
+      pressure_high = pressure(cell_index);
+    }
+    if (cell_index.x >= n_axis.x && cell_index.y >= n_axis.y &&
+        cell_index.z >= n_axis.z) {
+      pressure_low = pressure(cell_index - n_axis);
+    }
+    auto content = grid(cell_index);
+    content.v[0] = content.v[0] * PIC_SCALE + ((pressure_low - pressure_high) *
+                                               delta_t / (delta_x * RHO_AIR)) *
+                                                  (1.0f - PIC_SCALE);
+    content.v[1] = content.v[1] * PIC_SCALE + ((pressure_low - pressure_high) *
+                                               delta_t / (delta_x * RHO_LIQ)) *
+                                                  (1.0f - PIC_SCALE);
+    grid(cell_index) = content;
+  }
+}
+
+__device__ void GatherVelocity(thrust::pair<float, float> &v_wv,
+                               const MACGridContent content,
+                               float weight,
+                               int type) {
+  float wv = content.v[0] * content.w[0] + content.v[1] * content.w[1];
+  if (content.w[0] + content.w[1] > 1e-6f) {
+    wv /= content.w[0] + content.w[1];
+  }
+  v_wv.first += weight * content.w[type] * wv;
+  v_wv.second += weight * content.w[type];
+}
+
+__global__ void Grid2ParticleTransferKernel(Particle *particles,
+                                            int num_particle,
+                                            Grid<MACGridContent>::DevRef u_grid,
+                                            Grid<MACGridContent>::DevRef v_grid,
+                                            Grid<MACGridContent>::DevRef w_grid,
+                                            float delta_x,
+                                            glm::ivec3 cell_range) {
+  int id = blockDim.x * blockIdx.x + threadIdx.x;
+  if (id >= num_particle)
+    return;
+  auto particle = particles[id];
+  if (!InSceneRange(particle.position))
+    return;
+  auto grid_coord = particle.position / delta_x;
+  thrust::pair<float, float> x_wx{};
+  thrust::pair<float, float> y_wy{};
+  thrust::pair<float, float> z_wz{};
+  NeighbourGridInteract<thrust::pair<float, float> &, MACGridContent>(
+      x_wx, grid_coord + glm::vec3{0.5f, 0.0f, 0.0f}, u_grid, GatherVelocity,
+      particle.type);
+  NeighbourGridInteract<thrust::pair<float, float> &, MACGridContent>(
+      y_wy, grid_coord + glm::vec3{0.0f, 0.5f, 0.0f}, v_grid, GatherVelocity,
+      particle.type);
+  NeighbourGridInteract<thrust::pair<float, float> &, MACGridContent>(
+      z_wz, grid_coord + glm::vec3{0.0f, 0.0f, 0.5f}, w_grid, GatherVelocity,
+      particle.type);
+  if (x_wx.second > 1e-6f) {
+    x_wx.first /= x_wx.second;
+  }
+  if (y_wy.second > 1e-6f) {
+    y_wy.first /= y_wy.second;
+  }
+  if (z_wz.second > 1e-6f) {
+    z_wz.first /= z_wz.second;
+  }
+  particle.velocity = particle.velocity * (1.0f - PIC_SCALE) +
+                      glm::vec3{x_wx.first, y_wy.first, z_wz.first};
+  particles[id] = particle;
+}
+
 void PhysicSolver::UpdateStep() {
   DeviceClock dev_clock;
 
@@ -449,10 +523,6 @@ void PhysicSolver::UpdateStep() {
   thrust::sort_by_key(cell_indices_.begin(), cell_indices_.end(),
                       particles_.begin());
   dev_clock.Record("Sort by Cells");
-
-  //      thrust::sort_by_key(block_indices_.begin(), block_indices_.end(),
-  //                          particles_.begin());
-  //      dev_clock.Record("Sort by Blocks");
 
   LowerBoundKernel<<<CALL_GRID(cell_index_lower_bound_.size())>>>(
       cell_indices_.data().get(), cell_indices_.size(),
@@ -495,6 +565,22 @@ void PhysicSolver::UpdateStep() {
       divergence_.Vector(), pressure_.Vector());
   dev_clock.Record("Solve Poisson Equation");
 
+  UpdateVelocityFieldKernel<<<CALL_GRID(u_grid_.Size())>>>(
+      u_grid_, pressure_, glm::ivec3{1, 0, 0}, physic_settings_.delta_x,
+      physic_settings_.delta_t);
+  UpdateVelocityFieldKernel<<<CALL_GRID(v_grid_.Size())>>>(
+      v_grid_, pressure_, glm::ivec3{0, 1, 0}, physic_settings_.delta_x,
+      physic_settings_.delta_t);
+  UpdateVelocityFieldKernel<<<CALL_GRID(w_grid_.Size())>>>(
+      w_grid_, pressure_, glm::ivec3{0, 0, 1}, physic_settings_.delta_x,
+      physic_settings_.delta_t);
+  dev_clock.Record("Update Velocity Field");
+
+  Grid2ParticleTransferKernel<<<CALL_GRID(particles_.size())>>>(
+      particles_.data().get(), particles_.size(), u_grid_, v_grid_, w_grid_,
+      physic_settings_.delta_x, cell_range_);
+  dev_clock.Record("Grid2Particle Transfer");
+
   AdvectionKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), physic_settings_.delta_t, particles_.size());
   dev_clock.Record("Advection");
@@ -523,29 +609,29 @@ void PhysicSolver::UpdateStep() {
   // OutputXYZFile();
 
   //        GridLinearHost<MACGridContent> u_grid_host(u_grid_);
-  //    GridLinearHost<MACGridContent> v_grid_host(v_grid_);
+  //      GridLinearHost<MACGridContent> v_grid_host(v_grid_);
   //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
 
-  // GridLinearHost<LevelSet_t> level_set_host(level_sets_);
-  //    GridLinearHost<float> divergence_host(divergence_);
-  //    GridLinearHost<CellCoe> cell_coe_host(cell_coe_);
-  //      GridLinearHost<float> pressure_host(pressure_);
-  //      auto &print_grid = pressure_host;
-  //      std::ofstream csv_file("grid.csv");
-  //      for (int y = 0; y < print_grid.Range().y; y++) {
-  //      for (int z = 0; z < print_grid.Range().z; z++) {
-  //        auto content = print_grid(print_grid.Range().x / 2, y, z);
-  //        csv_file << std::to_string(content) << ",";
-  //      }
-  //      csv_file << std::endl;
-  //      }
-  //      csv_file.close();
-  //      std::system("start grid.csv");
+  //   GridLinearHost<LevelSet_t> level_set_host(level_sets_);
+  //      GridLinearHost<float> divergence_host(divergence_);
+  //      GridLinearHost<CellCoe> cell_coe_host(cell_coe_);
+  //        GridLinearHost<float> pressure_host(pressure_);
+  //        auto &print_grid = v_grid_host;
+  //        std::ofstream csv_file("grid.csv");
+  //        for (int y = 0; y < print_grid.Range().y; y++) {
+  //        for (int z = 0; z < print_grid.Range().z; z++) {
+  //          auto content = print_grid(print_grid.Range().x / 2, y, z);
+  //          csv_file << std::to_string(content.v[0]) << ",";
+  //        }
+  //        csv_file << std::endl;
+  //        }
+  //        csv_file.close();
+  //        std::system("start grid.csv");
   //
-  //      while (!GetAsyncKeyState(VK_ESCAPE))
-  //        ;
-  //      while (GetAsyncKeyState(VK_ESCAPE))
-  //        ;
+  //        while (!GetAsyncKeyState(VK_ESCAPE))
+  //          ;
+  //        while (GetAsyncKeyState(VK_ESCAPE))
+  //          ;
 }
 
 void PhysicSolver::OutputXYZFile() {
@@ -611,4 +697,19 @@ __device__ __host__ bool InSceneRange(const glm::vec3 &position) {
   if (position.z >= range.z)
     return false;
   return true;
+}
+
+__global__ void InstanceInfoComposeKernel(const Particle *particles,
+                                          InstanceInfo *instance_infos,
+                                          int num_particle) {
+  uint32_t i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i >= num_particle)
+    return;
+  auto particle = particles[i];
+  InstanceInfo info{};
+  info.size = 3e-3f;
+  info.offset = particle.position;
+  info.color = particle.type ? glm::vec4{0.5f, 0.5f, 1.0f, 1.0f}
+                             : glm::vec4{1.0f, 0.5f, 0.5f, 1.0f};
+  instance_infos[i] = info;
 }
