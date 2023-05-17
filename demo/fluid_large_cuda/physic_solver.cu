@@ -212,50 +212,43 @@ __global__ void LowerBoundKernel(int *array,
 __global__ void ConstructLevelSetKernel(Grid<LevelSet_t>::DevRef level_set,
                                         const int *cell_index_lower_bound,
                                         const Particle *particles,
-                                        int num_particle, float delta_x) {
+                                        int num_particle,
+                                        float delta_x) {
   int id = blockIdx.x * blockDim.x + threadIdx.x;
   auto level_set_range = level_set.Range();
   auto cell_range = level_set_range - 1;
-  float vaccum_phi{delta_x};
-  float phi[2]{};
+  float phi[2]{2.0f * delta_x, 2.0f * delta_x};
   if (id < level_set.Size()) {
     glm::ivec3 cell_index{id / (level_set_range.y * level_set_range.z),
-                             (id / level_set_range.z) % level_set_range.y, id % level_set_range.z};
-    glm::vec3 grid_point_pos  = glm::vec3{cell_index} * delta_x;
+                          (id / level_set_range.z) % level_set_range.y,
+                          id % level_set_range.z};
+    glm::vec3 grid_point_pos = glm::vec3{cell_index} * delta_x;
     for (int dx = -1; dx < 1; dx++) {
       for (int dy = -1; dy < 1; dy++) {
-         for (int dz = -1; dz < 1; dz++) {
-            glm::ivec3 current_index = cell_index + glm::ivec3{dx, dy, dz};
-            if (current_index.x < 0 || current_index.y < 0 || current_index.z < 0)
-              continue;
-            if (current_index.x >= cell_range.x ||
-                current_index.y >= cell_range.y || current_index.z >= cell_range.z)
-              continue;
-            for (int pid = cell_index_lower_bound[RANGE_INDEX(current_index, cell_range)], last = cell_index_lower_bound[RANGE_INDEX(current_index, cell_range) + 1]; pid < last; pid++) {
-              Particle particle = particles[pid];
-              float dist = glm::length(particle.position - grid_point_pos);
-              phi[particle.type] = max(delta_x - dist, phi[particle.type]);
-              vaccum_phi = min(vaccum_phi, max(0.0f, dist - delta_x));
-            }
-         }
-      }
-    }
-    int max_type = -1, second_type = -1;
-    float max_phi = vaccum_phi, second_phi = 0.0f;
-    for (int tid = 0; tid < 2; tid++) {
-      if (phi[tid] > max_phi) {
-         second_phi = max_phi;
-         second_type = max_type;
-         max_phi = phi[tid];
-         max_type = tid;
-      } else if (phi[tid] > second_phi) {
-         second_phi = phi[tid];
-         second_type = tid;
+        for (int dz = -1; dz < 1; dz++) {
+          glm::ivec3 current_index = cell_index + glm::ivec3{dx, dy, dz};
+          if (current_index.x < 0 || current_index.y < 0 || current_index.z < 0)
+            continue;
+          if (current_index.x >= cell_range.x ||
+              current_index.y >= cell_range.y ||
+              current_index.z >= cell_range.z)
+            continue;
+          for (int pid = cell_index_lower_bound[RANGE_INDEX(current_index,
+                                                            cell_range)],
+                   last = cell_index_lower_bound[RANGE_INDEX(current_index,
+                                                             cell_range) +
+                                                 1];
+               pid < last; pid++) {
+            Particle particle = particles[pid];
+            float dist = glm::length(particle.position - grid_point_pos);
+            phi[particle.type] = min(dist, phi[particle.type]);
+          }
+        }
       }
     }
     LevelSet_t result{};
-    result.type = max_type;
-    result.phi = max_phi - second_phi;
+    result.phi[0] = phi[0];
+    result.phi[1] = phi[1];
     level_set(cell_index) = result;
   }
 }
@@ -299,12 +292,8 @@ void PhysicSolver::UpdateStep() {
   dev_clock.Record("Process MAC Grid");
 
   ConstructLevelSetKernel<<<CALL_GRID(level_sets_.Size())>>>(
-      level_sets_,
-      cell_index_lower_bound_.data().get(),
-      particles_.data().get(),
-      particles_.size(),
-      physic_settings_.delta_x
-      );
+      level_sets_, cell_index_lower_bound_.data().get(),
+      particles_.data().get(), particles_.size(), physic_settings_.delta_x);
   dev_clock.Record("Construct Level Set");
 
   AdvectionKernel<<<CALL_GRID(particles_.size())>>>(
@@ -334,39 +323,25 @@ void PhysicSolver::UpdateStep() {
 
   // OutputXYZFile();
 
-//      GridLinearHost<MACGridContent> u_grid_host(u_grid_);
-//      GridLinearHost<MACGridContent> v_grid_host(v_grid_);
-//      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
+  //      GridLinearHost<MACGridContent> u_grid_host(u_grid_);
+  //      GridLinearHost<MACGridContent> v_grid_host(v_grid_);
+  //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
 
-//      GridLinearHost<LevelSet_t> level_set_host(level_sets_);
-//      std::ofstream csv_file("grid.csv");
-//      for (int y = 0; y < level_set_host.Range().y; y++) {
-//        for (int z = 0; z < level_set_host.Range().z; z++) {
-//          csv_file << level_set_host(level_set_host.Range().x / 2, y, z).phi <<
-//          ",";
-//        }
-//        csv_file << std::endl;
-//      }
-//      csv_file.close();
-//      std::system("start grid.csv");
-//      while (!GetAsyncKeyState(VK_ESCAPE));
-//      while (GetAsyncKeyState(VK_ESCAPE));
-}
-
-__device__ __host__ LevelSet_t LevelSetInterpolate(const LevelSet_t& ls_0, const LevelSet_t& ls_1, float alpha) {
-  LevelSet_t result{};
-  if (ls_0.type == ls_1.type) {
-    result.type = ls_0.type;
-    result.phi = ls_0.phi * (1.0f - alpha) + ls_1.phi * alpha;
-  } else {
-    result.type = ls_0.type;
-    result.phi = ls_0.phi * (1.0f - alpha) - ls_1.phi * alpha;
-    if (result.phi < 0.0f) {
-      result.type = ls_1.type;
-      result.phi = -result.phi;
-    }
-  }
-  return result;
+  //      GridLinearHost<LevelSet_t> level_set_host(level_sets_);
+  //      std::ofstream csv_file("grid.csv");
+  //      for (int y = 0; y < level_set_host.Range().y; y++) {
+  //        for (int z = 0; z < level_set_host.Range().z; z++) {
+  //          csv_file << level_set_host(level_set_host.Range().x / 2, y,
+  //          z).phi[0] - level_set_host(level_set_host.Range().x / 2, y,
+  //          z).phi[1] <<
+  //          ",";
+  //        }
+  //        csv_file << std::endl;
+  //      }
+  //      csv_file.close();
+  //      std::system("start grid.csv");
+  //      while (!GetAsyncKeyState(VK_ESCAPE));
+  //      while (GetAsyncKeyState(VK_ESCAPE));
 }
 
 void PhysicSolver::OutputXYZFile() {

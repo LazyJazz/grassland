@@ -1,12 +1,13 @@
-#include "fluid_large.cuh"
 #include <memory>
 
-void GUI(const PhysicSettings& settings) {
+#include "fluid_large.cuh"
+
+void GUI(const PhysicSettings &settings) {
   FluidLarge fluid_large("Fluid Large", 1024, 1024, settings);
   fluid_large.Run();
 }
 
-[[noreturn]] void NoGUI(const PhysicSettings& settings) {
+[[noreturn]] void NoGUI(const PhysicSettings &settings) {
   PhysicSolver solver(settings);
   while (true) {
     solver.UpdateStep();
@@ -15,6 +16,6 @@ void GUI(const PhysicSettings& settings) {
 
 int main() {
   PhysicSettings settings{};
-  // GUI(settings);
-  NoGUI(settings);
+  GUI(settings);
+  // NoGUI(settings);
 }
