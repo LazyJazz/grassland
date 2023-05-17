@@ -235,12 +235,11 @@ __global__ void ConstructLevelSetKernel(Grid<LevelSet_t>::DevRef level_set,
   }
 }
 
-__global__ void CalculateBorderComponentKernel(
-    Grid<MACGridContent>::DevRef grid,
-    Grid<LevelSet_t>::DevRef level_set,
-    glm::ivec3 t_axis,
-    glm::ivec3 b_axis,
-    float delta_x) {
+__global__ void ProcessMACGridKernel(Grid<MACGridContent>::DevRef grid,
+                                     Grid<LevelSet_t>::DevRef level_set,
+                                     glm::ivec3 t_axis,
+                                     glm::ivec3 b_axis,
+                                     float delta_x) {
   int id = blockIdx.x * blockDim.x + threadIdx.x;
   auto grid_range = grid.Range();
   glm::ivec3 cell_index{id / (grid_range.y * grid_range.z),
@@ -297,6 +296,114 @@ __global__ void CalculateBorderComponentKernel(
   }
 }
 
+__global__ void PreparePoissonEquationKernel(
+    Grid<float>::DevRef divergence,
+    Grid<CellCoe>::DevRef cell_coe,
+    const int *cell_index_lower_bound,
+    Grid<MACGridContent>::DevRef u_grid,
+    Grid<MACGridContent>::DevRef v_grid,
+    Grid<MACGridContent>::DevRef w_grid,
+    float delta_x,
+    float delta_t) {
+  int id = blockDim.x * blockIdx.x + threadIdx.x;
+  auto grid_range = divergence.Range();
+  glm::ivec3 cell_index{id / (grid_range.y * grid_range.z),
+                        (id / grid_range.z) % grid_range.y, id % grid_range.z};
+  auto is_vacuum = [&](const glm::ivec3 &index) {
+    return false;
+    glm::vec3 pos = (glm::vec3{index} + 0.5f) * delta_x;
+    if (!InSceneRange(pos))
+      return true;
+    return cell_index_lower_bound[RANGE_INDEX(index, grid_range)] ==
+           cell_index_lower_bound[RANGE_INDEX(index, grid_range) + 1];
+  };
+
+  float rho[2]{RHO_AIR, RHO_LIQ};
+
+  if (id < divergence.Size()) {
+    bool this_vacuum = is_vacuum(cell_index);
+    float div = 0.0f;
+    CellCoe coe{};
+    if (!this_vacuum) {
+      MACGridContent border_content{};
+      glm::ivec3 neighbor_index{};
+      bool neighbor_vacuum{false};
+      float delta_phi;
+
+      /* X axis */
+      neighbor_index = cell_index - glm::ivec3{1, 0, 0};
+      border_content = u_grid(cell_index);
+      div += border_content.w[0] * border_content.v[0] +
+             border_content.w[1] * border_content.v[1];
+      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
+                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      coe.local += delta_phi;
+      if (!is_vacuum(neighbor_index)) {
+        coe.x[0] -= delta_phi;
+      }
+
+      neighbor_index = cell_index + glm::ivec3{1, 0, 0};
+      border_content = u_grid(cell_index + glm::ivec3{1, 0, 0});
+      div -= border_content.w[0] * border_content.v[0] +
+             border_content.w[1] * border_content.v[1];
+      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
+                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      coe.local += delta_phi;
+      if (!is_vacuum(neighbor_index)) {
+        coe.x[1] -= delta_phi;
+      }
+
+      /* Y axis */
+      neighbor_index = cell_index - glm::ivec3{0, 1, 0};
+      border_content = v_grid(cell_index);
+      div += border_content.w[0] * border_content.v[0] +
+             border_content.w[1] * border_content.v[1];
+      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
+                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      coe.local += delta_phi;
+      if (!is_vacuum(neighbor_index)) {
+        coe.y[0] -= delta_phi;
+      }
+
+      neighbor_index = cell_index + glm::ivec3{0, 1, 0};
+      border_content = v_grid(cell_index + glm::ivec3{0, 1, 0});
+      div -= border_content.w[0] * border_content.v[0] +
+             border_content.w[1] * border_content.v[1];
+      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
+                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      coe.local += delta_phi;
+      if (!is_vacuum(neighbor_index)) {
+        coe.y[1] -= delta_phi;
+      }
+
+      /* Z axis */
+      neighbor_index = cell_index - glm::ivec3{0, 0, 1};
+      border_content = w_grid(cell_index);
+      div += border_content.w[0] * border_content.v[0] +
+             border_content.w[1] * border_content.v[1];
+      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
+                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      coe.local += delta_phi;
+      if (!is_vacuum(neighbor_index)) {
+        coe.z[0] -= delta_phi;
+      }
+
+      neighbor_index = cell_index + glm::ivec3{0, 0, 1};
+      border_content = w_grid(cell_index + glm::ivec3{0, 0, 1});
+      div -= border_content.w[0] * border_content.v[0] +
+             border_content.w[1] * border_content.v[1];
+      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
+                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      coe.local += delta_phi;
+      if (!is_vacuum(neighbor_index)) {
+        coe.z[1] -= delta_phi;
+      }
+    }
+    divergence(cell_index) = div;
+    cell_coe(cell_index) = coe;
+  }
+}
+
 void PhysicSolver::UpdateStep() {
   DeviceClock dev_clock;
 
@@ -335,16 +442,21 @@ void PhysicSolver::UpdateStep() {
       particles_.data().get(), particles_.size(), physic_settings_.delta_x);
   dev_clock.Record("Construct Level Set");
 
-  CalculateBorderComponentKernel<<<CALL_GRID(u_grid_.Size())>>>(
+  ProcessMACGridKernel<<<CALL_GRID(u_grid_.Size())>>>(
       u_grid_, level_sets_, glm::ivec3{0, 1, 0}, glm::ivec3{0, 0, 1},
       physic_settings_.delta_x);
-  CalculateBorderComponentKernel<<<CALL_GRID(v_grid_.Size())>>>(
+  ProcessMACGridKernel<<<CALL_GRID(v_grid_.Size())>>>(
       v_grid_, level_sets_, glm::ivec3{0, 1, 0}, glm::ivec3{0, 0, 1},
       physic_settings_.delta_x);
-  CalculateBorderComponentKernel<<<CALL_GRID(w_grid_.Size())>>>(
+  ProcessMACGridKernel<<<CALL_GRID(w_grid_.Size())>>>(
       w_grid_, level_sets_, glm::ivec3{0, 1, 0}, glm::ivec3{0, 0, 1},
       physic_settings_.delta_x);
   dev_clock.Record("Process MAC grid");
+
+  PreparePoissonEquationKernel<<<CALL_GRID(divergence_.Size())>>>(
+      divergence_, cell_coe_, cell_index_lower_bound_.data().get(), u_grid_,
+      v_grid_, w_grid_, physic_settings_.delta_x, physic_settings_.delta_t);
+  dev_clock.Record("Prepare Poisson Equation");
 
   AdvectionKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), physic_settings_.delta_t, particles_.size());
@@ -375,24 +487,29 @@ void PhysicSolver::UpdateStep() {
 
   //      GridLinearHost<MACGridContent> u_grid_host(u_grid_);
   //  GridLinearHost<MACGridContent> v_grid_host(v_grid_);
-  //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
-
-  //        GridLinearHost<LevelSet_t> level_set_host(level_sets_);
-  //  auto &print_grid = v_grid_host;
-  //  std::ofstream csv_file("grid.csv");
-  //  for (int y = 0; y < print_grid.Range().y; y++) {
+  //  //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
+  //
+  //          //GridLinearHost<LevelSet_t> level_set_host(level_sets_);
+  //  GridLinearHost<float> divergence_host(divergence_);
+  //  GridLinearHost<CellCoe> cell_coe_host(cell_coe_);
+  //    auto &print_grid = divergence_host;
+  //    std::ofstream csv_file("grid.csv");
+  //    for (int y = 0; y < print_grid.Range().y; y++) {
   //    for (int z = 0; z < print_grid.Range().z; z++) {
   //      auto content = print_grid(print_grid.Range().x / 2, y, z);
-  //      csv_file << content.w[0] << ",";
+  //      auto up = v_grid_host(print_grid.Range().x / 2, y, z);
+  //      auto down = v_grid_host(print_grid.Range().x / 2, y + 1, z);
+  //      csv_file << std::to_string(content) << ",";
   //    }
   //    csv_file << std::endl;
-  //  }
-  //  csv_file.close();
-  //  std::system("start grid.csv");
-  //  while (!GetAsyncKeyState(VK_ESCAPE))
-  //    ;
-  //  while (GetAsyncKeyState(VK_ESCAPE))
-  //    ;
+  //    }
+  //    csv_file.close();
+  //    std::system("start grid.csv");
+  //
+  //    while (!GetAsyncKeyState(VK_ESCAPE))
+  //      ;
+  //    while (GetAsyncKeyState(VK_ESCAPE))
+  //      ;
 }
 
 void PhysicSolver::OutputXYZFile() {

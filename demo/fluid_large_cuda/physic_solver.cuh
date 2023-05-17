@@ -4,6 +4,11 @@
 #include "scene.cuh"
 #include "thrust/device_vector.h"
 
+#define RHO_AIR 0.01f
+#define RHO_LIQ 1.0f
+#define TYPE_AIR 0
+#define TYPE_LIQ 1
+
 struct InstanceInfo;
 
 struct Particle {
@@ -35,10 +40,10 @@ struct LevelSet_t {
 };
 
 struct CellCoe {
-  float local;
-  float x[2];
-  float y[2];
-  float z[2];
+  float local{};
+  float x[2]{};
+  float y[2]{};
+  float z[2]{};
 };
 
 class PhysicSolver {
