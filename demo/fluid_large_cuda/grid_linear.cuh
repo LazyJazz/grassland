@@ -16,6 +16,7 @@ class GridLinear {
     __device__ const ElementType &operator()(const glm::ivec3 &index) const;
     __device__ ElementType &operator()(int x, int y, int z);
     __device__ const ElementType &operator()(int x, int y, int z) const;
+    __device__ ElementType Sample(const glm::vec3 &index) const;
     [[nodiscard]] __device__ glm::ivec3 Range() const {
       return grid_range_;
     }
@@ -53,6 +54,31 @@ class GridLinear {
   thrust::device_vector<ElementType> elements_;
   glm::ivec3 grid_range_;
 };
+
+template <class ElementType>
+__device__ ElementType
+GridLinear<ElementType>::DevRef::Sample(const glm::vec3 &index) const {
+  glm::ivec3 base{floor(index.x), floor(index.y), floor(index.z)};
+  glm::vec3 residual{index - glm::vec3{base}};
+  glm::ivec3 sample_index{};
+  ElementType result{};
+  for (int dx = 0; dx < 2; dx++) {
+    float sx = (1.0f - dx) + (-1.0f + 2.0f * dx) * residual.x;
+    sample_index.x = max(0, min(base.x + dx, grid_range_.x - 1));
+    for (int dy = 0; dy < 2; dy++) {
+      float sy = (1.0f - dy) + (-1.0f + 2.0f * dy) * residual.y;
+      sample_index.y = max(0, min(base.y + dx, grid_range_.y - 1));
+      for (int dz = 0; dz < 2; dz++) {
+        float sz = (1.0f - dz) + (-1.0f + 2.0f * dz) * residual.z;
+        sample_index.z = max(0, min(base.z + dx, grid_range_.z - 1));
+        result =
+            result + ptr_elements_[RANGE_INDEX(sample_index, grid_range_)] *
+                         (sx * sy * sz);
+      }
+    }
+  }
+  return result;
+}
 
 template <class ElementType>
 size_t GridLinear<ElementType>::BufferSize(glm::ivec3 range) {
