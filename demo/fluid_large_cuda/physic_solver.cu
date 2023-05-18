@@ -403,6 +403,19 @@ __global__ void PreparePoissonEquationKernel(
   };
 
   float rho[2]{RHO_AIR, RHO_LIQ};
+  auto border_sensitivity = [&](const MACGridContent &content) {
+    float mixed_rho = rho[0] * content.w[0] + rho[1] * content.w[1];
+    if (content.w[0] + content.w[1] > 1e-6f) {
+      mixed_rho /= content.w[0] + content.w[1];
+    } else {
+      mixed_rho = (rho[0] + rho[1]) * 0.5f;
+    }
+    return (content.w[0] * (delta_t / (delta_x * rho[0])) +
+            content.w[1] * (delta_t / (delta_x * rho[1]))) *
+               (1.0f - content.ortho) +
+           (content.w[0] + content.w[1]) * (delta_t / (delta_x * mixed_rho)) *
+               content.ortho;
+  };
 
   if (id < divergence.Size()) {
     bool this_vacuum = is_vacuum(cell_index);
@@ -419,8 +432,7 @@ __global__ void PreparePoissonEquationKernel(
       border_content = u_grid(cell_index);
       div += border_content.w[0] * border_content.v[0] +
              border_content.w[1] * border_content.v[1];
-      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
-                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      delta_phi = border_sensitivity(border_content);
       coe.local += delta_phi;
       if (!is_vacuum(neighbor_index)) {
         coe.x[0] -= delta_phi;
@@ -430,8 +442,7 @@ __global__ void PreparePoissonEquationKernel(
       border_content = u_grid(cell_index + glm::ivec3{1, 0, 0});
       div -= border_content.w[0] * border_content.v[0] +
              border_content.w[1] * border_content.v[1];
-      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
-                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      delta_phi = border_sensitivity(border_content);
       coe.local += delta_phi;
       if (!is_vacuum(neighbor_index)) {
         coe.x[1] -= delta_phi;
@@ -442,8 +453,7 @@ __global__ void PreparePoissonEquationKernel(
       border_content = v_grid(cell_index);
       div += border_content.w[0] * border_content.v[0] +
              border_content.w[1] * border_content.v[1];
-      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
-                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      delta_phi = border_sensitivity(border_content);
       coe.local += delta_phi;
       if (!is_vacuum(neighbor_index)) {
         coe.y[0] -= delta_phi;
@@ -453,8 +463,7 @@ __global__ void PreparePoissonEquationKernel(
       border_content = v_grid(cell_index + glm::ivec3{0, 1, 0});
       div -= border_content.w[0] * border_content.v[0] +
              border_content.w[1] * border_content.v[1];
-      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
-                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      delta_phi = border_sensitivity(border_content);
       coe.local += delta_phi;
       if (!is_vacuum(neighbor_index)) {
         coe.y[1] -= delta_phi;
@@ -465,8 +474,7 @@ __global__ void PreparePoissonEquationKernel(
       border_content = w_grid(cell_index);
       div += border_content.w[0] * border_content.v[0] +
              border_content.w[1] * border_content.v[1];
-      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
-                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      delta_phi = border_sensitivity(border_content);
       coe.local += delta_phi;
       if (!is_vacuum(neighbor_index)) {
         coe.z[0] -= delta_phi;
@@ -476,8 +484,7 @@ __global__ void PreparePoissonEquationKernel(
       border_content = w_grid(cell_index + glm::ivec3{0, 0, 1});
       div -= border_content.w[0] * border_content.v[0] +
              border_content.w[1] * border_content.v[1];
-      delta_phi = border_content.w[0] * (delta_t / (delta_x * rho[0])) +
-                  border_content.w[1] * (delta_t / (delta_x * rho[1]));
+      delta_phi = border_sensitivity(border_content);
       coe.local += delta_phi;
       if (!is_vacuum(neighbor_index)) {
         coe.z[1] -= delta_phi;
@@ -537,14 +544,24 @@ __global__ void UpdateVelocityFieldKernel(Grid<MACGridContent>::DevRef grid,
     }
     auto content = grid(cell_index);
     float block_weight = 0.0f;  // 1.0f - content.w[0] - content.w[1];
+
+    float mixed_rho = RHO_AIR * content.w[0] + RHO_LIQ * content.w[1];
+    if (content.w[0] + content.w[1] > 1e-6f) {
+      mixed_rho /= content.w[0] + content.w[1];
+    } else {
+      mixed_rho = (RHO_AIR + RHO_LIQ) * 0.5f;
+    }
+
     content.v[0] = content.v[0] * PIC_SCALE +
                    ((pressure_low - pressure_high) * delta_t /
-                        (delta_x * RHO_AIR) * (1.0f - block_weight) -
-                    content.v[0] * block_weight);
+                        (delta_x * RHO_AIR) * (1.0f - content.ortho) +
+                    (pressure_low - pressure_high) * delta_t /
+                        (delta_x * mixed_rho) * content.ortho);
     content.v[1] = content.v[1] * PIC_SCALE +
                    ((pressure_low - pressure_high) * delta_t /
-                        (delta_x * RHO_LIQ) * (1.0f - block_weight) -
-                    content.v[1] * block_weight);
+                        (delta_x * RHO_LIQ) * (1.0f - content.ortho) +
+                    (pressure_low - pressure_high) * delta_t /
+                        (delta_x * mixed_rho) * content.ortho);
     grid(cell_index) = content;
   }
 }
@@ -750,6 +767,8 @@ void PhysicSolver::UpdateStep() {
 
   dev_clock.Finish();
 
+  OutputXYZFile();
+
   //  Particle host_particles[10];
   //  int host_cell_indices[10];
   //  int host_block_indices[10];
@@ -806,9 +825,9 @@ void PhysicSolver::OutputXYZFile() {
                      std::ios::binary);
   int cnt = 0;
   for (auto &particle : particles) {
-    if (particle.type == 0) {
+    if (particle.type == 1) {
       cnt++;
-      if (cnt == 10) {
+      if (cnt == 1) {
         file.write(reinterpret_cast<const char *>(&particle.position),
                    sizeof(particle.position));
         cnt = 0;
@@ -835,7 +854,8 @@ __device__ __host__ bool InsideFreeSpace(const glm::vec3 &position) {
 __device__ __host__ int AssignType(const glm::vec3 &position) {
   glm::vec3 range = SceneRange();
   if (glm::length(position - glm::vec3{range.x * 0.5f, range.y * 0.7f,
-                                       range.z * 0.5f}) < range.x * 0.4f) {
+                                       range.z * 0.5f}) < range.x * 0.4f &&
+      position.y < range.y * 0.7f) {
     return 1;
   } else {
     return 0;

@@ -11,7 +11,7 @@
 #define TYPE_LIQ 1
 
 #define PIC_SCALE 0.00f
-#define SCALE 40
+#define SCALE 80
 #define PARTICLE_SIZE (0.05f / float(SCALE))
 
 struct InstanceInfo;
@@ -23,7 +23,7 @@ struct Particle {
 };
 
 struct PhysicSettings {
-  int num_particle{SCALE * (2 * SCALE) * SCALE};
+  int num_particle{SCALE * (4 * SCALE) * SCALE};
   float delta_x{1.0f / float(SCALE)};
   float delta_t{1e-3f};
   glm::vec3 gravity{0.0f, -9.8f, 0.0f};
