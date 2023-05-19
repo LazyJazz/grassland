@@ -11,7 +11,7 @@
 #define TYPE_LIQ 1
 
 #define PIC_SCALE 0.00f
-#define SCALE 80
+#define SCALE 40
 #define PARTICLE_SIZE (0.05f / float(SCALE))
 
 struct InstanceInfo;
