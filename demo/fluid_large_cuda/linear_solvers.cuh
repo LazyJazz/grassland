@@ -1,7 +1,16 @@
 #pragma once
+#include "grid.cuh"
 #include "thrust/device_vector.h"
 #include "thrust/reduce.h"
 #include "thrust/transform.h"
+#include "thrust/transform_reduce.h"
+
+struct CellCoe {
+  float local{};
+  float x[2]{};
+  float y[2]{};
+  float z[2]{};
+};
 
 template <typename T>
 struct SquareOp {
@@ -80,3 +89,23 @@ void ConjugateGradient(MatrixType matrix,
     saxpy(bk, p_vec_, r_vec_, p_vec_);
   }
 }
+
+template <class InterFuncType>
+void JacobiMethod(InterFuncType iter_func,
+                  const thrust::device_vector<float> &b,
+                  thrust::device_vector<float> &x,
+                  int num_iter = 2000) {
+  auto norm = [](const thrust::device_vector<float> &x) {
+    SquareOp<float> sqr_op;
+    return thrust::transform_reduce(x.begin(), x.end(), sqr_op, 0.0f,
+                                    thrust::plus<float>());
+  };
+  thrust::device_vector<float> new_x(x.size());
+  auto *src_x = &x, *dst_x = &new_x;
+  for (int i = 0; i < num_iter; i++) {
+    iter_func(b, *src_x, *dst_x);
+    std::swap(src_x, dst_x);
+  }
+}
+
+void MultiGrid(Grid<CellCoe> &matrix, Grid<float> &b, Grid<float> &x);

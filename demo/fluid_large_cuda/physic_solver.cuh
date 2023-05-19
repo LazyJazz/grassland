@@ -2,6 +2,7 @@
 #include "curand_kernel.h"
 #include "glm/glm.hpp"
 #include "grid.cuh"
+#include "linear_solvers.cuh"
 #include "scene.cuh"
 #include "thrust/device_vector.h"
 
@@ -11,7 +12,7 @@
 #define TYPE_LIQ 1
 
 #define PIC_SCALE 0.00f
-#define SCALE 40
+#define SCALE 320
 #define PARTICLE_SIZE (0.05f / float(SCALE))
 
 struct InstanceInfo;
@@ -23,7 +24,7 @@ struct Particle {
 };
 
 struct PhysicSettings {
-  int num_particle{SCALE * (4 * SCALE) * SCALE};
+  int num_particle{SCALE * (2 * SCALE) * SCALE};
   float delta_x{1.0f / float(SCALE)};
   float delta_t{1e-3f};
   glm::vec3 gravity{0.0f, -9.8f, 0.0f};
@@ -62,13 +63,6 @@ struct LevelSetGradient_t {
   __device__ __host__ LevelSetGradient_t operator*(float s) const {
     return {phi_gradient[0] * s, phi_gradient[1] * s};
   }
-};
-
-struct CellCoe {
-  float local{};
-  float x[2]{};
-  float y[2]{};
-  float z[2]{};
 };
 
 class PhysicSolver {

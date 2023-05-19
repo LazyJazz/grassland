@@ -1,7 +1,6 @@
 
 #include "device_clock.cuh"
 #include "fluid_large.cuh"
-#include "linear_solvers.cuh"
 #include "physic_solver.cuh"
 #include "thrust/sort.h"
 #include "util.cuh"
@@ -591,6 +590,36 @@ __global__ void ApplyPressureKernel(const CellCoe *cell_coe,
   }
 }
 
+__global__ void JacobiIterationKernel(const CellCoe *cell_coe,
+                                      const float *divergence,
+                                      const float *pressure,
+                                      float *pressure_new,
+                                      glm::ivec3 range) {
+  int id = blockIdx.x * blockDim.x + threadIdx.x;
+  int num_cell = range.x * range.y * range.z;
+  if (id < num_cell) {
+    float res = 0.0f;
+    CellCoe coe = cell_coe[id];
+    if (coe.local > 1e-6f) {
+      // coe.local *= 1.0f + 3e-4f;
+      if (id > 1)
+        res += coe.z[0] * pressure[id - 1];
+      if (id > range.z)
+        res += coe.y[0] * pressure[id - range.z];
+      if (id > range.z * range.y)
+        res += coe.x[0] * pressure[id - range.z * range.y];
+      if (id + 1 < num_cell)
+        res += coe.z[1] * pressure[id + 1];
+      if (id + range.z < num_cell)
+        res += coe.y[1] * pressure[id + range.z];
+      if (id + range.z * range.y < num_cell)
+        res += coe.x[1] * pressure[id + range.z * range.y];
+      res = (divergence[id] - res) / coe.local;
+    }
+    pressure_new[id] = res;
+  }
+}
+
 __global__ void UpdateVelocityFieldKernel(Grid<MACGridContent>::DevRef grid,
                                           Grid<float>::DevRef pressure,
                                           glm::ivec3 n_axis,
@@ -746,6 +775,7 @@ void PhysicSolver::UpdateStep() {
   u_grid_.Clear();
   v_grid_.Clear();
   w_grid_.Clear();
+
   dev_clock.Record("Clean data");
 
   ParticleLinearOperationsKernel<<<CALL_GRID(particles_.size())>>>(
@@ -800,15 +830,29 @@ void PhysicSolver::UpdateStep() {
       v_grid_, w_grid_, physic_settings_.delta_x, physic_settings_.delta_t);
   dev_clock.Record("Prepare Poisson Equation");
 
-  ConjugateGradient(
-      [this](const thrust::device_vector<float> &pressure,
-             thrust::device_vector<float> &delta_gradient) {
-        ApplyPressureKernel<<<CALL_GRID(pressure_.Size())>>>(
-            cell_coe_.Vector().data().get(), pressure.data().get(),
-            delta_gradient.data().get(), pressure_.Range());
-      },
-      divergence_.Vector(), pressure_.Vector());
-  dev_clock.Record("Solve Poisson Equation");
+  //  ConjugateGradient(
+  //      [this](const thrust::device_vector<float> &pressure,
+  //             thrust::device_vector<float> &delta_gradient) {
+  //        ApplyPressureKernel<<<CALL_GRID(pressure_.Size())>>>(
+  //            cell_coe_.Vector().data().get(), pressure.data().get(),
+  //            delta_gradient.data().get(), pressure_.Range());
+  //      },
+  //      divergence_.Vector(), pressure_.Vector());
+  //  dev_clock.Record("Solve Poisson Equation (Conjugate Gradient)");
+
+  //  JacobiMethod(
+  //      [this](const thrust::device_vector<float> &divergence,
+  //             const thrust::device_vector<float> &pressure,
+  //             thrust::device_vector<float> &pressure_new) {
+  //        JacobiIterationKernel<<<CALL_GRID(pressure_.Size())>>>(
+  //            cell_coe_.Vector().data().get(), divergence.data().get(),
+  //            pressure.data().get(), pressure_new.data().get(),
+  //            pressure_.Range());
+  //      },
+  //      divergence_.Vector(), pressure_.Vector());
+  //  dev_clock.Record("Solve Poisson Equation (Jacobi Iteration)");
+  MultiGrid(cell_coe_, divergence_, pressure_);
+  dev_clock.Record("Solve Poisson Equation (Multi Grid)");
 
   UpdateVelocityFieldKernel<<<CALL_GRID(u_grid_.Size())>>>(
       u_grid_, pressure_, glm::ivec3{1, 0, 0}, physic_settings_.delta_x,
@@ -837,7 +881,7 @@ void PhysicSolver::UpdateStep() {
 
   dev_clock.Finish();
 
-  // OutputXYZFile();
+  OutputXYZFile();
 
   //  Particle host_particles[10];
   //  int host_cell_indices[10];
@@ -852,8 +896,6 @@ void PhysicSolver::UpdateStep() {
   //    cell_index.y, cell_index.z, host_cell_indices[i],
   //    host_block_indices[i]);
   //  }
-
-  // OutputXYZFile();
 
   //        GridLinearHost<MACGridContent> u_grid_host(u_grid_);
   //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
@@ -891,7 +933,7 @@ void PhysicSolver::OutputXYZFile() {
   static int round = 0;
   if (!round)
     std::system("mkdir data");
-  std::ofstream file("data/" + std::to_string(round) + ".xyz",
+  std::ofstream file("data/" + std::to_string(round) + "_320.xyz",
                      std::ios::binary);
   int cnt = 0;
   for (auto &particle : particles) {

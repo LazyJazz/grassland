@@ -1,4 +1,5 @@
 #pragma once
+#include "glm/glm.hpp"
 #include "thrust/device_vector.h"
 #include "util.cuh"
 
