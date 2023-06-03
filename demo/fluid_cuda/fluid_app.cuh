@@ -73,6 +73,8 @@ class FluidApp {
   void InitParticles();
   void PlotMatrix();
 
+  void OutputXYZFile();
+
   FluidAppSettings settings_{};
   std::unique_ptr<grassland::vulkan::framework::Core> core_;
   std::unique_ptr<grassland::vulkan::framework::RenderNode> render_node_;
