@@ -45,7 +45,7 @@ __global__ void CalcResidualKernel(const CellCoe *cell_coe,
           ele += coe.y[1] * x[id + range.z];
         if (id + range.z * range.y < num_cell)
           ele += coe.x[1] * x[id + range.z * range.y];
-        result += b[id] - ele;
+        result += (b[id] - ele) * 0.125f;
       }
     }
   }
@@ -78,7 +78,7 @@ __global__ void CalcResidualKernel(const CellCoe *cell_coe,
     ele += coe.y[1] * x[id + range.z];
   if (id + range.z * range.y < num_cell)
     ele += coe.x[1] * x[id + range.z * range.y];
-  r[id] = b[id] - ele;
+  r[id] = (b[id] - ele);
 }
 
 __global__ void MultiGridJacobiIterationKernel(const CellCoe *cell_coe,
@@ -134,16 +134,16 @@ __global__ void ConstructHalfKernel(Grid<CellCoe>::DevRef matrix,
         if (cell_index.z >= range.z)
           continue;
         CellCoe cell = matrix(cell_index);
-        cell_2h.local += cell.local;
+        cell_2h.local += cell.local * 0.125f;
 
-        cell_2h.x[dx] += cell.x[dx];
-        cell_2h.local += cell.x[dx ^ 1];
+        cell_2h.x[dx] += cell.x[dx] * 0.125f;
+        cell_2h.local += cell.x[dx ^ 1] * 0.125f;
 
-        cell_2h.y[dy] += cell.y[dy];
-        cell_2h.local += cell.y[dy ^ 1];
+        cell_2h.y[dy] += cell.y[dy] * 0.125f;
+        cell_2h.local += cell.y[dy ^ 1] * 0.125f;
 
-        cell_2h.z[dz] += cell.z[dz];
-        cell_2h.local += cell.z[dz ^ 1];
+        cell_2h.z[dz] += cell.z[dz] * 0.125f;
+        cell_2h.local += cell.z[dz ^ 1] * 0.125f;
       }
     }
   }
@@ -190,59 +190,108 @@ struct CoePlus {
   }
 };
 
+__global__ void ApplyMatrixKernel(const CellCoe *matrix,
+                                  const float *x,
+                                  float *b,
+                                  glm::ivec3 range) {
+  int id = blockIdx.x * blockDim.x + threadIdx.x;
+  int num_cell = range.x * range.y * range.z;
+  if (id < num_cell) {
+    float div = 0.0f;
+    CellCoe coe = matrix[id];
+    div += coe.local * x[id];
+    if (id > 1)
+      div += coe.z[0] * x[id - 1];
+    if (id > range.z)
+      div += coe.y[0] * x[id - range.z];
+    if (id > range.z * range.y)
+      div += coe.x[0] * x[id - range.z * range.y];
+    if (id + 1 < num_cell)
+      div += coe.z[1] * x[id + 1];
+    if (id + range.z < num_cell)
+      div += coe.y[1] * x[id + range.z];
+    if (id + range.z * range.y < num_cell)
+      div += coe.x[1] * x[id + range.z * range.y];
+    b[id] = div;
+  }
+}
+
 void MultiGrid(Grid<CellCoe> &matrix, Grid<float> &b, Grid<float> &x) {
   auto matrix_range = matrix.Range();
-  JacobiMethod(
-      [&](const thrust::device_vector<float> &b,
-          const thrust::device_vector<float> &x,
-          thrust::device_vector<float> &x_new) {
-        MultiGridJacobiIterationKernel<<<CALL_GRID(x.size())>>>(
-            matrix.Vector().data().get(), b.data().get(), x.data().get(),
-            x_new.data().get(), matrix_range);
-      },
-      b.Vector(), x.Vector(), 50);
-
-  if (matrix_range.x <= 10 && matrix_range.y <= 10 && matrix_range.z <= 10) {
-    return;
-  }
-  Grid<CellCoe> matrix_2h((matrix.Range() + 1) >> 1);
-  Grid<float> r_2h((matrix.Range() + 1) >> 1);
-  Grid<float> e_2h((matrix.Range() + 1) >> 1);
-  ConstructHalfKernel<<<CALL_GRID(matrix_2h.Size())>>>(matrix, matrix_2h);
-  CalcResidualKernel<<<CALL_GRID(r_2h.Size())>>>(
-      matrix.Vector().data().get(), x.Vector().data().get(),
-      b.Vector().data().get(), r_2h.Vector().data().get(), matrix.Range(),
-      matrix_2h.Range());
-  CalcResidualKernel<<<CALL_GRID(r_2h.Size())>>>(
-      matrix.Vector().data().get(), x.Vector().data().get(),
-      b.Vector().data().get(), r_2h.Vector().data().get(), matrix.Range(),
-      matrix_2h.Range());
-  MultiGrid(matrix_2h, r_2h, e_2h);
-  ApplyErrorKernel<<<CALL_GRID(e_2h.Size())>>>(e_2h, x);
-
-  CalcResidualKernel<<<CALL_GRID(r_2h.Size())>>>(
-      matrix.Vector().data().get(), x.Vector().data().get(),
-      b.Vector().data().get(), r_2h.Vector().data().get(), matrix.Range(),
-      matrix_2h.Range());
-
-  JacobiMethod(
-      [&](const thrust::device_vector<float> &b,
-          const thrust::device_vector<float> &x,
-          thrust::device_vector<float> &x_new) {
-        MultiGridJacobiIterationKernel<<<CALL_GRID(x.size())>>>(
-            matrix.Vector().data().get(), b.data().get(), x.data().get(),
-            x_new.data().get(), matrix_range);
-      },
-      b.Vector(), x.Vector(), 150);
-
+#ifdef MULTIGRID_VERBOSE
   thrust::device_vector<float> r(x.Size());
   CalcResidualKernel<<<CALL_GRID(x.Size())>>>(
       matrix.Vector().data().get(), x.Vector().data().get(),
       b.Vector().data().get(), r.data().get(), matrix.Range());
-  printf(
-      "MultiGrid Final Residual: %f %f\n",
-      thrust::transform_reduce(r.begin(), r.end(), SquareOp<float>(), 0.0f,
-                               thrust::plus<float>()),
-      thrust::transform_reduce(x.Vector().begin(), x.Vector().end(),
-                               SquareOp<float>(), 0.0f, thrust::plus<float>()));
+  printf("Residual Before Iter: %f %f\n",
+         thrust::transform_reduce(r.begin(), r.end(), SquareOp<float>(), 0.0f,
+                                  thrust::plus<float>()),
+         thrust::transform_reduce(x.Vector().begin(), x.Vector().end(),
+                                  SquareOp<float>(), 0.0f,
+                                  thrust::maximum<float>()));
+#endif
+
+  JacobiMethod(
+      [&](const thrust::device_vector<float> &b,
+          const thrust::device_vector<float> &x,
+          thrust::device_vector<float> &x_new) {
+        MultiGridJacobiIterationKernel<<<CALL_GRID(x.size())>>>(
+            matrix.Vector().data().get(), b.data().get(), x.data().get(),
+            x_new.data().get(), matrix_range);
+      },
+      b.Vector(), x.Vector(), 100);
+
+  if (!(matrix_range.x <= 2 && matrix_range.y <= 2 && matrix_range.z <= 2)) {
+    Grid<CellCoe> matrix_2h((matrix.Range() + 1) >> 1);
+    Grid<float> r_2h((matrix.Range() + 1) >> 1);
+    Grid<float> e_2h((matrix.Range() + 1) >> 1);
+    ConstructHalfKernel<<<CALL_GRID(matrix_2h.Size())>>>(matrix, matrix_2h);
+    CalcResidualKernel<<<CALL_GRID(r_2h.Size())>>>(
+        matrix.Vector().data().get(), x.Vector().data().get(),
+        b.Vector().data().get(), r_2h.Vector().data().get(), matrix.Range(),
+        matrix_2h.Range());
+#ifdef MULTIGRID_VERBOSE
+    printf("Residual: %f\n",
+           thrust::transform_reduce(r_2h.Vector().begin(), r_2h.Vector().end(),
+                                    SquareOp<float>(), 0.0f,
+                                    thrust::plus<float>()));
+#endif
+
+    MultiGrid(matrix_2h, r_2h, e_2h);
+    ApplyErrorKernel<<<CALL_GRID(e_2h.Size())>>>(e_2h, x);
+  }
+
+#ifdef MULTIGRID_VERBOSE
+  CalcResidualKernel<<<CALL_GRID(x.Size())>>>(
+      matrix.Vector().data().get(), x.Vector().data().get(),
+      b.Vector().data().get(), r.data().get(), matrix.Range());
+  printf("MultiGrid Residual After Recurse: %f %f\n",
+         thrust::transform_reduce(r.begin(), r.end(), SquareOp<float>(), 0.0f,
+                                  thrust::plus<float>()),
+         thrust::transform_reduce(x.Vector().begin(), x.Vector().end(),
+                                  SquareOp<float>(), 0.0f,
+                                  thrust::maximum<float>()));
+#endif
+
+  JacobiMethod(
+      [&](const thrust::device_vector<float> &b,
+          const thrust::device_vector<float> &x,
+          thrust::device_vector<float> &x_new) {
+        MultiGridJacobiIterationKernel<<<CALL_GRID(x.size())>>>(
+            matrix.Vector().data().get(), b.data().get(), x.data().get(),
+            x_new.data().get(), matrix_range);
+      },
+      b.Vector(), x.Vector(), 100);
+
+#ifdef MULTIGRID_VERBOSE
+  CalcResidualKernel<<<CALL_GRID(x.Size())>>>(
+      matrix.Vector().data().get(), x.Vector().data().get(),
+      b.Vector().data().get(), r.data().get(), matrix.Range());
+  printf("MultiGrid Final Residual: %f %f\n",
+         thrust::transform_reduce(r.begin(), r.end(), SquareOp<float>(), 0.0f,
+                                  thrust::plus<float>()),
+         thrust::transform_reduce(x.Vector().begin(), x.Vector().end(),
+                                  SquareOp<float>(), 0.0f,
+                                  thrust::maximum<float>()));
+#endif
 }

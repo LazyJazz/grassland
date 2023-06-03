@@ -1,4 +1,5 @@
 #pragma once
+#include "fstream"
 #include "grid.cuh"
 #include "thrust/device_vector.h"
 #include "thrust/reduce.h"
@@ -80,7 +81,6 @@ void ConjugateGradient(MatrixType matrix,
     saxpy(ak, p_vec_, x, x);
     saxpy(-ak, Ap_vec_, r_vec_, r_vec_);
     float new_rk2 = dot(r_vec_, r_vec_);
-    // printf("%f\n", new_rk2);
     if (new_rk2 < r_vec_.size() * 1e-8f) {
       printf("%d\n", cnt);
       break;

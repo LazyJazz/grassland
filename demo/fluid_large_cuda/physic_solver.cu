@@ -185,6 +185,77 @@ __global__ void Particle2GridTransferKernel(const Particle *particles,
       grid_coord + glm::vec3{0.0f, 0.0f, 0.5f}, w_grid, AssignVelocity);
 }
 
+__global__ void Particle2GridTransferGatherKernel(
+    Grid<MACGridContent>::DevRef u_grid,
+    Grid<MACGridContent>::DevRef v_grid,
+    Grid<MACGridContent>::DevRef w_grid,
+    const Particle *particles,
+    int *cell_index_lower_bound,
+    glm::ivec3 cell_range,
+    float delta_x) {
+  int id = blockIdx.x * blockDim.x + threadIdx.x;
+  float phi[2]{0.25f, 0.25f};
+  glm::vec3 phi_gradient[2]{};
+  auto grid_range = cell_range + 1;
+  {
+    MACGridContent u_content{};
+    MACGridContent v_content{};
+    MACGridContent w_content{};
+    glm::ivec3 cell_index{id / (grid_range.y * grid_range.z),
+                          (id / grid_range.z) % grid_range.y,
+                          id % grid_range.z};
+    glm::vec3 grid_point_pos = glm::vec3{cell_index} + 0.5f;
+    for (int dx = -2; dx < 2; dx++) {
+      for (int dy = -2; dy < 2; dy++) {
+        for (int dz = -2; dz < 2; dz++) {
+          glm::ivec3 current_index = cell_index + glm::ivec3{dx, dy, dz};
+          if (current_index.x < 0 || current_index.y < 0 || current_index.z < 0)
+            continue;
+          if (current_index.x >= cell_range.x ||
+              current_index.y >= cell_range.y ||
+              current_index.z >= cell_range.z)
+            continue;
+          for (int pid = cell_index_lower_bound[RANGE_INDEX(current_index,
+                                                            cell_range)],
+                   last = cell_index_lower_bound[RANGE_INDEX(current_index,
+                                                             cell_range) +
+                                                 1];
+               pid < last; pid++) {
+            Particle particle = particles[pid];
+            float weight;
+            weight =
+                KernelFunction(particle.position / delta_x - grid_point_pos +
+                               glm::vec3{0.5f, 0.0f, 0.0f});
+            u_content.w[particle.type] += weight;
+            u_content.v[particle.type] += weight * particle.velocity.x;
+
+            weight =
+                KernelFunction(particle.position / delta_x - grid_point_pos +
+                               glm::vec3{0.0f, 0.5f, 0.0f});
+            v_content.w[particle.type] += weight;
+            v_content.v[particle.type] += weight * particle.velocity.y;
+
+            weight =
+                KernelFunction(particle.position / delta_x - grid_point_pos +
+                               glm::vec3{0.0f, 0.0f, 0.5f});
+            w_content.w[particle.type] += weight;
+            w_content.v[particle.type] += weight * particle.velocity.z;
+          }
+        }
+      }
+    }
+    if (cell_index.x < u_grid.Range().x && cell_index.y < u_grid.Range().y &&
+        cell_index.z < u_grid.Range().z)
+      u_grid(cell_index) = u_content;
+    if (cell_index.x < v_grid.Range().x && cell_index.y < v_grid.Range().y &&
+        cell_index.z < v_grid.Range().z)
+      v_grid(cell_index) = v_content;
+    if (cell_index.x < w_grid.Range().x && cell_index.y < w_grid.Range().y &&
+        cell_index.z < w_grid.Range().z)
+      w_grid(cell_index) = w_content;
+  }
+}
+
 __global__ void LowerBoundKernel(int *array,
                                  int num_element,
                                  int *lower_bound,
@@ -769,6 +840,8 @@ __global__ void ResetWrongParticleKernel(Particle *particles,
 }
 
 void PhysicSolver::UpdateStep() {
+  static int round = 0;
+  printf("-- Round #%d --\n", round++);
   DeviceClock dev_clock;
 
   level_set_.Clear();
@@ -796,12 +869,17 @@ void PhysicSolver::UpdateStep() {
   Particle2GridTransferKernel<<<CALL_GRID(particles_.size())>>>(
       particles_.data().get(), particles_.size(), u_grid_, v_grid_, w_grid_,
       physic_settings_.delta_x, cell_range_);
-  dev_clock.Record("Trivial Grid2Particle");
+  dev_clock.Record("Scatter Grid2Particle");
 
-  //    ConstructLevelSetKernel<<<CALL_GRID(level_sets_.Size())>>>(
-  //        level_sets_, cell_index_lower_bound_.data().get(),
-  //        particles_.data().get(), particles_.size(),
-  //        physic_settings_.delta_x);
+  //  Particle2GridTransferGatherKernel<<<CALL_GRID(level_set_.Size())>>>(
+  //      u_grid_, v_grid_, w_grid_, particles_.data().get(),
+  //      cell_index_lower_bound_.data().get(), cell_range_,
+  //      physic_settings_.delta_x);
+  //  dev_clock.Record("Gather Grid2Particle");
+  //
+  //  ConstructLevelSetKernel<<<CALL_GRID(level_sets_.Size())>>>(
+  //      level_sets_, cell_index_lower_bound_.data().get(),
+  //      particles_.data().get(), particles_.size(), physic_settings_.delta_x);
 
   ConstructLevelSetNearestKernel<<<CALL_GRID(level_set_.Size())>>>(
       level_set_, level_set_gradient_, cell_index_lower_bound_.data().get(),
@@ -839,7 +917,7 @@ void PhysicSolver::UpdateStep() {
   //      },
   //      divergence_.Vector(), pressure_.Vector());
   //  dev_clock.Record("Solve Poisson Equation (Conjugate Gradient)");
-
+  //
   //  JacobiMethod(
   //      [this](const thrust::device_vector<float> &divergence,
   //             const thrust::device_vector<float> &pressure,
@@ -851,6 +929,8 @@ void PhysicSolver::UpdateStep() {
   //      },
   //      divergence_.Vector(), pressure_.Vector());
   //  dev_clock.Record("Solve Poisson Equation (Jacobi Iteration)");
+
+  MultiGrid(cell_coe_, divergence_, pressure_);
   MultiGrid(cell_coe_, divergence_, pressure_);
   dev_clock.Record("Solve Poisson Equation (Multi Grid)");
 
@@ -882,49 +962,6 @@ void PhysicSolver::UpdateStep() {
   dev_clock.Finish();
 
   OutputXYZFile();
-
-  //  Particle host_particles[10];
-  //  int host_cell_indices[10];
-  //  int host_block_indices[10];
-  //  thrust::copy(cell_indices.begin(), cell_indices.begin() + 10,
-  //  host_cell_indices); thrust::copy(block_indices.begin(),
-  //  block_indices.begin() + 10, host_block_indices);
-  //  thrust::copy(particles_.begin(), particles_.begin() + 10, host_particles);
-  //  for (int i = 0; i < 10; i++) {
-  //    glm::ivec3 cell_index = host_particles[i].position /
-  //    physic_settings_.delta_x; printf("%d %d %d %d %d\n", cell_index.x,
-  //    cell_index.y, cell_index.z, host_cell_indices[i],
-  //    host_block_indices[i]);
-  //  }
-
-  //        GridLinearHost<MACGridContent> u_grid_host(u_grid_);
-  //      GridLinearHost<MACGridContent> w_grid_host(w_grid_);
-
-  //   GridLinearHost<LevelSet_t> level_set_host(level_sets_);
-  //      GridLinearHost<float> divergence_host(divergence_);
-  //      GridLinearHost<CellCoe> cell_coe_host(cell_coe_);
-  //        GridLinearHost<float> pressure_host(pressure_);
-
-  //  GridLinearHost<MACGridContent> v_grid_host(v_grid_);
-  //  auto &print_grid = v_grid_host;
-  //  std::ofstream csv_file("grid.csv");
-  //  for (int y = 0; y < print_grid.Range().y; y++) {
-  //    for (int z = 0; z < print_grid.Range().z; z++) {
-  //      auto content = print_grid(print_grid.Range().x / 2, y, z);
-  //      for (float s = 0; s < content.ortho; s += 0.1f) {
-  //        csv_file << "*";
-  //      }
-  //      csv_file << ",";
-  //    }
-  //    csv_file << std::endl;
-  //  }
-  //  csv_file.close();
-  //  std::system("start grid.csv");
-  //
-  //  while (!GetAsyncKeyState(VK_ESCAPE))
-  //    ;
-  //  while (GetAsyncKeyState(VK_ESCAPE))
-  //    ;
 }
 
 void PhysicSolver::OutputXYZFile() {
@@ -933,20 +970,22 @@ void PhysicSolver::OutputXYZFile() {
   static int round = 0;
   if (!round)
     std::system("mkdir data");
-  std::ofstream file("data/" + std::to_string(round) + "_320.xyz",
-                     std::ios::binary);
-  int cnt = 0;
-  for (auto &particle : particles) {
-    if (particle.type == 1) {
-      cnt++;
-      if (cnt == 1) {
-        file.write(reinterpret_cast<const char *>(&particle.position),
-                   sizeof(particle.position));
-        cnt = 0;
+  if (round % 20 == 0) {
+    std::ofstream file("data/" + std::to_string(round) + FILE_SUFFIX ".xyz",
+                       std::ios::binary);
+    int cnt = 0;
+    for (auto &particle : particles) {
+      if (particle.type == 1) {
+        cnt++;
+        if (cnt == 1) {
+          file.write(reinterpret_cast<const char *>(&particle.position),
+                     sizeof(particle.position));
+          cnt = 0;
+        }
       }
     }
+    file.close();
   }
-  file.close();
   round++;
 }
 

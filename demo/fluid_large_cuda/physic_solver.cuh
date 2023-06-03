@@ -11,9 +11,11 @@
 #define TYPE_AIR 0
 #define TYPE_LIQ 1
 
-#define PIC_SCALE 0.00f
+#define PIC_SCALE 0.03f
 #define SCALE 320
 #define PARTICLE_SIZE (0.05f / float(SCALE))
+
+#define FILE_SUFFIX "_320"
 
 struct InstanceInfo;
 

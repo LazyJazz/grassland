@@ -9,13 +9,17 @@ void GUI(const PhysicSettings &settings) {
 
 [[noreturn]] void NoGUI(const PhysicSettings &settings) {
   PhysicSolver solver(settings);
-  while (true) {
+  auto start_tp = std::chrono::steady_clock::now();
+  int frames = 4000;
+  for (int i = 0; i < frames; i++) {
     solver.UpdateStep();
   }
+  auto dur = std::chrono::steady_clock::now() - start_tp;
+  std::cout << double(dur / std::chrono::milliseconds(1)) * 1e-3 / float(frames)
+            << "s/frame avg" << std::endl;
 }
 
 int main() {
   PhysicSettings settings{};
-  GUI(settings);
-  // NoGUI(settings);
+  NoGUI(settings);
 }
