@@ -1,9 +1,11 @@
+#pragma once
 #include "device.h"
 
 namespace grassland::vulkan {
 class DescriptorSetLayout {
  public:
   GRASSLAND_CANNOT_COPY(DescriptorSetLayout)
+
   DescriptorSetLayout(
       const class Device &device,
       const std::vector<VkDescriptorSetLayoutBinding> &bindings);
