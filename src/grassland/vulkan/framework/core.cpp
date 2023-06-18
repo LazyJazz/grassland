@@ -35,6 +35,8 @@ Core::Core(const CoreSettings &core_settings) {
                        ::grassland::vulkan::framework::Core::GLFWKeyFunc);
     glfwSetDropCallback(window_,
                         ::grassland::vulkan::framework::Core::GLFWDropFunc);
+    glfwSetScrollCallback(window_,
+                          ::grassland::vulkan::framework::Core::GLFWScrollFunc);
     glfwSetWindowUserPointer(window_, this);
   }
 
@@ -401,6 +403,11 @@ void Core::SetDropCallback(
   custom_drop_functions_.push_back(drop_callback);
 }
 
+void Core::SetScrollCallback(
+    const std::function<void(double, double)> &scroll_callback) {
+  custom_scroll_functions_.push_back(scroll_callback);
+}
+
 void Core::GLFWFrameSizeFunc(GLFWwindow *window, int width, int height) {
   auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
 
@@ -460,6 +467,15 @@ void Core::GLFWDropFunc(GLFWwindow *window,
   if (!core->custom_drop_functions_.empty()) {
     for (auto &func : core->custom_drop_functions_) {
       func(path_count, paths);
+    }
+  }
+}
+
+void Core::GLFWScrollFunc(GLFWwindow *window, double xoffset, double yoffset) {
+  auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
+  if (!core->custom_scroll_functions_.empty()) {
+    for (auto &func : core->custom_scroll_functions_) {
+      func(xoffset, yoffset);
     }
   }
 }

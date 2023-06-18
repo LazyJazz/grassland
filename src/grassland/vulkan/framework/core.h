@@ -48,6 +48,9 @@ class Core {
   void SetDropCallback(
       const std::function<void(int path_count, const char **paths)>
           &drop_callback);
+  void SetScrollCallback(
+      const std::function<void(double xoffset, double yoffset)>
+          &scroll_callback);
 
   void ImGuiInit(TextureImage *render_texture,
                  const char *font_file_path = nullptr,
@@ -69,6 +72,9 @@ class Core {
   static void GLFWDropFunc(GLFWwindow *window,
                            int path_count,
                            const char **paths);
+  static void GLFWScrollFunc(GLFWwindow *window,
+                             double xoffset,
+                             double yoffset);
 
   CoreSettings core_settings_;
 
@@ -99,6 +105,8 @@ class Core {
   std::vector<std::function<void(int key, int scancode, int action, int mods)>>
       custom_key_functions_;
   std::vector<std::function<void(int, const char **)>> custom_drop_functions_;
+  std::vector<std::function<void(double xoffset, double yoffset)>>
+      custom_scroll_functions_;
 
   VkDescriptorPool imgui_pool_{};
   TextureImage *imgui_render_target_{nullptr};
