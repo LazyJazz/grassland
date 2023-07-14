@@ -55,7 +55,8 @@ void HostRGBA8ToDeviceBuffer(Core *core_,
     }
     buffer->Unmap();
   } else {
-    LAND_ERROR("[Vulkan] format #{} doesn't support conversion.", format);
+    LAND_ERROR("[Vulkan] format #{} doesn't support conversion.",
+               uint32_t(format));
   }
 }
 
@@ -83,7 +84,8 @@ void DeviceBufferToHostRGBA8(Core *core_,
     }
     buffer->Unmap();
   } else {
-    LAND_ERROR("[Vulkan] format #{} doesn't support conversion.", format);
+    LAND_ERROR("[Vulkan] format #{} doesn't support conversion.",
+               uint32_t(format));
   }
 }
 
@@ -126,7 +128,8 @@ void HostRGBA32FToDeviceBuffer(Core *core_,
                 sizeof(float) * host_rgba32f.size());
     buffer->Unmap();
   } else {
-    LAND_ERROR("[Vulkan] format #{} doesn't support conversion.", format);
+    LAND_ERROR("[Vulkan] format #{} doesn't support conversion.",
+               uint32_t(format));
   }
 }
 
@@ -155,7 +158,8 @@ void DeviceBufferToHostRGBA32F(Core *core_,
                 sizeof(float) * host_rgba32f.size());
     buffer->Unmap();
   } else {
-    LAND_ERROR("[Vulkan] format #{} doesn't support conversion.", format);
+    LAND_ERROR("[Vulkan] format #{} doesn't support conversion.",
+               uint32_t(format));
   }
 }
 }  // namespace

@@ -51,7 +51,7 @@ uint32_t FormatSizeInBytes(VkFormat format) {
     case VK_FORMAT_R64G64B64A64_SFLOAT:
       return 32;
     default:
-      LAND_ERROR("[Vulkan] format #{} is not supported.", format);
+      LAND_ERROR("[Vulkan] format #{} is not supported.", uint32_t(format));
   }
   return 0;
 }
@@ -96,7 +96,7 @@ uint32_t FormatSlot(VkFormat format) {
     case VK_FORMAT_R64G64B64A64_SFLOAT:
       return 2;
     default:
-      LAND_ERROR("[Vulkan] format #{} is not supported.", format);
+      LAND_ERROR("[Vulkan] format #{} is not supported.", uint32_t(format));
   }
 }
 }  // namespace grassland::vulkan
