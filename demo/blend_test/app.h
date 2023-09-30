@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "GLFW/glfw3.h"
-#include "grassland/vulkan/vulkan.h"
+#include "grassland/grassland.h"
 
 using namespace grassland;
 
