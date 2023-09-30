@@ -657,6 +657,7 @@ void Fluid2D::PrintAMatrix() {
   //  fout.close();
   //  exit(0);
 }
+
 void Fluid2D::PrintMatrixAndOpen(float *matrix) {
   std::ofstream file("matrix.csv");
   file << std::fixed << std::setprecision(8);
@@ -668,5 +669,6 @@ void Fluid2D::PrintMatrixAndOpen(float *matrix) {
     file << std::endl;
   }
   file.close();
-  std::system("start matrix.csv");
+  if (std::system("start matrix.csv")) {
+  }
 }
