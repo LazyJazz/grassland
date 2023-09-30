@@ -1,7 +1,7 @@
 ﻿#include <grassland/util/logging.h>
 #include <grassland/vulkan/descriptor_pool.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 DescriptorPool::DescriptorPool(
     Device *device,
@@ -41,4 +41,4 @@ DescriptorPool::DescriptorPool(
 DescriptorPool::~DescriptorPool() {
   vkDestroyDescriptorPool(device_->GetHandle(), GetHandle(), nullptr);
 }
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

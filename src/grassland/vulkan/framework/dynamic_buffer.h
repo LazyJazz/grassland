@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/framework/data_buffer.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 template <class Ty>
 class DynamicBuffer : public DataBuffer {
  public:
@@ -112,4 +112,4 @@ void DynamicBuffer<Ty>::Resize(size_t size) {
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
   }
 }
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

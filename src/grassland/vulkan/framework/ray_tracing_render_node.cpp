@@ -1,6 +1,6 @@
 #include "grassland/vulkan/framework/ray_tracing_render_node.h"
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 
 RayTracingRenderNode::RayTracingRenderNode(Core *core) : core_(core) {
 }
@@ -196,4 +196,4 @@ void RayTracingRenderNode::UpdateDescriptorSetBinding(int binding_index) {
   }
 }
 
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

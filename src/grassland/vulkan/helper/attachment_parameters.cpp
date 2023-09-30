@@ -1,6 +1,6 @@
 #include <grassland/vulkan/helper/attachment_parameters.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 
 void AttachmentParameters::AddColorAttachment(
     VkFormat format,
@@ -58,4 +58,4 @@ const VkAttachmentReference &AttachmentParameters::GetDepthAttachmentReference()
   return *depth_attachment_reference_;
 }
 
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

@@ -3,7 +3,7 @@
 #include "grassland/vulkan/image.h"
 #include "vulkan/vulkan.h"
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class InstanceProcedures {
  public:
   static InstanceProcedures *GetStaticInstance();
@@ -23,4 +23,4 @@ class InstanceProcedures {
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkCreateDebugUtilsMessengerEXT);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkDestroyDebugUtilsMessengerEXT);
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

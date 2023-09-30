@@ -2,7 +2,7 @@
 #include <grassland/vulkan/descriptor_pool.h>
 #include <grassland/vulkan/descriptor_set_layout.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class DescriptorSet {
  public:
   DescriptorSet(Device *device,
@@ -33,4 +33,4 @@ class DescriptorSets {
   GRASSLAND_VULKAN_DEVICE_PTR
   DescriptorPool *descriptor_pool_{nullptr};
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

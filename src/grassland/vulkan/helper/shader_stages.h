@@ -2,7 +2,7 @@
 #include <grassland/vulkan/shader_module.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 class ShaderStages {
  public:
   void AddShaderModule(const ShaderModule *shader_module,
@@ -13,4 +13,4 @@ class ShaderStages {
  private:
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_create_infos_{};
 };
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

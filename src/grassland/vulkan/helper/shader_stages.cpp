@@ -1,6 +1,6 @@
 #include <grassland/vulkan/helper/shader_stages.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 
 uint32_t ShaderStages::Size() const {
   return static_cast<uint32_t>(shader_stage_create_infos_.size());
@@ -21,4 +21,4 @@ void ShaderStages::AddShaderModule(
   shader_stage_create_infos_.push_back(stage_info);
 }
 
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

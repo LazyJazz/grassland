@@ -2,7 +2,7 @@
 #include <grassland/vulkan/physical_device.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 
 VkFormat FindSupportedFormat(PhysicalDevice *physical_device,
                              const std::vector<VkFormat> &candidates,
@@ -10,4 +10,4 @@ VkFormat FindSupportedFormat(PhysicalDevice *physical_device,
                              VkFormatFeatureFlags features);
 
 VkFormat FindDepthFormat(PhysicalDevice *physical_device);
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

@@ -2,12 +2,13 @@
 #include "grassland/grassland.h"
 
 int main() {
-  grassland::vulkan::framework::CoreSettings core_settings;
-  std::unique_ptr<grassland::vulkan::framework::Core> core =
-      std::make_unique<grassland::vulkan::framework::Core>(core_settings);
+  grassland::vulkan_legacy::framework::CoreSettings core_settings;
+  std::unique_ptr<grassland::vulkan_legacy::framework::Core> core =
+      std::make_unique<grassland::vulkan_legacy::framework::Core>(
+          core_settings);
 
   auto paint_buffer =
-      std::make_unique<grassland::vulkan::framework::TextureImage>(
+      std::make_unique<grassland::vulkan_legacy::framework::TextureImage>(
           core.get(), core->GetFramebufferWidth(), core->GetFramebufferHeight(),
           VK_FORMAT_B8G8R8A8_UNORM,
           VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |

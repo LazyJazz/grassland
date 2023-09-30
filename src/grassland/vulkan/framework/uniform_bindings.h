@@ -4,7 +4,7 @@
 #include <grassland/vulkan/framework/texture_image.h>
 #include <grassland/vulkan/raytracing/raytracing.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 class UniformBinding {
  public:
   explicit UniformBinding(VkShaderStageFlags access_stage_flags);
@@ -67,7 +67,7 @@ class UniformBindingTextureSampler : public UniformBinding {
       int frame_index) override;
   void BeforeDraw(CommandBuffer *command_buffer,
                   int frame_index) const override;
-  void AfterDraw(grassland::vulkan::CommandBuffer *command_buffer,
+  void AfterDraw(grassland::vulkan_legacy::CommandBuffer *command_buffer,
                  int frame_index) const override;
   TextureImage *texture_image_{nullptr};
   Sampler *sampler_{nullptr};
@@ -88,7 +88,7 @@ class UniformBindingTextureSamplers : public UniformBinding {
       int frame_index) override;
   void BeforeDraw(CommandBuffer *command_buffer,
                   int frame_index) const override;
-  void AfterDraw(grassland::vulkan::CommandBuffer *command_buffer,
+  void AfterDraw(grassland::vulkan_legacy::CommandBuffer *command_buffer,
                  int frame_index) const override;
 
   std::vector<std::pair<TextureImage *, Sampler *>> texture_sampler_pairs_;
@@ -148,4 +148,4 @@ class UniformBindingAccelerationStructure : public UniformBinding {
   VkWriteDescriptorSetAccelerationStructureKHR
       descriptor_write_acceleration_structure_{};
 };
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

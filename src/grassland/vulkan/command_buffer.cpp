@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/command_buffer.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 CommandBuffer::CommandBuffer(CommandPool *command_pool) : handle_{} {
   command_pool_ = command_pool;
@@ -65,4 +65,4 @@ CommandPool *CommandBuffers::GetCommandPool() const {
   return command_pool_;
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

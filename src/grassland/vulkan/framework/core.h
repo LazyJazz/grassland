@@ -6,7 +6,7 @@
 #include "imgui.h"
 #include "imgui_stdlib.h"
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 class TextureImage;
 class Core {
  public:
@@ -113,4 +113,4 @@ class Core {
   std::unique_ptr<RenderPass> imgui_render_pass_;
   std::unique_ptr<Framebuffer> imgui_framebuffer_;
 };
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

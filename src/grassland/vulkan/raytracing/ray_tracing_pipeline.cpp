@@ -1,6 +1,6 @@
 #include "grassland/vulkan/raytracing/ray_tracing_pipeline.h"
 
-namespace grassland::vulkan::raytracing {
+namespace grassland::vulkan_legacy::raytracing {
 RayTracingPipeline::RayTracingPipeline(Device *device,
                                        PipelineLayout *pipeline_layout,
                                        const ShaderModule &ray_gen_shader,
@@ -78,4 +78,4 @@ RayTracingPipeline::~RayTracingPipeline() {
   vkDestroyPipeline(device_->GetHandle(), handle_, nullptr);
 }
 
-}  // namespace grassland::vulkan::raytracing
+}  // namespace grassland::vulkan_legacy::raytracing

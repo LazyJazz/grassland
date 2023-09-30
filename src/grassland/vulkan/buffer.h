@@ -3,7 +3,7 @@
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/queue.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Buffer {
  public:
   Buffer(
@@ -68,4 +68,4 @@ void CopyBuffer(CommandPool *command_pool,
                 VkDeviceSize src_offset,
                 VkDeviceSize dst_offset);
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

@@ -1,3 +1,3 @@
 #include <grassland/vulkan/vulkan.h>
 
-namespace grassland::vulkan {}
+namespace grassland::vulkan_legacy {}

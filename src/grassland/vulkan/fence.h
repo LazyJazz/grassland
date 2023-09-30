@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/device.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Fence {
  public:
   explicit Fence(Device *device);
@@ -11,4 +11,4 @@ class Fence {
   GRASSLAND_VULKAN_HANDLE(VkFence)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

@@ -2,7 +2,7 @@
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class ShaderModule {
  public:
   explicit ShaderModule(Device *device, const char *spv_file_path);
@@ -13,4 +13,4 @@ class ShaderModule {
   GRASSLAND_VULKAN_HANDLE(VkShaderModule)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

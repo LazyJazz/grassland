@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/framebuffer.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 Framebuffer::Framebuffer(Device *device,
                          int width,
@@ -67,4 +67,4 @@ VkExtent2D Framebuffer::GetExtent() const {
   return extent_;
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

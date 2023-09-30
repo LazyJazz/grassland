@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/command_pool.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class CommandBuffer {
  public:
   explicit CommandBuffer(CommandPool *command_pool);
@@ -27,4 +27,4 @@ class CommandBuffers {
   CommandPool *command_pool_{nullptr};
   uint32_t count_{0};
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

@@ -3,7 +3,7 @@
 #include "grassland/vulkan/device.h"
 #include "grassland/vulkan/raytracing/ray_tracing_pipeline.h"
 
-namespace grassland::vulkan::raytracing {
+namespace grassland::vulkan_legacy::raytracing {
 class ShaderBindingTable {
  public:
   explicit ShaderBindingTable(RayTracingPipeline *ray_tracing_pipeline);
@@ -18,4 +18,4 @@ class ShaderBindingTable {
   VkDeviceAddress miss_offset_;
   VkDeviceAddress closest_hit_offset_;
 };
-}  // namespace grassland::vulkan::raytracing
+}  // namespace grassland::vulkan_legacy::raytracing

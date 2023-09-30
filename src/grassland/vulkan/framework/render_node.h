@@ -4,7 +4,7 @@
 #include <grassland/vulkan/framework/texture_image.h>
 #include <grassland/vulkan/framework/uniform_bindings.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 class RenderNode {
  public:
   explicit RenderNode(Core *core);
@@ -99,4 +99,4 @@ class RenderNode {
 
   std::unique_ptr<Pipeline> graphics_pipeline_;
 };
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

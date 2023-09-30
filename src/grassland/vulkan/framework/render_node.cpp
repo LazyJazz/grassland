@@ -1,7 +1,7 @@
 #include <grassland/util/util.h>
 #include <grassland/vulkan/framework/render_node.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 RenderNode::RenderNode(Core *core) {
   core_ = core;
 }
@@ -443,4 +443,4 @@ void RenderNode::UpdateDescriptorSetBinding(int binding_index) {
   }
 }
 
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

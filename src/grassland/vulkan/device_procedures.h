@@ -1,7 +1,7 @@
 #pragma once
 #include "grassland/vulkan/device.h"
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class DeviceProcedures {
  public:
   explicit DeviceProcedures();
@@ -69,4 +69,4 @@ class DeviceProcedures {
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkGetRayTracingShaderGroupHandlesKHR);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkCmdTraceRaysKHR);
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

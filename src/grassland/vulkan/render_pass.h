@@ -3,7 +3,7 @@
 #include <grassland/vulkan/helper/attachment_parameters.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class RenderPass {
  public:
   RenderPass(Device *device, VkFormat color_format);
@@ -19,4 +19,4 @@ class RenderPass {
   GRASSLAND_VULKAN_HANDLE(VkRenderPass)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

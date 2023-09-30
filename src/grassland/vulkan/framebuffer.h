@@ -4,7 +4,7 @@
 #include <grassland/vulkan/render_pass.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Framebuffer {
  public:
   Framebuffer(Device *device,
@@ -32,4 +32,4 @@ class Framebuffer {
   GRASSLAND_VULKAN_DEVICE_PTR
   VkExtent2D extent_{};
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

@@ -2,7 +2,7 @@
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Queue {
  public:
   Queue(Device *device, uint32_t queue_family_index);
@@ -13,4 +13,4 @@ class Queue {
   GRASSLAND_VULKAN_HANDLE(VkQueue)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

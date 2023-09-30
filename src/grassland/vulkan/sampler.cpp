@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/sampler.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 Sampler::Sampler(Device *device,
                  VkFilter filter,
@@ -91,4 +91,4 @@ void Sampler::Clear() {
   }
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

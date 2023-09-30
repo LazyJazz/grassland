@@ -2,7 +2,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/shader_module.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 ShaderModule::ShaderModule(Device *device, const char *spv_file_path)
     : ShaderModule(device, file::ReadFileBinary(spv_file_path)) {
@@ -25,4 +25,4 @@ ShaderModule::~ShaderModule() {
   vkDestroyShaderModule(device_->GetHandle(), GetHandle(), nullptr);
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

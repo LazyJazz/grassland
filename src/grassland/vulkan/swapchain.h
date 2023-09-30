@@ -3,7 +3,7 @@
 #include <grassland/vulkan/image.h>
 #include <grassland/vulkan/image_view.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Swapchain {
  public:
   Swapchain(GLFWwindow *window, Device *device);
@@ -28,4 +28,4 @@ class Swapchain {
   std::vector<std::unique_ptr<ImageView>> image_views_;
   uint32_t image_count_{0};
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

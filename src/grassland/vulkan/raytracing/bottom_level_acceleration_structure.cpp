@@ -4,7 +4,7 @@
 #include "glm/detail/type_vec3.hpp"
 #include "grassland/vulkan/helper/helper.h"
 
-namespace grassland::vulkan::raytracing {
+namespace grassland::vulkan_legacy::raytracing {
 
 BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(
     Device *device,
@@ -193,4 +193,4 @@ VkDeviceAddress BottomLevelAccelerationStructure::GetDeviceAddress() const {
 BottomLevelAccelerationStructure::~BottomLevelAccelerationStructure() {
   vkDestroyAccelerationStructureKHR(device_->GetHandle(), handle_, nullptr);
 }
-}  // namespace grassland::vulkan::raytracing
+}  // namespace grassland::vulkan_legacy::raytracing

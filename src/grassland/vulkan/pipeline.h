@@ -6,7 +6,7 @@
 #include <grassland/vulkan/shader_module.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Pipeline {
  public:
   explicit Pipeline(
@@ -31,4 +31,4 @@ class Pipeline {
   GRASSLAND_VULKAN_HANDLE(VkPipeline)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

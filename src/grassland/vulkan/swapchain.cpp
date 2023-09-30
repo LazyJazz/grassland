@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 namespace {
 
@@ -177,4 +177,4 @@ ImageView *Swapchain::GetImageView(uint32_t image_index) const {
   return image_views_[image_index].get();
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

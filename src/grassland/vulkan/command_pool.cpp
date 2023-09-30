@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/command_pool.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 CommandPool::CommandPool(Device *device) : handle_{} {
   device_ = device;
@@ -21,4 +21,4 @@ CommandPool::~CommandPool() {
   vkDestroyCommandPool(device_->GetHandle(), GetHandle(), nullptr);
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

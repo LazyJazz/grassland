@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/framework/core.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 class DataBuffer {
  public:
   explicit DataBuffer(Core *core);
@@ -16,4 +16,4 @@ class DataBuffer {
  protected:
   Core *core_{nullptr};
 };
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

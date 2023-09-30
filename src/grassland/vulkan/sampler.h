@@ -2,7 +2,7 @@
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Sampler {
  public:
   explicit Sampler(
@@ -42,4 +42,4 @@ class Sampler {
   GRASSLAND_VULKAN_HANDLE(VkSampler)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

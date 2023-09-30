@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/framework/data_buffer.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 template <class Ty>
 class StaticBuffer : public DataBuffer {
  public:
@@ -80,4 +80,4 @@ void StaticBuffer<Ty>::Resize(size_t size) {
   device_buffer_ =
       std::make_unique<Buffer>(core_->GetDevice(), sizeof(Ty) * size, usage_);
 }
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

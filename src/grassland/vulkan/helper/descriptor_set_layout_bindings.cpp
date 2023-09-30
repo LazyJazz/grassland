@@ -1,6 +1,6 @@
 #include <grassland/vulkan/helper/descriptor_set_layout_bindings.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 
 void DescriptorSetLayoutBindings::AddBinding(
     VkDescriptorSetLayoutBinding binding) {
@@ -26,4 +26,4 @@ const std::vector<VkDescriptorSetLayoutBinding>
     &DescriptorSetLayoutBindings::GetDescriptorSetLayoutBinding() const {
   return bindings_;
 }
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

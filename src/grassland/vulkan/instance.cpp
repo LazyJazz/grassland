@@ -7,7 +7,7 @@
 #include <iostream>
 #include <vector>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 namespace {
 
@@ -191,4 +191,4 @@ void Instance::CreateDebugMessenger() {
   }
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

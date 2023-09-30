@@ -5,7 +5,7 @@
 
 #include <set>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 Device::Device(PhysicalDevice *physical_device,
                const std::vector<const char *> &extra_device_extensions,
@@ -134,4 +134,4 @@ Queue *Device::GetPresentQueue() const {
   return present_queue_.get();
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

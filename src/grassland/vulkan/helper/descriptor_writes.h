@@ -5,7 +5,7 @@
 #include <grassland/vulkan/image_view.h>
 #include <grassland/vulkan/sampler.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 void UpdateDescriptorWrite(VkDevice &device,
                            VkDescriptorSet &descriptor_set,
                            int binding,
@@ -15,4 +15,4 @@ void UpdateDescriptorWrite(VkDevice &device,
                            int binding,
                            ImageView *image_view,
                            Sampler *sampler);
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

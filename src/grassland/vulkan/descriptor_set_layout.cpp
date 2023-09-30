@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/descriptor_set_layout.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 DescriptorSetLayout::DescriptorSetLayout(
     Device *device,
@@ -29,4 +29,4 @@ DescriptorSetLayout::DescriptorSetLayout(
 DescriptorSetLayout::~DescriptorSetLayout() {
   vkDestroyDescriptorSetLayout(device_->GetHandle(), GetHandle(), nullptr);
 }
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

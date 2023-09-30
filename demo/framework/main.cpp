@@ -5,7 +5,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
-using namespace grassland::vulkan::framework;
+using namespace grassland::vulkan_legacy::framework;
 
 namespace {
 
@@ -38,7 +38,7 @@ const std::vector<uint32_t> indices = {
 }  // namespace
 
 int main() {
-  grassland::vulkan::framework::CoreSettings core_settings;
+  grassland::vulkan_legacy::framework::CoreSettings core_settings;
   core_settings.raytracing_pipeline_required = false;
   core_settings.window_title = "Hello, World!";
   core_settings.frames_in_flight = 1;
@@ -60,8 +60,8 @@ int main() {
   std::unique_ptr<TextureImage> texture = std::make_unique<TextureImage>(
       &core, core_settings.window_width, core_settings.window_height);
   texture->ReadImage("../../textures/xor_grid.png");
-  std::unique_ptr<grassland::vulkan::Sampler> sampler =
-      std::make_unique<grassland::vulkan::Sampler>(core.GetDevice());
+  std::unique_ptr<grassland::vulkan_legacy::Sampler> sampler =
+      std::make_unique<grassland::vulkan_legacy::Sampler>(core.GetDevice());
 
   render_node->AddColorAttachment(core.GetSwapchain()->GetFormat());
   render_node->AddDepthAttachment();

@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/vulkan.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 struct CoreSettings {
   CoreSettings() = default;
   bool has_window{true};
@@ -13,4 +13,4 @@ struct CoreSettings {
   bool validation_layer{kDefaultEnableValidationLayers};
   int selected_device{-1};
 };
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

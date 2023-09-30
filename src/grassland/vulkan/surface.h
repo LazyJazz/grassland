@@ -4,7 +4,7 @@
 #include <grassland/vulkan/instance.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Surface {
  public:
   explicit Surface(Instance *instance, GLFWwindow *window);
@@ -14,4 +14,4 @@ class Surface {
   GRASSLAND_VULKAN_HANDLE(VkSurfaceKHR)
   Instance *instance_;
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

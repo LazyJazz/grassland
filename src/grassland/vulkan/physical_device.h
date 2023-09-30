@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
@@ -55,4 +55,4 @@ PhysicalDevice PickPhysicalDevice(
     Instance *instance,
     const std::function<int(PhysicalDevice)> &rate_function);
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

@@ -21,12 +21,14 @@ void FontViewer::Run() {
 void FontViewer::OnInit() {
   core_settings_.window_width = 1024;
   core_settings_.window_height = 1024;
-  core_ = std::make_unique<grassland::vulkan::framework::Core>(core_settings_);
+  core_ = std::make_unique<grassland::vulkan_legacy::framework::Core>(
+      core_settings_);
   uniform_buffer_ = std::make_unique<
-      grassland::vulkan::framework::DynamicBuffer<UniformBufferObject>>(
+      grassland::vulkan_legacy::framework::DynamicBuffer<UniformBufferObject>>(
       core_.get(), 1);
   render_node_ =
-      std::make_unique<grassland::vulkan::framework::RenderNode>(core_.get());
+      std::make_unique<grassland::vulkan_legacy::framework::RenderNode>(
+          core_.get());
   render_node_->AddBufferBinding(uniform_buffer_.get(),
                                  VK_SHADER_STAGE_VERTEX_BIT);
   render_node_->VertexInput({VK_FORMAT_R32G32_SFLOAT});
@@ -34,12 +36,12 @@ void FontViewer::OnInit() {
   render_node_->AddShader("font_shader.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
   render_node_->AddShader("font_shader.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
   render_node_->BuildRenderNode();
-  vertex_buffer_ =
-      std::make_unique<grassland::vulkan::framework::StaticBuffer<glm::vec2>>(
-          core_.get(), font_mesh_.GetVertices().size());
-  index_buffer_ =
-      std::make_unique<grassland::vulkan::framework::StaticBuffer<uint32_t>>(
-          core_.get(), font_mesh_.GetIndices().size());
+  vertex_buffer_ = std::make_unique<
+      grassland::vulkan_legacy::framework::StaticBuffer<glm::vec2>>(
+      core_.get(), font_mesh_.GetVertices().size());
+  index_buffer_ = std::make_unique<
+      grassland::vulkan_legacy::framework::StaticBuffer<uint32_t>>(
+      core_.get(), font_mesh_.GetIndices().size());
   vertex_buffer_->Upload(font_mesh_.GetVertices().data());
   index_buffer_->Upload(font_mesh_.GetIndices().data());
   uniform_buffer_->operator[](0) = {

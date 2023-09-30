@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/pipeline_layout.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 PipelineLayout::PipelineLayout(Device *device)
     : PipelineLayout(device, std::vector<VkDescriptorSetLayout>{}) {
 }
@@ -33,4 +33,4 @@ PipelineLayout::PipelineLayout(
 PipelineLayout::~PipelineLayout() {
   vkDestroyPipelineLayout(device_->GetHandle(), handle_, nullptr);
 }
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

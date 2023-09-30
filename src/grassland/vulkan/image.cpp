@@ -2,7 +2,7 @@
 #include <grassland/vulkan/helper/helper.h>
 #include <grassland/vulkan/image.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 namespace {
 uint32_t FindMemoryType(PhysicalDevice *physical_device,
@@ -76,7 +76,7 @@ Image::Image(Device *device,
   auto command_pool = std::make_unique<CommandPool>(device_);
   helper::SingleTimeCommands(
       command_pool.get(), [&](VkCommandBuffer command_buffer) {
-        ::grassland::vulkan::TransitImageLayout(
+        ::grassland::vulkan_legacy::TransitImageLayout(
             command_buffer, handle_, VK_IMAGE_LAYOUT_GENERAL,
             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_NONE,
             format == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT
@@ -103,7 +103,7 @@ void Image::TransitImageLayout(CommandBuffer *command_buffer,
                                VkImageLayout new_layout,
                                VkPipelineStageFlags new_stage_flags,
                                VkAccessFlags new_access_flags) {
-  grassland::vulkan::TransitImageLayout(
+  grassland::vulkan_legacy::TransitImageLayout(
       command_buffer->GetHandle(), GetHandle(), new_layout, new_stage_flags,
       new_access_flags, VK_IMAGE_ASPECT_COLOR_BIT);
 }
@@ -280,4 +280,4 @@ void TransitImageLayout(VkCommandBuffer command_buffer,
   vkCmdPipelineBarrier(command_buffer, old_stage_flags, new_stage_flags, 0, 0,
                        nullptr, 0, nullptr, 1, &barrier);
 }
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

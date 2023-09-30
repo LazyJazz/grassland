@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 class DescriptorSetLayoutBindings {
  public:
   void AddBinding(VkDescriptorSetLayoutBinding binding);
@@ -16,4 +16,4 @@ class DescriptorSetLayoutBindings {
  private:
   std::vector<VkDescriptorSetLayoutBinding> bindings_;
 };
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

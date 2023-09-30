@@ -2,7 +2,7 @@
 
 #include "cstring"
 
-namespace grassland::vulkan::raytracing {
+namespace grassland::vulkan_legacy::raytracing {
 ShaderBindingTable::ShaderBindingTable(
     RayTracingPipeline *ray_tracing_pipeline) {
   auto aligned_size = [](uint32_t value, uint32_t alignment) {
@@ -79,4 +79,4 @@ VkDeviceAddress ShaderBindingTable::GetMissDeviceAddress() const {
 VkDeviceAddress ShaderBindingTable::GetClosestHitDeviceAddress() const {
   return buffer_address_ + closest_hit_offset_;
 }
-}  // namespace grassland::vulkan::raytracing
+}  // namespace grassland::vulkan_legacy::raytracing

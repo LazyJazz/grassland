@@ -1,7 +1,7 @@
 #include <grassland/vulkan/queue.h>
 #include <vulkan/vulkan.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 Queue::Queue(Device *device, uint32_t queue_family_index) {
   device_ = device;
@@ -14,4 +14,4 @@ void Queue::WaitIdle() {
 
 Queue::~Queue() = default;
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

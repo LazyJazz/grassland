@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 class VertexInputDescriptions {
  public:
   void AddBinding(uint32_t binding, uint32_t stride);
@@ -18,4 +18,4 @@ class VertexInputDescriptions {
   std::vector<VkVertexInputBindingDescription> binding_descriptions_{};
   std::vector<VkVertexInputAttributeDescription> attribute_descriptions_{};
 };
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

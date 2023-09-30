@@ -1,6 +1,6 @@
 #include <grassland/vulkan/helper/vertex_input_descriptions.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 
 void VertexInputDescriptions::AddBinding(uint32_t binding, uint32_t stride) {
   VkVertexInputBindingDescription description{};
@@ -30,4 +30,4 @@ const std::vector<VkVertexInputAttributeDescription>
     &VertexInputDescriptions::GetAttributeDescription() const {
   return attribute_descriptions_;
 }
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

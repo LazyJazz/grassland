@@ -1,7 +1,7 @@
 #include <grassland/vulkan/helper/single_time_commands.h>
 #include <grassland/vulkan/queue.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 void SingleTimeCommands(CommandPool *command_pool,
                         std::function<void(VkCommandBuffer)> actions) {
   std::unique_ptr<CommandBuffer> command_buffer =
@@ -53,4 +53,4 @@ void SingleTimeCommands(CommandPool *command_pool,
   vkQueueSubmit(graphics_queue->GetHandle(), 1, &submitInfo, nullptr);
   graphics_queue->WaitIdle();
 }
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

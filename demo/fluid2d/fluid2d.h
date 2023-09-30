@@ -58,21 +58,23 @@ class Fluid2D {
 
   static bool InsideContainer(glm::vec2 pos);
 
-  std::unique_ptr<vulkan::framework::Core> core;
-  std::unique_ptr<vulkan::framework::RenderNode> render_node;
-  std::unique_ptr<vulkan::framework::RenderNode> bkground_render_node;
-  std::unique_ptr<vulkan::framework::TextureImage> framebuffer;
-  std::unique_ptr<vulkan::framework::TextureImage> texture_image;
-  std::unique_ptr<vulkan::Sampler> sampler;
-  std::unique_ptr<vulkan::framework::StaticBuffer<glm::vec2>> vertex_buffer;
-  std::unique_ptr<vulkan::framework::StaticBuffer<uint32_t>> index_buffer;
-  std::unique_ptr<vulkan::framework::StaticBuffer<glm::vec2>>
+  std::unique_ptr<vulkan_legacy::framework::Core> core;
+  std::unique_ptr<vulkan_legacy::framework::RenderNode> render_node;
+  std::unique_ptr<vulkan_legacy::framework::RenderNode> bkground_render_node;
+  std::unique_ptr<vulkan_legacy::framework::TextureImage> framebuffer;
+  std::unique_ptr<vulkan_legacy::framework::TextureImage> texture_image;
+  std::unique_ptr<vulkan_legacy::Sampler> sampler;
+  std::unique_ptr<vulkan_legacy::framework::StaticBuffer<glm::vec2>>
+      vertex_buffer;
+  std::unique_ptr<vulkan_legacy::framework::StaticBuffer<uint32_t>>
+      index_buffer;
+  std::unique_ptr<vulkan_legacy::framework::StaticBuffer<glm::vec2>>
       rectangle_vertex_buffer;
-  std::unique_ptr<vulkan::framework::StaticBuffer<uint32_t>>
+  std::unique_ptr<vulkan_legacy::framework::StaticBuffer<uint32_t>>
       rectangle_index_buffer;
-  std::unique_ptr<vulkan::framework::DynamicBuffer<RenderObjectInfo>>
+  std::unique_ptr<vulkan_legacy::framework::DynamicBuffer<RenderObjectInfo>>
       render_objects;
-  std::unique_ptr<vulkan::framework::StaticBuffer<glm::mat4>>
+  std::unique_ptr<vulkan_legacy::framework::StaticBuffer<glm::mat4>>
       global_transform_buffer;
   std::vector<RenderObjectInfo> render_object_infos;
 

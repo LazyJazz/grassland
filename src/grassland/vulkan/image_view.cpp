@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/image_view.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 ImageView::ImageView(Image *image)
     : ImageView(image->GetDevice(), image->GetHandle(), image->GetFormat()) {
@@ -41,4 +41,4 @@ ImageView::~ImageView() {
   vkDestroyImageView(device_->GetHandle(), GetHandle(), nullptr);
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

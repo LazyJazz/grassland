@@ -1,7 +1,7 @@
 ﻿#include <grassland/util/logging.h>
 #include <grassland/vulkan/descriptor_set.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 DescriptorSet::DescriptorSet(Device *device,
                              DescriptorSetLayout *descriptor_set_layout,
@@ -65,4 +65,4 @@ const VkDescriptorSet &DescriptorSets::GetHandle(uint32_t index) const {
   return descriptor_sets_[index];
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

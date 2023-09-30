@@ -3,7 +3,7 @@
 #include <grassland/vulkan/image.h>
 #include <grassland/vulkan/image_view.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 class TextureImage {
  public:
   TextureImage(Core *core,
@@ -35,4 +35,4 @@ class TextureImage {
   std::unique_ptr<Image> image_;
   std::unique_ptr<ImageView> image_view_;
 };
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

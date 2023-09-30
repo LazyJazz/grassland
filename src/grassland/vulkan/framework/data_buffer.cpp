@@ -1,6 +1,6 @@
 #include <grassland/vulkan/framework/data_buffer.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 
 DataBuffer::DataBuffer(Core *core) {
   core_ = core;
@@ -9,4 +9,4 @@ DataBuffer::DataBuffer(Core *core) {
 Core *DataBuffer::GetCore() const {
   return core_;
 }
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

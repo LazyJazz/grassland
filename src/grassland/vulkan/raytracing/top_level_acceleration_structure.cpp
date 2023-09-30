@@ -3,7 +3,7 @@
 #include "cstring"
 #include "grassland/vulkan/helper/helper.h"
 
-namespace grassland::vulkan::raytracing {
+namespace grassland::vulkan_legacy::raytracing {
 
 TopLevelAccelerationStructure::TopLevelAccelerationStructure(
     Device *device,
@@ -310,4 +310,4 @@ void TopLevelAccelerationStructure::UpdateAccelerationStructure(
   device_address_ = vkGetAccelerationStructureDeviceAddressKHR(
       device_->GetHandle(), &acceleration_device_address_info);
 }
-}  // namespace grassland::vulkan::raytracing
+}  // namespace grassland::vulkan_legacy::raytracing

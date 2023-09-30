@@ -6,7 +6,7 @@
 #include <grassland/vulkan/queue.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Image {
  public:
   /*
@@ -83,4 +83,4 @@ void TransitImageLayout(
     VkAccessFlags new_access_flags,
     VkImageAspectFlags aspect_flags = VK_IMAGE_ASPECT_COLOR_BIT);
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

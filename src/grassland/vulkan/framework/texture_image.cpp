@@ -6,7 +6,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 
 namespace {
 
@@ -274,7 +274,7 @@ void TextureImage::WriteHDRImage(const char *path) {
 }
 
 void TextureImage::ClearColor(VkClearColorValue clear_color) const {
-  grassland::vulkan::TransitImageLayout(
+  grassland::vulkan_legacy::TransitImageLayout(
       core_->GetCommandBuffer()->GetHandle(), image_->GetHandle(),
       VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
       VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -305,4 +305,4 @@ void TextureImage::Resize(uint32_t width, uint32_t height) {
   image_view_ = std::make_unique<ImageView>(image_.get());
 }
 
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

@@ -2,7 +2,7 @@
 #include <grassland/vulkan/framework/core.h>
 #include <grassland/vulkan/framework/texture_image.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 
 Core::Core(const CoreSettings &core_settings) {
   core_settings_ = core_settings;
@@ -26,17 +26,20 @@ Core::Core(const CoreSettings &core_settings) {
     core_settings_.window_height = actual_height;
 
     glfwSetFramebufferSizeCallback(
-        window_, ::grassland::vulkan::framework::Core::GLFWFrameSizeFunc);
+        window_,
+        ::grassland::vulkan_legacy::framework::Core::GLFWFrameSizeFunc);
     glfwSetCursorPosCallback(
-        window_, ::grassland::vulkan::framework::Core::GLFWCursorPosFunc);
+        window_,
+        ::grassland::vulkan_legacy::framework::Core::GLFWCursorPosFunc);
     glfwSetMouseButtonCallback(
-        window_, ::grassland::vulkan::framework::Core::GLFWMouseButtonFunc);
-    glfwSetKeyCallback(window_,
-                       ::grassland::vulkan::framework::Core::GLFWKeyFunc);
-    glfwSetDropCallback(window_,
-                        ::grassland::vulkan::framework::Core::GLFWDropFunc);
-    glfwSetScrollCallback(window_,
-                          ::grassland::vulkan::framework::Core::GLFWScrollFunc);
+        window_,
+        ::grassland::vulkan_legacy::framework::Core::GLFWMouseButtonFunc);
+    glfwSetKeyCallback(
+        window_, ::grassland::vulkan_legacy::framework::Core::GLFWKeyFunc);
+    glfwSetDropCallback(
+        window_, ::grassland::vulkan_legacy::framework::Core::GLFWDropFunc);
+    glfwSetScrollCallback(
+        window_, ::grassland::vulkan_legacy::framework::Core::GLFWScrollFunc);
     glfwSetWindowUserPointer(window_, this);
   }
 
@@ -237,11 +240,13 @@ void Core::BeginCommandRecord() {
   vkResetCommandBuffer(command_buffers_[frame_index_]->GetHandle(),
                        /*VkCommandBufferResetFlagBits*/ 0);
 
-  vulkan::helper::CommandBegin(command_buffers_[frame_index_]->GetHandle());
+  vulkan_legacy::helper::CommandBegin(
+      command_buffers_[frame_index_]->GetHandle());
 }
 
 void Core::TemporalSubmit() {
-  vulkan::helper::CommandEnd(command_buffers_[frame_index_]->GetHandle());
+  vulkan_legacy::helper::CommandEnd(
+      command_buffers_[frame_index_]->GetHandle());
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -272,11 +277,13 @@ void Core::TemporalSubmit() {
                 &in_flight_fences_[frame_index_]->GetHandle());
   vkResetCommandBuffer(command_buffers_[frame_index_]->GetHandle(),
                        /*VkCommandBufferResetFlagBits*/ 0);
-  vulkan::helper::CommandBegin(command_buffers_[frame_index_]->GetHandle());
+  vulkan_legacy::helper::CommandBegin(
+      command_buffers_[frame_index_]->GetHandle());
 }
 
 void Core::EndCommandRecordAndSubmit() {
-  vulkan::helper::CommandEnd(command_buffers_[frame_index_]->GetHandle());
+  vulkan_legacy::helper::CommandEnd(
+      command_buffers_[frame_index_]->GetHandle());
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -586,7 +593,7 @@ void Core::ImGuiInit(TextureImage *render_texture,
   }
 
   // execute a gpu command to upload imgui font textures
-  grassland::vulkan::helper::SingleTimeCommands(
+  grassland::vulkan_legacy::helper::SingleTimeCommands(
       command_pool_.get(),
       [&](VkCommandBuffer cmd) { ImGui_ImplVulkan_CreateFontsTexture(cmd); });
 
@@ -611,4 +618,4 @@ void Core::ImGuiRender() {
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer);
   vkCmdEndRenderPass(command_buffer);
 }
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/fence.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 Fence::Fence(Device *device) : handle_{} {
   device_ = device;
 
@@ -18,4 +18,4 @@ Fence::~Fence() {
   vkDestroyFence(device_->GetHandle(), GetHandle(), nullptr);
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

@@ -2,7 +2,7 @@
 #include <grassland/vulkan/util.h>
 #include <vulkan/vulkan.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Instance {
  public:
   explicit Instance(
@@ -18,4 +18,4 @@ class Instance {
   bool require_surface_{true};
   bool enable_validation_layers_{true};
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

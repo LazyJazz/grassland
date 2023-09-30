@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/helper/find_depth_format.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 
 VkFormat FindSupportedFormat(PhysicalDevice *physical_device,
                              const std::vector<VkFormat> &candidates,
@@ -32,4 +32,4 @@ VkFormat FindDepthFormat(PhysicalDevice *physical_device) {
                              VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

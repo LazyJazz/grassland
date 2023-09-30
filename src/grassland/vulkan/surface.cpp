@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/surface.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 Surface::Surface(Instance *instance, GLFWwindow *window) : handle_{} {
   instance_ = instance;
@@ -15,4 +15,4 @@ Surface::~Surface() {
   vkDestroySurfaceKHR(instance_->GetHandle(), handle_, nullptr);
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

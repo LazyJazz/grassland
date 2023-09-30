@@ -3,7 +3,7 @@
 #include "grassland/vulkan/device.h"
 #include "grassland/vulkan/raytracing/bottom_level_acceleration_structure.h"
 
-namespace grassland::vulkan::raytracing {
+namespace grassland::vulkan_legacy::raytracing {
 class TopLevelAccelerationStructure {
  public:
   TopLevelAccelerationStructure(
@@ -23,4 +23,4 @@ class TopLevelAccelerationStructure {
   std::unique_ptr<Buffer> buffer_;
   VkDeviceAddress device_address_;
 };
-}  // namespace grassland::vulkan::raytracing
+}  // namespace grassland::vulkan_legacy::raytracing

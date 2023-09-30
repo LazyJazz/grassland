@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/semaphore.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 Semaphore::Semaphore(Device *device) : handle_{} {
   device_ = device;
@@ -17,4 +17,4 @@ Semaphore::~Semaphore() {
   vkDestroySemaphore(device_->GetHandle(), GetHandle(), nullptr);
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

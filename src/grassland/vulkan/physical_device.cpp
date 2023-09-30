@@ -5,7 +5,7 @@
 #include <set>
 #include <utility>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 namespace {
 SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device,
@@ -254,4 +254,4 @@ PhysicalDevice PickPhysicalDevice(
   return PickPhysicalDevice(GetPhysicalDevices(instance), rate_function);
 }
 
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

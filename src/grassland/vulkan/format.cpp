@@ -1,7 +1,7 @@
 #include <grassland/util/util.h>
 #include <grassland/vulkan/format.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 uint32_t FormatSizeInBytes(VkFormat format) {
   switch (format) {
@@ -99,4 +99,4 @@ uint32_t FormatSlot(VkFormat format) {
       LAND_ERROR("[Vulkan] format #{} is not supported.", uint32_t(format));
   }
 }
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

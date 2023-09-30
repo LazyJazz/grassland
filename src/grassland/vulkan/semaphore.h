@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/device.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class Semaphore {
  public:
   explicit Semaphore(Device *device);
@@ -11,4 +11,4 @@ class Semaphore {
   GRASSLAND_VULKAN_HANDLE(VkSemaphore)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

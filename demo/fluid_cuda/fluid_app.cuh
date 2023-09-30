@@ -28,7 +28,8 @@ struct MACGridContent {
   float vel[2]{};
   float weight[2]{};
   float rho{};
-  friend std::ostream& operator << (std::ostream& os, const MACGridContent& content) {
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const MACGridContent &content) {
     os << content.rho;
     return os;
   }
@@ -60,7 +61,9 @@ class FluidApp {
   void UpdateDynamicInfos();
 
   void UpdatePhysicalSystem();
-  void CalcPressureImpactToDivergence(const thrust::device_vector<float> &pressure, thrust::device_vector<float>& delta_divergence);
+  void CalcPressureImpactToDivergence(
+      const thrust::device_vector<float> &pressure,
+      thrust::device_vector<float> &delta_divergence);
   void SolvePressure();
 
   void RegisterSphere();
@@ -76,18 +79,24 @@ class FluidApp {
   void OutputXYZFile();
 
   FluidAppSettings settings_{};
-  std::unique_ptr<grassland::vulkan::framework::Core> core_;
-  std::unique_ptr<grassland::vulkan::framework::RenderNode> render_node_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::Core> core_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::RenderNode> render_node_;
   std::vector<std::pair<
-      std::unique_ptr<grassland::vulkan::framework::StaticBuffer<Vertex>>,
-      std::unique_ptr<grassland::vulkan::framework::StaticBuffer<uint32_t>>>>
+      std::unique_ptr<
+          grassland::vulkan_legacy::framework::StaticBuffer<Vertex>>,
+      std::unique_ptr<
+          grassland::vulkan_legacy::framework::StaticBuffer<uint32_t>>>>
       object_models_;
-  std::unique_ptr<grassland::vulkan::framework::DynamicBuffer<RenderInfo>>
+  std::unique_ptr<
+      grassland::vulkan_legacy::framework::DynamicBuffer<RenderInfo>>
       render_info_buffer_;
-  std::unique_ptr<grassland::vulkan::framework::DynamicBuffer<CameraObject>>
+  std::unique_ptr<
+      grassland::vulkan_legacy::framework::DynamicBuffer<CameraObject>>
       camera_object_buffer_;
-  std::unique_ptr<grassland::vulkan::framework::TextureImage> frame_image_;
-  std::unique_ptr<grassland::vulkan::framework::TextureImage> depth_buffer_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::TextureImage>
+      frame_image_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::TextureImage>
+      depth_buffer_;
 
   std::vector<int> render_objects_;
   std::vector<RenderInfo> render_infos_;
@@ -106,8 +115,10 @@ class FluidApp {
   Grid<float> v_border_coe_;
   Grid<float> w_border_coe_;
   Grid<float> level_set_;
-  thrust::device_vector<float> pressure_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
-  thrust::device_vector<float> divergence_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
+  thrust::device_vector<float> pressure_{GRID_SIZE_X * GRID_SIZE_Y *
+                                         GRID_SIZE_Z};
+  thrust::device_vector<float> divergence_{GRID_SIZE_X * GRID_SIZE_Y *
+                                           GRID_SIZE_Z};
   thrust::device_vector<float> buffer_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
   thrust::device_vector<float> r_vec_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};
   thrust::device_vector<float> p_vec_{GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z};

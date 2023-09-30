@@ -20,4 +20,4 @@
 #include <grassland/vulkan/surface.h>
 #include <grassland/vulkan/swapchain.h>
 
-namespace grassland::vulkan {}
+namespace grassland::vulkan_legacy {}

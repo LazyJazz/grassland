@@ -1,6 +1,6 @@
 #include <grassland/vulkan/helper/descriptor_writes.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 
 void UpdateDescriptorWrite(VkDevice &device,
                            VkDescriptorSet &descriptor_set,
@@ -46,4 +46,4 @@ void UpdateDescriptorWrite(VkDevice &device,
 
   vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 }
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

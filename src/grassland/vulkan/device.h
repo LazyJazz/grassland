@@ -2,7 +2,7 @@
 #include <grassland/vulkan/physical_device.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 class Queue;
 
@@ -31,4 +31,4 @@ class Device {
   std::unique_ptr<Queue> graphics_queue_;
   std::unique_ptr<Queue> present_queue_;
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

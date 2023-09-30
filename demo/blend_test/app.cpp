@@ -78,85 +78,89 @@ void App::OnCreate() {
 }
 
 void App::OnInit() {
-  instance_ = std::make_unique<vulkan::Instance>();
-  surface_ = std::make_unique<vulkan::Surface>(instance_.get(), window_);
-  physical_device_ = std::make_unique<vulkan::PhysicalDevice>(
-      vulkan::PickPhysicalDevice(instance_.get(), [](vulkan::PhysicalDevice
-                                                         physical_device) {
-        int score = 0;
-        if (physical_device.IsDiscreteGPU())
-          score += 1000;
-        score +=
-            int(physical_device.GetProperties().limits.maxImageDimension2D);
-        return score;
-      }).GetHandle());
+  instance_ = std::make_unique<vulkan_legacy::Instance>();
+  surface_ = std::make_unique<vulkan_legacy::Surface>(instance_.get(), window_);
+  physical_device_ = std::make_unique<vulkan_legacy::PhysicalDevice>(
+      vulkan_legacy::PickPhysicalDevice(
+          instance_.get(),
+          [](vulkan_legacy::PhysicalDevice physical_device) {
+            int score = 0;
+            if (physical_device.IsDiscreteGPU())
+              score += 1000;
+            score +=
+                int(physical_device.GetProperties().limits.maxImageDimension2D);
+            return score;
+          })
+          .GetHandle());
   spdlog::info("Picked device:");
   physical_device_->PrintDeviceProperties();
-  device_ =
-      std::make_unique<vulkan::Device>(physical_device_.get(), surface_.get());
-  present_queue_ = std::make_unique<vulkan::Queue>(
+  device_ = std::make_unique<vulkan_legacy::Device>(physical_device_.get(),
+                                                    surface_.get());
+  present_queue_ = std::make_unique<vulkan_legacy::Queue>(
       device_.get(), physical_device_->PresentFamilyIndex(surface_.get()));
-  swapchain_ = std::make_unique<vulkan::Swapchain>(window_, device_.get());
+  swapchain_ =
+      std::make_unique<vulkan_legacy::Swapchain>(window_, device_.get());
 
-  render_pass_ = std::make_unique<vulkan::RenderPass>(device_.get(),
-                                                      swapchain_->GetFormat());
+  render_pass_ = std::make_unique<vulkan_legacy::RenderPass>(
+      device_.get(), swapchain_->GetFormat());
 
-  vulkan::helper::DescriptorSetLayoutBindings descriptorSetLayoutBindings;
+  vulkan_legacy::helper::DescriptorSetLayoutBindings
+      descriptorSetLayoutBindings;
   descriptorSetLayoutBindings.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                          1, VK_SHADER_STAGE_VERTEX_BIT);
-  descriptor_set_layout_ = std::make_unique<vulkan::DescriptorSetLayout>(
+  descriptor_set_layout_ = std::make_unique<vulkan_legacy::DescriptorSetLayout>(
       device_.get(), descriptorSetLayoutBindings);
 
-  pipeline_layout_ = std::make_unique<vulkan::PipelineLayout>(
+  pipeline_layout_ = std::make_unique<vulkan_legacy::PipelineLayout>(
       device_.get(), descriptor_set_layout_.get());
-  vulkan::ShaderModule vert_shader(device_.get(),
-                                   "color_shader_0.5_alpha.vert.spv");
-  vulkan::ShaderModule frag_shader(device_.get(),
-                                   "color_shader_0.5_alpha.frag.spv");
-  vulkan::helper::ShaderStages shader_stages;
+  vulkan_legacy::ShaderModule vert_shader(device_.get(),
+                                          "color_shader_0.5_alpha.vert.spv");
+  vulkan_legacy::ShaderModule frag_shader(device_.get(),
+                                          "color_shader_0.5_alpha.frag.spv");
+  vulkan_legacy::helper::ShaderStages shader_stages;
   shader_stages.AddShaderModule(&vert_shader, VK_SHADER_STAGE_VERTEX_BIT);
   shader_stages.AddShaderModule(&frag_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
-  vulkan::helper::VertexInputDescriptions vertex_input_descriptions;
+  vulkan_legacy::helper::VertexInputDescriptions vertex_input_descriptions;
   vertex_input_descriptions.AddBinding(0, sizeof(Vertex));
   vertex_input_descriptions.AddAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
                                          offsetof(Vertex, pos));
   vertex_input_descriptions.AddAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
                                          offsetof(Vertex, color));
-  graphics_pipeline_ = std::make_unique<vulkan::Pipeline>(
+  graphics_pipeline_ = std::make_unique<vulkan_legacy::Pipeline>(
       device_.get(), render_pass_.get(), pipeline_layout_.get(), shader_stages,
       vertex_input_descriptions, false, true);
   framebuffers_.resize(swapchain_->GetImageCount());
   for (int i = 0; i < swapchain_->GetImageCount(); i++) {
-    framebuffers_[i] = std::make_unique<vulkan::Framebuffer>(
+    framebuffers_[i] = std::make_unique<vulkan_legacy::Framebuffer>(
         device_.get(), swapchain_->GetExtent().width,
         swapchain_->GetExtent().height, render_pass_.get(),
-        std::vector<vulkan::ImageView *>{swapchain_->GetImageView(i)});
+        std::vector<vulkan_legacy::ImageView *>{swapchain_->GetImageView(i)});
   }
-  descriptor_pool_ = std::make_unique<vulkan::DescriptorPool>(
+  descriptor_pool_ = std::make_unique<vulkan_legacy::DescriptorPool>(
       device_.get(), descriptorSetLayoutBindings, kMaxFramesInFlight);
-  descriptor_sets_ = std::make_unique<vulkan::DescriptorSets>(
+  descriptor_sets_ = std::make_unique<vulkan_legacy::DescriptorSets>(
       device_.get(), descriptor_set_layout_.get(), descriptor_pool_.get(),
       kMaxFramesInFlight);
 
-  command_pool_ = std::make_unique<vulkan::CommandPool>(device_.get());
-  command_buffers_ = std::make_unique<vulkan::CommandBuffers>(
+  command_pool_ = std::make_unique<vulkan_legacy::CommandPool>(device_.get());
+  command_buffers_ = std::make_unique<vulkan_legacy::CommandBuffers>(
       command_pool_.get(), kMaxFramesInFlight);
 
   in_flight_fence_.resize(kMaxFramesInFlight);
   image_available_semaphores_.resize(kMaxFramesInFlight);
   render_finished_semaphores_.resize(kMaxFramesInFlight);
   for (int i = 0; i < kMaxFramesInFlight; i++) {
-    in_flight_fence_[i] = std::make_unique<vulkan::Fence>(device_.get());
+    in_flight_fence_[i] = std::make_unique<vulkan_legacy::Fence>(device_.get());
     image_available_semaphores_[i] =
-        std::make_unique<vulkan::Semaphore>(device_.get());
+        std::make_unique<vulkan_legacy::Semaphore>(device_.get());
     render_finished_semaphores_[i] =
-        std::make_unique<vulkan::Semaphore>(device_.get());
+        std::make_unique<vulkan_legacy::Semaphore>(device_.get());
   }
 
-  vertex_buffer_ = std::make_unique<vulkan::Buffer>(
+  vertex_buffer_ = std::make_unique<vulkan_legacy::Buffer>(
       device_.get(), vertices.size() * sizeof(Vertex),
       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-  index_buffer_ = std::make_unique<vulkan::Buffer>(
+  index_buffer_ = std::make_unique<vulkan_legacy::Buffer>(
       device_.get(), indices.size() * sizeof(uint16_t),
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   vertex_buffer_->UploadData(command_pool_.get(),
@@ -165,7 +169,7 @@ void App::OnInit() {
                             reinterpret_cast<const void *>(indices.data()));
 
   for (size_t i = 0; i < kMaxFramesInFlight; i++) {
-    uniform_buffers_.push_back(std::make_unique<vulkan::Buffer>(
+    uniform_buffers_.push_back(std::make_unique<vulkan_legacy::Buffer>(
         device_.get(), sizeof(UniformBufferObject),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -173,9 +177,9 @@ void App::OnInit() {
   }
 
   for (size_t i = 0; i < kMaxFramesInFlight; i++) {
-    vulkan::helper::UpdateDescriptorWrite(device_->GetHandle(),
-                                          descriptor_sets_->GetHandle(i), 0,
-                                          uniform_buffers_[i].get());
+    vulkan_legacy::helper::UpdateDescriptorWrite(device_->GetHandle(),
+                                                 descriptor_sets_->GetHandle(i),
+                                                 0, uniform_buffers_[i].get());
   }
 }
 
@@ -331,19 +335,20 @@ void App::recreateSwapChain() {
   framebuffers_.clear();
   swapchain_.reset();
 
-  swapchain_ = std::make_unique<vulkan::Swapchain>(window_, device_.get());
+  swapchain_ =
+      std::make_unique<vulkan_legacy::Swapchain>(window_, device_.get());
   framebuffers_.resize(swapchain_->GetImageCount());
   for (int i = 0; i < swapchain_->GetImageCount(); i++) {
-    framebuffers_[i] = std::make_unique<vulkan::Framebuffer>(
+    framebuffers_[i] = std::make_unique<vulkan_legacy::Framebuffer>(
         device_.get(), swapchain_->GetExtent().width,
         swapchain_->GetExtent().height, render_pass_.get(),
-        std::vector<vulkan::ImageView *>{swapchain_->GetImageView(i)});
+        std::vector<vulkan_legacy::ImageView *>{swapchain_->GetImageView(i)});
   }
 }
 void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
                               uint32_t imageIndex) {
-  vulkan::helper::CommandBegin(commandBuffer);
-  grassland::vulkan::TransitImageLayout(
+  vulkan_legacy::helper::CommandBegin(commandBuffer);
+  grassland::vulkan_legacy::TransitImageLayout(
       commandBuffer, swapchain_->GetImage(imageIndex), VK_IMAGE_LAYOUT_GENERAL,
       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
       VK_IMAGE_ASPECT_COLOR_BIT);
@@ -397,11 +402,11 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer,
 
   vkCmdEndRenderPass(commandBuffer);
 
-  grassland::vulkan::TransitImageLayout(
+  grassland::vulkan_legacy::TransitImageLayout(
       commandBuffer, swapchain_->GetImage(imageIndex), VK_IMAGE_LAYOUT_GENERAL,
       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
       VK_ACCESS_NONE);
 
-  vulkan::helper::CommandEnd(commandBuffer);
+  vulkan_legacy::helper::CommandEnd(commandBuffer);
 }

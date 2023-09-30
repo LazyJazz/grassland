@@ -30,7 +30,7 @@
 
 #define GRASSLAND_VULKAN_PROCEDURE_VAR(function_name) \
   PFN_##function_name function_name##_;
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};
 
@@ -39,4 +39,4 @@ constexpr bool kDefaultEnableValidationLayers = false;
 #else
 constexpr bool kDefaultEnableValidationLayers = true;
 #endif
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

@@ -19,15 +19,18 @@ class RayTracingApp {
   void OnUpdate();
   void OnRender();
 
-  std::unique_ptr<grassland::vulkan::framework::Core> core_;
-  std::unique_ptr<grassland::vulkan::framework::TextureImage> frame_texture_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::Core> core_;
+  std::unique_ptr<grassland::vulkan_legacy::framework::TextureImage>
+      frame_texture_;
   std::unique_ptr<
-      grassland::vulkan::raytracing::BottomLevelAccelerationStructure>
+      grassland::vulkan_legacy::raytracing::BottomLevelAccelerationStructure>
       bottom_level_acceleration_structure_;
-  std::unique_ptr<grassland::vulkan::raytracing::TopLevelAccelerationStructure>
+  std::unique_ptr<
+      grassland::vulkan_legacy::raytracing::TopLevelAccelerationStructure>
       top_level_acceleration_structure_;
-  std::unique_ptr<grassland::vulkan::framework::StaticBuffer<CameraObject>>
+  std::unique_ptr<
+      grassland::vulkan_legacy::framework::StaticBuffer<CameraObject>>
       camera_object_buffer_;
-  std::unique_ptr<grassland::vulkan::framework::RayTracingRenderNode>
+  std::unique_ptr<grassland::vulkan_legacy::framework::RayTracingRenderNode>
       ray_tracing_render_node_;
 };

@@ -3,7 +3,7 @@
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class PipelineLayout {
  public:
   explicit PipelineLayout(Device *device);
@@ -18,4 +18,4 @@ class PipelineLayout {
   GRASSLAND_VULKAN_HANDLE(VkPipelineLayout)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

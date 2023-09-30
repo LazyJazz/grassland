@@ -2,7 +2,7 @@
 #include <grassland/vulkan/buffer.h>
 #include <grassland/vulkan/helper/helper.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 namespace {
 uint32_t FindMemoryType(PhysicalDevice *physical_device,
@@ -180,4 +180,4 @@ void CopyBuffer(CommandPool *command_pool,
     vkCmdCopyBuffer(command_buffer, src_buffer, dst_buffer, 1, &copyRegion);
   });
 }
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

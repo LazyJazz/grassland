@@ -2,7 +2,7 @@
 #include <grassland/vulkan/device.h>
 #include <grassland/vulkan/helper/descriptor_set_layout_bindings.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class DescriptorSetLayout {
  public:
   DescriptorSetLayout(
@@ -17,4 +17,4 @@ class DescriptorSetLayout {
   GRASSLAND_VULKAN_HANDLE(VkDescriptorSetLayout)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

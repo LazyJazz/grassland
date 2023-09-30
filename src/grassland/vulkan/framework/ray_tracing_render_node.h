@@ -4,7 +4,7 @@
 #include "grassland/vulkan/framework/uniform_bindings.h"
 #include "grassland/vulkan/raytracing/raytracing.h"
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 class RayTracingRenderNode {
  public:
   explicit RayTracingRenderNode(Core *core);
@@ -50,4 +50,4 @@ class RayTracingRenderNode {
   std::unique_ptr<raytracing::RayTracingPipeline> pipeline_;
   std::unique_ptr<raytracing::ShaderBindingTable> shader_binding_table_;
 };
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

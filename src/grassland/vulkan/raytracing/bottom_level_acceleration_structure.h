@@ -3,7 +3,7 @@
 #include "grassland/vulkan/command_pool.h"
 #include "grassland/vulkan/device.h"
 
-namespace grassland::vulkan::raytracing {
+namespace grassland::vulkan_legacy::raytracing {
 class BottomLevelAccelerationStructure {
  public:
   BottomLevelAccelerationStructure(Device *device,
@@ -38,4 +38,4 @@ class BottomLevelAccelerationStructure {
   VkDeviceAddress device_address_{};
 };
 
-}  // namespace grassland::vulkan::raytracing
+}  // namespace grassland::vulkan_legacy::raytracing

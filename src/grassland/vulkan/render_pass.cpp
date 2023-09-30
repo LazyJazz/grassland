@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/render_pass.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 RenderPass::RenderPass(Device *device, VkFormat color_format) {
   helper::AttachmentParameters attachment_parameters;
@@ -67,4 +67,4 @@ void RenderPass::ConstructorCommon(
     LAND_ERROR("failed to create render pass!");
   }
 }
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

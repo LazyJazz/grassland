@@ -2,7 +2,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/pipeline.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 
 Pipeline::~Pipeline() {
   vkDestroyPipeline(device_->GetHandle(), handle_, nullptr);
@@ -134,4 +134,4 @@ Pipeline::Pipeline(
     LAND_ERROR("Vulkan failed to create graphics pipeline!");
   }
 }
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy

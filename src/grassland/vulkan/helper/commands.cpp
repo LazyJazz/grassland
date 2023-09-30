@@ -1,7 +1,7 @@
 #include <grassland/util/logging.h>
 #include <grassland/vulkan/helper/commands.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 
 void CommandBegin(VkCommandBuffer command_buffer) {
   VkCommandBufferBeginInfo beginInfo{};
@@ -18,4 +18,4 @@ void CommandEnd(VkCommandBuffer command_buffer) {
   }
 }
 
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

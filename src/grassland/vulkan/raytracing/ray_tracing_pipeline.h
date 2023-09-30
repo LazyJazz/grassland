@@ -4,7 +4,7 @@
 #include "grassland/vulkan/raytracing/bottom_level_acceleration_structure.h"
 #include "grassland/vulkan/raytracing/top_level_acceleration_structure.h"
 
-namespace grassland::vulkan::raytracing {
+namespace grassland::vulkan_legacy::raytracing {
 class RayTracingPipeline {
  public:
   RayTracingPipeline(Device *device,
@@ -18,4 +18,4 @@ class RayTracingPipeline {
   GRASSLAND_VULKAN_HANDLE(VkPipeline);
   GRASSLAND_VULKAN_DEVICE_PTR;
 };
-}  // namespace grassland::vulkan::raytracing
+}  // namespace grassland::vulkan_legacy::raytracing

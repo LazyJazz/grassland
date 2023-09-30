@@ -1,7 +1,7 @@
 #include <grassland/util/util.h>
 #include <grassland/vulkan/framework/uniform_bindings.h>
 
-namespace grassland::vulkan::framework {
+namespace grassland::vulkan_legacy::framework {
 UniformBinding::UniformBinding(VkPipelineStageFlags access_stage_flags) {
   access_stage_flags_ = access_stage_flags;
 }
@@ -137,7 +137,7 @@ void UniformBindingTextureSampler::BeforeDraw(CommandBuffer *command_buffer,
       VK_IMAGE_ASPECT_COLOR_BIT);
 }
 void UniformBindingTextureSampler::AfterDraw(
-    grassland::vulkan::CommandBuffer *command_buffer,
+    grassland::vulkan_legacy::CommandBuffer *command_buffer,
     int frame_index) const {
   TransitImageLayout(
       command_buffer->GetHandle(), texture_image_->GetImage()->GetHandle(),
@@ -202,7 +202,7 @@ void UniformBindingTextureSamplers::BeforeDraw(CommandBuffer *command_buffer,
   }
 }
 void UniformBindingTextureSamplers::AfterDraw(
-    grassland::vulkan::CommandBuffer *command_buffer,
+    grassland::vulkan_legacy::CommandBuffer *command_buffer,
     int frame_index) const {
   for (auto &texture_image_pair : texture_sampler_pairs_) {
     TransitImageLayout(command_buffer->GetHandle(),
@@ -341,4 +341,4 @@ void UniformBindingAccelerationStructure::BeforeDraw(
     CommandBuffer *command_buffer,
     int frame_index) const {
 }
-}  // namespace grassland::vulkan::framework
+}  // namespace grassland::vulkan_legacy::framework

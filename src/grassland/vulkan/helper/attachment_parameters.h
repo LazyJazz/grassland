@@ -1,7 +1,7 @@
 #pragma once
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan::helper {
+namespace grassland::vulkan_legacy::helper {
 class AttachmentParameters {
  public:
   void AddColorAttachment(
@@ -22,4 +22,4 @@ class AttachmentParameters {
   std::vector<VkAttachmentReference> color_attachment_references_{};
   std::unique_ptr<VkAttachmentReference> depth_attachment_reference_{};
 };
-}  // namespace grassland::vulkan::helper
+}  // namespace grassland::vulkan_legacy::helper

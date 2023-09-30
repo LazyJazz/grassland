@@ -2,7 +2,7 @@
 #include <grassland/vulkan/image.h>
 #include <grassland/vulkan/util.h>
 
-namespace grassland::vulkan {
+namespace grassland::vulkan_legacy {
 class ImageView {
  public:
   explicit ImageView(Image *image);
@@ -13,4 +13,4 @@ class ImageView {
   GRASSLAND_VULKAN_HANDLE(VkImageView)
   GRASSLAND_VULKAN_DEVICE_PTR
 };
-}  // namespace grassland::vulkan
+}  // namespace grassland::vulkan_legacy
