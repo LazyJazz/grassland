@@ -1,7 +1,7 @@
 #pragma once
 #include "grassland/font/font.h"
-#include "grassland/vulkan/framework/framework.h"
-#include "grassland/vulkan/vulkan.h"
+#include "grassland/vulkan_legacy/framework/framework.h"
+#include "grassland/vulkan_legacy/vulkan.h"
 
 struct UniformBufferObject {
   glm::mat4 trans_mat;

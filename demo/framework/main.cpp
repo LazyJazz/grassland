@@ -1,6 +1,6 @@
 #include <grassland/util/util.h>
-#include <grassland/vulkan/framework/framework.h>
-#include <grassland/vulkan/vulkan.h>
+#include <grassland/vulkan_legacy/framework/framework.h>
+#include <grassland/vulkan_legacy/vulkan.h>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
