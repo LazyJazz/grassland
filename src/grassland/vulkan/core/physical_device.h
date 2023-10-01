@@ -28,10 +28,10 @@ class PhysicalDevice {
   [[nodiscard]] std::vector<VkExtensionProperties> GetDeviceExtensions() const;
 
   bool IsExtensionSupported(const char *extension_name) const;
-  [[nodiscard]] bool IsGeometryShaderSupported() const;
-  [[nodiscard]] bool IsRayTracingSupported() const;
+  [[nodiscard]] bool SupportGeometryShader() const;
+  [[nodiscard]] bool SupportRayTracing() const;
 
-  [[nodiscard]] uint64_t EvaluateDeviceScore() const;
+  [[nodiscard]] uint64_t Evaluate() const;
 
   [[nodiscard]] uint32_t GraphicsFamilyIndex() const;
   uint32_t PresentFamilyIndex(Surface *surface) const;

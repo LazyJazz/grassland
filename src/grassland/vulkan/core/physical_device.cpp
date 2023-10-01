@@ -64,7 +64,7 @@ bool PhysicalDevice::IsExtensionSupported(const char *extension_name) const {
   return false;
 }
 
-[[maybe_unused]] bool PhysicalDevice::IsGeometryShaderSupported() const {
+[[maybe_unused]] bool PhysicalDevice::SupportGeometryShader() const {
   // Geometry shader is feature of Vulkan
   VkPhysicalDeviceFeatures features = GetPhysicalDeviceFeatures();
   return features.geometryShader;
@@ -96,13 +96,13 @@ PhysicalDevice::GetPhysicalDeviceRayTracingPipelineFeatures() const {
   return features;
 }
 
-bool PhysicalDevice::IsRayTracingSupported() const {
+bool PhysicalDevice::SupportRayTracing() const {
   VkPhysicalDeviceRayTracingPipelineFeaturesKHR features =
       GetPhysicalDeviceRayTracingPipelineFeatures();
   return features.rayTracingPipeline;
 }
 
-uint64_t PhysicalDevice::EvaluateDeviceScore() const {
+uint64_t PhysicalDevice::Evaluate() const {
   uint64_t score = 0;
   VkPhysicalDeviceProperties properties = GetPhysicalDeviceProperties();
   VkPhysicalDeviceFeatures features = GetPhysicalDeviceFeatures();
