@@ -75,8 +75,8 @@ Device::Device(PhysicalDevice *physical_device,
 
   if (enable_validation_layers) {
     createInfo.enabledLayerCount =
-        static_cast<uint32_t>(validationLayers.size());
-    createInfo.ppEnabledLayerNames = validationLayers.data();
+        static_cast<uint32_t>(vulkan::validationLayers.size());
+    createInfo.ppEnabledLayerNames = vulkan::validationLayers.data();
   } else {
     createInfo.enabledLayerCount = 0;
   }

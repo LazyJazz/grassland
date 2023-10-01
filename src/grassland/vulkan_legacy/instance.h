@@ -1,13 +1,14 @@
 #pragma once
-#include <grassland/vulkan_legacy/util.h>
 #include <vulkan/vulkan.h>
+
+#include "grassland/vulkan/core/util.h"
 
 namespace grassland::vulkan_legacy {
 class Instance {
  public:
   explicit Instance(
       bool require_surface = true,
-      bool enable_validation_layers = kDefaultEnableValidationLayers);
+      bool enable_validation_layers = vulkan::kDefaultEnableValidationLayers);
   ~Instance();
 
  private:

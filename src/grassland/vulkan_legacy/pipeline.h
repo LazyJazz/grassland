@@ -4,7 +4,8 @@
 #include <grassland/vulkan_legacy/pipeline_layout.h>
 #include <grassland/vulkan_legacy/render_pass.h>
 #include <grassland/vulkan_legacy/shader_module.h>
-#include <grassland/vulkan_legacy/util.h>
+
+#include "grassland/vulkan/core/util.h"
 
 namespace grassland::vulkan_legacy {
 class Pipeline {

@@ -1,11 +1,12 @@
 #pragma once
 #include <grassland/vulkan_legacy/instance.h>
 #include <grassland/vulkan_legacy/surface.h>
-#include <grassland/vulkan_legacy/util.h>
 
 #include <functional>
 #include <string>
 #include <vector>
+
+#include "grassland/vulkan/core/util.h"
 
 namespace grassland::vulkan_legacy {
 

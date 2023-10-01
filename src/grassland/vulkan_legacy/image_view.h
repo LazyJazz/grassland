@@ -1,6 +1,7 @@
 #pragma once
 #include <grassland/vulkan_legacy/image.h>
-#include <grassland/vulkan_legacy/util.h>
+
+#include "grassland/vulkan/core/util.h"
 
 namespace grassland::vulkan_legacy {
 class ImageView {

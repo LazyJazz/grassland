@@ -10,7 +10,7 @@ struct CoreSettings {
   const char *window_title{"Grassland Demo"};
   uint32_t frames_in_flight{3};
   bool raytracing_pipeline_required{false};
-  bool validation_layer{kDefaultEnableValidationLayers};
+  bool validation_layer{vulkan::kDefaultEnableValidationLayers};
   int selected_device{-1};
 };
 }  // namespace grassland::vulkan_legacy::framework

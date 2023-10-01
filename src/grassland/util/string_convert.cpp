@@ -1,5 +1,7 @@
 #include "grassland/util/string_convert.h"
 
+#include "fmt/format.h"
+
 namespace grassland::util {
 
 std::wstring U8StringToWideString(const std::string &str) {
@@ -49,5 +51,18 @@ std::string WideStringToU8String(const std::wstring &wide_str) {
     }
   }
   return str;
+}
+
+std::string SizeToString(size_t size) {
+  // convert size to string, alternate unit from byte to PB, use
+  // double-precision, round to 2 decimal places
+  std::string unit[] = {"B", "KB", "MB", "GB", "TB", "PB"};
+  int i = 0;
+  double size_d = size;
+  while (size_d >= 1024 && i < 5) {
+    size_d /= 1024;
+    i++;
+  }
+  return fmt::format("{:.2f} {}", size_d, unit[i]);
 }
 }  // namespace grassland::util

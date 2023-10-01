@@ -2,7 +2,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <grassland/vulkan_legacy/instance.h>
-#include <grassland/vulkan_legacy/util.h>
+
+#include "grassland/vulkan/core/util.h"
 
 namespace grassland::vulkan_legacy {
 class Surface {

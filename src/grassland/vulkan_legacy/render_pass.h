@@ -1,7 +1,8 @@
 #pragma once
 #include <grassland/vulkan_legacy/device.h>
 #include <grassland/vulkan_legacy/helper/attachment_parameters.h>
-#include <grassland/vulkan_legacy/util.h>
+
+#include "grassland/vulkan/core/util.h"
 
 namespace grassland::vulkan_legacy {
 class RenderPass {

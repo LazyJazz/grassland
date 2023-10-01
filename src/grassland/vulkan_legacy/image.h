@@ -4,7 +4,8 @@
 #include <grassland/vulkan_legacy/command_pool.h>
 #include <grassland/vulkan_legacy/device.h>
 #include <grassland/vulkan_legacy/queue.h>
-#include <grassland/vulkan_legacy/util.h>
+
+#include "grassland/vulkan/core/util.h"
 
 namespace grassland::vulkan_legacy {
 class Image {

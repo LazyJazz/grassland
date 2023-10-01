@@ -41,7 +41,7 @@ bool CheckValidationLayerSupport() {
   std::vector<VkLayerProperties> available_layers(layer_count);
   vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
 
-  for (const char *layerName : validationLayers) {
+  for (const char *layerName : vulkan::validationLayers) {
     bool layer_found = false;
 
     for (const auto &layerProperties : available_layers) {
@@ -158,8 +158,8 @@ void Instance::CreateInstance() {
   VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
   if (enable_validation_layers_) {
     create_info.enabledLayerCount =
-        static_cast<uint32_t>(validationLayers.size());
-    create_info.ppEnabledLayerNames = validationLayers.data();
+        static_cast<uint32_t>(vulkan::validationLayers.size());
+    create_info.ppEnabledLayerNames = vulkan::validationLayers.data();
 
     PopulateDebugMessengerCreateInfo(debug_create_info);
     create_info.pNext =

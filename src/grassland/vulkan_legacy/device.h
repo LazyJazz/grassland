@@ -1,6 +1,7 @@
 #pragma once
 #include <grassland/vulkan_legacy/physical_device.h>
-#include <grassland/vulkan_legacy/util.h>
+
+#include "grassland/vulkan/core/util.h"
 
 namespace grassland::vulkan_legacy {
 
@@ -11,11 +12,11 @@ class Device {
   explicit Device(
       PhysicalDevice *physical_device,
       const std::vector<const char *> &extra_device_extensions = {},
-      bool enable_validation_layers = kDefaultEnableValidationLayers);
+      bool enable_validation_layers = vulkan::kDefaultEnableValidationLayers);
   Device(PhysicalDevice *physical_device,
          Surface *surface,
          const std::vector<const char *> &extra_device_extensions = {},
-         bool enable_validation_layers = kDefaultEnableValidationLayers,
+         bool enable_validation_layers = vulkan::kDefaultEnableValidationLayers,
          void *extraDeviceFeatures = nullptr);
   ~Device();
   [[nodiscard]] PhysicalDevice *GetPhysicalDevice() const;
