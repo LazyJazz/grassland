@@ -51,6 +51,7 @@ find_package(freetype CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(imgui REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(SFML COMPONENTS system window graphics audio network REQUIRED)
 
 message("${VCPKG_INCLUDE_DIR}")
 

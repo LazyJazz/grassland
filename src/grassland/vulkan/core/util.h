@@ -29,7 +29,7 @@
  private:
 
 #define GRASSLAND_VULKAN_PROCEDURE_VAR(function_name) \
-  PFN_##function_name function_name##_{};
+  PFN_##function_name function_name{};
 namespace grassland::vulkan {
 const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};

@@ -11,6 +11,7 @@
     "spdlog",
     "imgui",
     "abseil",
-    "gtest"
+    "gtest",
+    "sfml"
   ]
 }
