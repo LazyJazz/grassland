@@ -6,6 +6,9 @@ namespace {
 template <class FuncTy>
 FuncTy GetProcedure(VkInstance instance, const char *function_name) {
   auto func = (FuncTy)vkGetInstanceProcAddr(instance, function_name);
+  if (!func) {
+    LAND_WARN("Failed to load instance function: {}", function_name);
+  }
   return func;
 };
 }  // namespace
@@ -17,6 +20,7 @@ FuncTy GetProcedure(VkInstance instance, const char *function_name) {
 void InstanceProcedures::Initialize(VkInstance instance) {
   GET_PROCEDURE(instance, vkCreateDebugUtilsMessengerEXT);
   GET_PROCEDURE(instance, vkDestroyDebugUtilsMessengerEXT);
+  GET_PROCEDURE(instance, vkSetDebugUtilsObjectNameEXT);
 }
 
 }  // namespace grassland::vulkan

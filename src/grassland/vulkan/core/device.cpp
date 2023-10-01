@@ -10,7 +10,7 @@ DeviceSettings GetDefaultDeviceSettings(Instance *instance,
                                         bool enable_raytracing) {
   DeviceSettings settings{physical_device};
   settings.surface = surface;
-  settings.enable_raytracing = true;
+  settings.enable_raytracing = false;
   return settings;
 }
 }  // namespace
@@ -78,13 +78,13 @@ Device::Device(Instance *instance,
     pointer = &feature;                      \
   } while (false)
 
+  device_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
   ADD_DEVICE_FEATURE(p_extra_device_features,
                      physical_device_buffer_device_address_features);
   if (settings.enable_raytracing) {
     device_extensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
     device_extensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
     device_extensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
-    device_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
     device_extensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
 
     // Add ray tracing features
@@ -122,6 +122,15 @@ Device::Device(Instance *instance,
   VkPhysicalDeviceFeatures deviceFeatures =
       settings.physical_device.GetPhysicalDeviceFeatures();
   VkDeviceCreateInfo createInfo{};
+
+  if (instance->Settings().enable_validation_layers) {
+    createInfo.enabledLayerCount =
+        static_cast<uint32_t>(vulkan::validationLayers.size());
+    createInfo.ppEnabledLayerNames = vulkan::validationLayers.data();
+  } else {
+    createInfo.enabledLayerCount = 0;
+  }
+
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   createInfo.queueCreateInfoCount =
       static_cast<uint32_t>(queueCreateInfos.size());
@@ -131,14 +140,6 @@ Device::Device(Instance *instance,
       static_cast<uint32_t>(device_extensions.size());
   if (createInfo.enabledExtensionCount) {
     createInfo.ppEnabledExtensionNames = device_extensions.data();
-  }
-
-  if (instance->Settings().enable_validation_layers) {
-    createInfo.enabledLayerCount =
-        static_cast<uint32_t>(vulkan::validationLayers.size());
-    createInfo.ppEnabledLayerNames = vulkan::validationLayers.data();
-  } else {
-    createInfo.enabledLayerCount = 0;
   }
 
   VkPhysicalDeviceDescriptorIndexingFeaturesEXT

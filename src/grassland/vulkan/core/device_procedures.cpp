@@ -7,6 +7,9 @@ template <class FuncTy>
 FuncTy GetProcedure(VkDevice device, const char *function_name) {
   auto func =
       reinterpret_cast<FuncTy>(vkGetDeviceProcAddr(device, function_name));
+  if (!func) {
+    LAND_WARN("Failed to load device function: {}", function_name);
+  }
   return func;
 };
 }  // namespace

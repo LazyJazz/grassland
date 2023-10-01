@@ -2,7 +2,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include "grassland/util/util.h"
 #include "grassland/vulkan/core/instance_procedures.h"
 #include "grassland/vulkan/core/instance_settings.h"
 #include "grassland/vulkan/core/util.h"

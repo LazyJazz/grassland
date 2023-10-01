@@ -1,4 +1,5 @@
 #pragma once
+#define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
 #include "grassland/vulkan/core/instance.h"
 #include "grassland/vulkan/utils/vulkan_utils.h"

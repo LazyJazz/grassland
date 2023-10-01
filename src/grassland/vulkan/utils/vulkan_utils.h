@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "grassland/util/util.h"
+
 #define GRASSLAND_VULKAN_HANDLE(type) \
   type handle_{};                     \
                                       \
