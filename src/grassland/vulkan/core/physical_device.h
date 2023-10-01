@@ -3,6 +3,9 @@
 #include "grassland/vulkan/core/instance.h"
 
 namespace grassland::vulkan {
+
+class Surface;
+
 // Physical Device
 class PhysicalDevice {
  public:
@@ -28,7 +31,10 @@ class PhysicalDevice {
   [[nodiscard]] bool IsGeometryShaderSupported() const;
   [[nodiscard]] bool IsRayTracingSupported() const;
 
-  uint64_t EvaluateDeviceScore() const;
+  [[nodiscard]] uint64_t EvaluateDeviceScore() const;
+
+  [[nodiscard]] uint32_t GraphicsFamilyIndex() const;
+  uint32_t PresentFamilyIndex(Surface *surface) const;
 
  private:
   VkPhysicalDevice physical_device_{};

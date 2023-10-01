@@ -6,7 +6,7 @@ namespace grassland::vulkan {
 class InstanceProcedures {
  public:
   InstanceProcedures() = default;
-  void GetFunctionPointers(VkInstance instance);
+  void Initialize(VkInstance instance);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkCreateDebugUtilsMessengerEXT);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkDestroyDebugUtilsMessengerEXT);
 };

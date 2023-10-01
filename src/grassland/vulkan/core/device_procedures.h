@@ -5,7 +5,7 @@ namespace grassland::vulkan {
 class DeviceProcedures {
  public:
   explicit DeviceProcedures();
-  void GetFunctionPointers(VkDevice device);
+  void Initialize(VkDevice device);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkCmdBuildAccelerationStructuresKHR);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkCreateAccelerationStructureKHR);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkGetAccelerationStructureBuildSizesKHR);

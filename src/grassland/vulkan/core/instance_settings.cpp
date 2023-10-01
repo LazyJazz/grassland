@@ -5,17 +5,14 @@
 namespace grassland::vulkan {
 
 InstanceSettings::InstanceSettings() {
-  app_info = {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.pApplicationName = "Grassland";
   app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-  app_info.pEngineName = "Grassland";
+  app_info.pEngineName = "Grassland Engine";
   app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  app_info.apiVersion = VK_API_VERSION_1_0;
+  app_info.apiVersion = VK_API_VERSION_1_2;
 
-  extensions = {
-      VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-  };
+  extensions = {VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME};
 }
 
 void InstanceSettings::EnableSurfaceSupport() {

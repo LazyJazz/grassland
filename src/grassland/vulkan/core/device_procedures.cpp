@@ -17,7 +17,7 @@ FuncTy GetProcedure(VkDevice device, const char *function_name) {
 
 DeviceProcedures::DeviceProcedures() = default;
 
-void DeviceProcedures::GetFunctionPointers(VkDevice device) {
+void DeviceProcedures::Initialize(VkDevice device) {
   GET_PROCEDURE(device, vkGetBufferDeviceAddressKHR);
   GET_PROCEDURE(device, vkGetAccelerationStructureBuildSizesKHR);
   GET_PROCEDURE(device, vkCreateAccelerationStructureKHR);

@@ -14,7 +14,7 @@ FuncTy GetProcedure(VkInstance instance, const char *function_name) {
   function_name = grassland::vulkan::GetProcedure<PFN_##function_name>( \
       instance, #function_name)
 
-void InstanceProcedures::GetFunctionPointers(VkInstance instance) {
+void InstanceProcedures::Initialize(VkInstance instance) {
   GET_PROCEDURE(instance, vkCreateDebugUtilsMessengerEXT);
   GET_PROCEDURE(instance, vkDestroyDebugUtilsMessengerEXT);
 }

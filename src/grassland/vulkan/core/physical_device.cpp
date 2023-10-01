@@ -1,5 +1,7 @@
 #include "grassland/vulkan/core/physical_device.h"
 
+#include "grassland/vulkan/core/surface.h"
+
 namespace grassland::vulkan {
 PhysicalDevice::PhysicalDevice(VkPhysicalDevice physical_device) {
   physical_device_ = physical_device;
@@ -127,6 +129,44 @@ uint64_t PhysicalDevice::EvaluateDeviceScore() const {
   score += device_local_memory_size / 1000000;
 
   return score;
+}
+
+uint32_t PhysicalDevice::GraphicsFamilyIndex() const {
+  uint32_t graphics_family_index = 0;
+  uint32_t queue_family_count = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(physical_device_,
+                                           &queue_family_count, nullptr);
+  std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      physical_device_, &queue_family_count, queue_families.data());
+  for (const auto &queue_family : queue_families) {
+    if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      return graphics_family_index;
+    }
+    graphics_family_index++;
+  }
+  return -1;
+}
+
+uint32_t PhysicalDevice::PresentFamilyIndex(
+    grassland::vulkan::Surface *surface) const {
+  uint32_t present_family_index = 0;
+  uint32_t queue_family_count = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(physical_device_,
+                                           &queue_family_count, nullptr);
+  std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      physical_device_, &queue_family_count, queue_families.data());
+  for (const auto &queue_family : queue_families) {
+    VkBool32 present_support = false;
+    vkGetPhysicalDeviceSurfaceSupportKHR(physical_device_, present_family_index,
+                                         surface->Handle(), &present_support);
+    if (present_support) {
+      return present_family_index;
+    }
+    present_family_index++;
+  }
+  return -1;
 }
 
 }  // namespace grassland::vulkan

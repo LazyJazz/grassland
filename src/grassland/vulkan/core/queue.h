@@ -5,12 +5,14 @@ namespace grassland::vulkan {
 class Device;
 class Queue {
  public:
-  explicit Queue(Device *device, uint32_t queue_family_index);
+  explicit Queue(Device *device = nullptr, uint32_t queue_family_index = 0);
 
   [[nodiscard]] VkQueue Handle() const;
   class Device *Device() {
     return device_;
   }
+
+  void WaitIdle() const;
 
  private:
   class Device *device_{};

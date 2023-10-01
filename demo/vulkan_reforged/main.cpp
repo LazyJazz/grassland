@@ -7,8 +7,8 @@ using namespace grassland;
 
 int main() {
   // Create an Instance, then enumerate all physical devices.
-  grassland::vulkan::Instance instance;
-  std::vector<grassland::vulkan::PhysicalDevice> physical_devices;
+  vulkan::Instance instance;
+  std::vector<vulkan::PhysicalDevice> physical_devices;
   instance.EnumeratePhysicalDevices(physical_devices);
   // Print physical device information
   for (const auto &physical_device : physical_devices) {
@@ -50,4 +50,7 @@ int main() {
                                                               : "Not Supported")
               << std::endl;
   }
+
+  vulkan::Device device(&instance, physical_devices[0]);
+  return 0;
 }

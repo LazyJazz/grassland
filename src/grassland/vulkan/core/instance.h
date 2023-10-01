@@ -22,6 +22,11 @@ class Instance {
   void EnumeratePhysicalDevices(
       std::vector<PhysicalDevice> &physical_devices) const;
 
+  [[nodiscard]] const InstanceSettings &Settings() const;
+  InstanceProcedures &Procedures() {
+    return instance_procedures_;
+  }
+
  private:
   InstanceSettings settings_;
   VkInstance instance_{};

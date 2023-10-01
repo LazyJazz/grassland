@@ -162,7 +162,7 @@ Instance::Instance(InstanceSettings settings) {
     LAND_ERROR("[Vulkan] failed to create instance!");
   }
 
-  instance_procedures_.GetFunctionPointers(instance_);
+  instance_procedures_.Initialize(instance_);
 
   if (settings.enable_validation_layers) {
     if (instance_procedures_.vkCreateDebugUtilsMessengerEXT(
@@ -173,5 +173,9 @@ Instance::Instance(InstanceSettings settings) {
   }
 
   settings_ = settings;
+}
+
+const InstanceSettings &Instance::Settings() const {
+  return settings_;
 }
 }  // namespace grassland::vulkan
