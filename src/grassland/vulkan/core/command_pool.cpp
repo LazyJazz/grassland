@@ -6,7 +6,8 @@ CommandPool::CommandPool(class Device *device) : device_(device) {
   command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   command_pool_create_info.queueFamilyIndex =
       device_->PhysicalDevice().GraphicsFamilyIndex();
-  command_pool_create_info.flags = 0;
+  command_pool_create_info.flags =
+      VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
   if (vkCreateCommandPool(device_->Handle(), &command_pool_create_info, nullptr,
                           &command_pool_) != VK_SUCCESS) {

@@ -31,6 +31,11 @@ class SwapChain {
     return image_views_;
   }
 
+  // Acquire an image from the swap chain
+  VkResult AcquireNextImage(uint32_t *image_index,
+                            VkSemaphore semaphore,
+                            VkFence fence);
+
  private:
   void CreateSwapChain();
   void CreateImageViews();

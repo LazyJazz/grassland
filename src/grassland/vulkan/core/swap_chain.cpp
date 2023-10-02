@@ -190,4 +190,13 @@ SwapChain::~SwapChain() {
   }
   vkDestroySwapchainKHR(device_->Handle(), swap_chain_, nullptr);
 }
+
+VkResult SwapChain::AcquireNextImage(uint32_t *image_index,
+                                     VkSemaphore semaphore,
+                                     VkFence fence) {
+  return vkAcquireNextImageKHR(device_->Handle(), swap_chain_,
+                               std::numeric_limits<uint64_t>::max(), semaphore,
+                               fence, image_index);
+}
+
 }  // namespace grassland::vulkan

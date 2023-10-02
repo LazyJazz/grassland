@@ -35,6 +35,8 @@ void Application::OnUpdate() {
 }
 
 void Application::OnRender() {
+  core_->BeginFrame();
+  core_->EndFrame();
 }
 
 void Application::OnInit() {
