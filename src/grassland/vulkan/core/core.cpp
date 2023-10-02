@@ -1,7 +1,7 @@
 #include "grassland/vulkan/core/core.h"
 
 namespace grassland::vulkan {
-Core::Core(const CoreSettings &settings) {
+Core::Core(const CoreSettings &settings) : settings_(settings) {
   InstanceSettings instance_settings;
   if (settings.window) {
     instance_settings.EnableSurfaceSupport();
@@ -41,10 +41,21 @@ Core::Core(const CoreSettings &settings) {
   device_ = std::make_unique<class Device>(instance_.get(), *physical_device,
                                            surface_.get(),
                                            settings.enable_ray_tracing);
+
+  // Create the command pool
+  command_pool_ = std::make_unique<class CommandPool>(device_.get());
+
+  // Create command buffers
+  command_buffers_.resize(settings.frames_in_flight);
+  for (auto &command_buffer : command_buffers_) {
+    command_buffer = std::make_unique<class CommandBuffer>(command_pool_.get());
+  }
 }
 
 Core::~Core() {
   // Release all the resources in reverse order of creation
+  command_buffers_.clear();
+  command_pool_.reset();
   device_.reset();
   surface_.reset();
   instance_.reset();

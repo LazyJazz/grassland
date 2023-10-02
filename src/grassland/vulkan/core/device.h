@@ -18,13 +18,14 @@ struct DeviceSettings {
 class Device {
  public:
   explicit Device(Instance *instance,
-                  const PhysicalDevice &physical_device,
+                  const class PhysicalDevice &physical_device,
                   Surface *surface = nullptr,
                   bool enable_raytracing = false);
   Device(Instance *instance, const DeviceSettings &settings);
   ~Device();
 
   [[nodiscard]] VkDevice Handle() const;
+  [[nodiscard]] class PhysicalDevice PhysicalDevice() const;
   [[nodiscard]] Queue GraphicsQueue() const;
   [[nodiscard]] Queue PresentQueue() const;
   DeviceProcedures &Procedures() {
@@ -52,6 +53,7 @@ class Device {
 
  private:
   Instance *instance_{};
+  class PhysicalDevice physical_device_;
 
   VkDevice device_{};
   Queue graphics_queue_{};

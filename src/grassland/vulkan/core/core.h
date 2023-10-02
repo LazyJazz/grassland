@@ -13,6 +13,7 @@ struct CoreSettings {
   bool enable_validation_layers{kDefaultEnableValidationLayers};
   bool enable_ray_tracing{false};
   int device_index{-1};
+  int frames_in_flight{3};
 };
 
 class Core {
@@ -29,11 +30,20 @@ class Core {
   [[nodiscard]] class Device *Device() const {
     return device_.get();
   }
+  [[nodiscard]] class CommandPool *CommandPool() const {
+    return command_pool_.get();
+  }
+  [[nodiscard]] int FramesInFlight() const {
+    return settings_.frames_in_flight;
+  }
 
  private:
+  CoreSettings settings_;
   std::unique_ptr<class Instance> instance_;
   std::unique_ptr<class Surface> surface_;
   std::unique_ptr<class Device> device_;
+  std::unique_ptr<class CommandPool> command_pool_;
+  std::vector<std::unique_ptr<class CommandBuffer>> command_buffers_;
 };
 
 }  // namespace grassland::vulkan

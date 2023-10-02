@@ -16,7 +16,7 @@ DeviceSettings GetDefaultDeviceSettings(Instance *instance,
 }  // namespace
 
 Device::Device(Instance *instance,
-               const PhysicalDevice &physical_device,
+               const class PhysicalDevice &physical_device,
                Surface *surface,
                bool enable_raytracing)
     : Device(instance,
@@ -28,7 +28,9 @@ Device::Device(Instance *instance,
 
 Device::Device(Instance *instance,
                const grassland::vulkan::DeviceSettings &settings)
-    : instance_(instance) {
+    : instance_(instance),
+      physical_device_(settings.physical_device),
+      device_(VK_NULL_HANDLE) {
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   std::set<uint32_t> uniqueQueueFamilies = {
       settings.physical_device.GraphicsFamilyIndex()};
@@ -177,6 +179,10 @@ Device::~Device() {
 
 VkDevice Device::Handle() const {
   return device_;
+}
+
+class PhysicalDevice Device::PhysicalDevice() const {
+  return physical_device_;
 }
 
 Queue Device::PresentQueue() const {

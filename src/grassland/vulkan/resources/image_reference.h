@@ -1,23 +1,23 @@
-#include "grassland/vulkan/core/device.h"
-#include "grassland/vulkan/resources/image_reference.h"
+#pragma once
+#include "grassland/vulkan/core/core.h"
 
 namespace grassland::vulkan {
-class Image {
+class ImageReference {
  public:
-  Image(Core *core,
-        VkFormat format,
-        VkExtent2D extent,
-        VkImageUsageFlags usage,
-        VkImageAspectFlags aspect_flags,
-        VkSampleCountFlagBits sample_count,
-        VkImageLayout layout);
-  ~Image();
+  ImageReference(Device *device,
+                 VkImage image,
+                 VkImageView image_view,
+                 VkFormat format,
+                 VkExtent2D extent,
+                 VkImageUsageFlags usage,
+                 VkImageAspectFlags aspect_flags,
+                 VkSampleCountFlagBits sample_count,
+                 VkImageLayout layout);
+  ~ImageReference();
 
-  [[nodiscard]] VkImage Handle() const {
+  [[nodiscard]] VkImage Image() const {
     return image_;
   }
-
-  // Complete all the gets
   [[nodiscard]] VkImageView ImageView() const {
     return image_view_;
   }
@@ -41,10 +41,10 @@ class Image {
   }
 
  private:
-  Core *core_{};
+  Device *device_;
 
   VkImage image_{};
-  VkImageView image_view_{};
+  VkImageView image_view_;
   VkFormat format_{};
   VkExtent2D extent_{};
   VkImageUsageFlags usage_{};
