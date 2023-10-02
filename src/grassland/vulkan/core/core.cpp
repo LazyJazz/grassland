@@ -50,14 +50,26 @@ Core::Core(const CoreSettings &settings) : settings_(settings) {
   for (auto &command_buffer : command_buffers_) {
     command_buffer = std::make_unique<class CommandBuffer>(command_pool_.get());
   }
+
+  // Create the swap chain
+  if (settings.window) {
+    swap_chain_ =
+        std::make_unique<class SwapChain>(device_.get(), surface_.get());
+  }
 }
 
 Core::~Core() {
   // Release all the resources in reverse order of creation
+  swap_chain_.reset();
   command_buffers_.clear();
   command_pool_.reset();
   device_.reset();
   surface_.reset();
   instance_.reset();
+}
+
+void Core::SingleTimeCommands(
+    const std::function<void(VkCommandBuffer)> &function) {
+  grassland::vulkan::SingleTimeCommands(command_pool_.get(), function);
 }
 }  // namespace grassland::vulkan

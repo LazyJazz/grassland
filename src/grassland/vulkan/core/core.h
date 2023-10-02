@@ -4,6 +4,7 @@
 #include "grassland/vulkan/core/device.h"
 #include "grassland/vulkan/core/instance.h"
 #include "grassland/vulkan/core/physical_device.h"
+#include "grassland/vulkan/core/single_time_commands.h"
 #include "grassland/vulkan/core/swap_chain.h"
 
 namespace grassland::vulkan {
@@ -33,9 +34,14 @@ class Core {
   [[nodiscard]] class CommandPool *CommandPool() const {
     return command_pool_.get();
   }
+  [[nodiscard]] class SwapChain *SwapChain() const {
+    return swap_chain_.get();
+  }
   [[nodiscard]] int FramesInFlight() const {
     return settings_.frames_in_flight;
   }
+
+  void SingleTimeCommands(const std::function<void(VkCommandBuffer)> &function);
 
  private:
   CoreSettings settings_;
@@ -44,6 +50,7 @@ class Core {
   std::unique_ptr<class Device> device_;
   std::unique_ptr<class CommandPool> command_pool_;
   std::vector<std::unique_ptr<class CommandBuffer>> command_buffers_;
+  std::unique_ptr<class SwapChain> swap_chain_;
 };
 
 }  // namespace grassland::vulkan

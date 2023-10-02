@@ -28,8 +28,18 @@ class Device {
   [[nodiscard]] class PhysicalDevice PhysicalDevice() const;
   [[nodiscard]] Queue GraphicsQueue() const;
   [[nodiscard]] Queue PresentQueue() const;
+  [[nodiscard]] uint32_t GraphicsQueueFamilyIndex() const {
+    return graphics_queue_.QueueFamilyIndex();
+  }
+  [[nodiscard]] uint32_t PresentQueueFamilyIndex() const {
+    return present_queue_.QueueFamilyIndex();
+  }
   DeviceProcedures &Procedures() {
     return device_procedures_;
+  }
+
+  [[nodiscard]] VmaAllocator Allocator() const {
+    return allocator_;
   }
 
   void NameObject(VkImage image, const std::string &name);
@@ -59,5 +69,6 @@ class Device {
   Queue graphics_queue_{};
   Queue present_queue_{};
   DeviceProcedures device_procedures_{};
+  VmaAllocator allocator_{};
 };
 }  // namespace grassland::vulkan

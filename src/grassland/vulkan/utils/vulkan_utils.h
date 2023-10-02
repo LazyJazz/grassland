@@ -1,4 +1,5 @@
 #pragma once
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
 #include <memory>
@@ -43,4 +44,8 @@ constexpr bool kDefaultEnableValidationLayers = true;
 #endif
 
 std::string PCIVendorIDToName(uint32_t vendor_id);
+
+std::string VkFormatToName(VkFormat format);
+std::string VkColorSpaceToName(VkColorSpaceKHR color_space);
+std::string VkPresentModeToName(VkPresentModeKHR present_mode);
 }  // namespace grassland::vulkan

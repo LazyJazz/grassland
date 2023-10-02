@@ -11,9 +11,12 @@ class Surface {
   ~Surface();
 
   [[nodiscard]] VkSurfaceKHR Handle() const;
+  // Get window method
+  [[nodiscard]] GLFWwindow *Window() const;
 
  private:
   Instance *instance_{};
+  GLFWwindow *window_{};
   VkSurfaceKHR surface_{};
 };
 }  // namespace grassland::vulkan

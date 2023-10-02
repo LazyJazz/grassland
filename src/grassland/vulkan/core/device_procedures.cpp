@@ -20,16 +20,19 @@ FuncTy GetProcedure(VkDevice device, const char *function_name) {
 
 DeviceProcedures::DeviceProcedures() = default;
 
-void DeviceProcedures::Initialize(VkDevice device) {
+void DeviceProcedures::Initialize(VkDevice device,
+                                  bool enable_raytracing_extensions) {
   GET_PROCEDURE(device, vkGetBufferDeviceAddressKHR);
-  GET_PROCEDURE(device, vkGetAccelerationStructureBuildSizesKHR);
-  GET_PROCEDURE(device, vkCreateAccelerationStructureKHR);
-  GET_PROCEDURE(device, vkCmdBuildAccelerationStructuresKHR);
-  GET_PROCEDURE(device, vkDestroyAccelerationStructureKHR);
-  GET_PROCEDURE(device, vkGetAccelerationStructureDeviceAddressKHR);
-  GET_PROCEDURE(device, vkCreateRayTracingPipelinesKHR);
-  GET_PROCEDURE(device, vkGetRayTracingShaderGroupHandlesKHR);
-  GET_PROCEDURE(device, vkCmdTraceRaysKHR);
+  if (enable_raytracing_extensions) {
+    GET_PROCEDURE(device, vkGetAccelerationStructureBuildSizesKHR);
+    GET_PROCEDURE(device, vkCreateAccelerationStructureKHR);
+    GET_PROCEDURE(device, vkCmdBuildAccelerationStructuresKHR);
+    GET_PROCEDURE(device, vkDestroyAccelerationStructureKHR);
+    GET_PROCEDURE(device, vkGetAccelerationStructureDeviceAddressKHR);
+    GET_PROCEDURE(device, vkCreateRayTracingPipelinesKHR);
+    GET_PROCEDURE(device, vkGetRayTracingShaderGroupHandlesKHR);
+    GET_PROCEDURE(device, vkCmdTraceRaysKHR);
+  }
 }
 
 }  // namespace grassland::vulkan

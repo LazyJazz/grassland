@@ -32,10 +32,13 @@ Image::Image(Core *core,
   image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-  if (vkCreateImage(core_->Device()->Handle(), &image_create_info, nullptr,
-                    &image_) != VK_SUCCESS) {
-    LAND_ERROR("[Vulkan] failed to create image!");
-  }
+  // Create image from image create info by VMA library
+
+  VmaAllocationCreateInfo allocationInfo = {};
+  allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+  vmaCreateImage(core_->Device()->Allocator(), &image_create_info,
+                 &allocationInfo, &image_, &allocation_, nullptr);
 
   // Create Image View
   VkImageViewCreateInfo image_view_create_info{};
@@ -43,6 +46,10 @@ Image::Image(Core *core,
   image_view_create_info.image = image_;
   image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
   image_view_create_info.format = format_;
+  image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+  image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+  image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+  image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
   image_view_create_info.subresourceRange.aspectMask = aspect_flags_;
   image_view_create_info.subresourceRange.baseMipLevel = 0;
   image_view_create_info.subresourceRange.levelCount = 1;
@@ -53,6 +60,11 @@ Image::Image(Core *core,
                         nullptr, &image_view_) != VK_SUCCESS) {
     LAND_ERROR("[Vulkan] failed to create image view!");
   }
+}
+
+Image::~Image() {
+  vkDestroyImageView(core_->Device()->Handle(), image_view_, nullptr);
+  vmaDestroyImage(core_->Device()->Allocator(), image_, allocation_);
 }
 
 }  // namespace grassland::vulkan

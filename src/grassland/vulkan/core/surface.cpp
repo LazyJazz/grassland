@@ -2,7 +2,8 @@
 
 namespace grassland::vulkan {
 // Complete the implementation of the Surface class here.
-Surface::Surface(Instance *instance, GLFWwindow *window) : instance_(instance) {
+Surface::Surface(Instance *instance, GLFWwindow *window)
+    : instance_(instance), window_(window) {
   VkResult result =
       glfwCreateWindowSurface(instance->Handle(), window, nullptr, &surface_);
   if (result != VK_SUCCESS) {
@@ -16,6 +17,10 @@ Surface::~Surface() {
 
 VkSurfaceKHR Surface::Handle() const {
   return surface_;
+}
+
+GLFWwindow *Surface::Window() const {
+  return window_;
 }
 
 }  // namespace grassland::vulkan

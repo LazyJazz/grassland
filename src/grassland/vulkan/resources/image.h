@@ -51,5 +51,7 @@ class Image {
   VkImageAspectFlags aspect_flags_{};
   VkSampleCountFlagBits sample_count_{};
   VkImageLayout layout_{};
+
+  VmaAllocation allocation_{};
 };
 }  // namespace grassland::vulkan

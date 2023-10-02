@@ -3,6 +3,13 @@
 #include "grassland/vulkan/core/surface.h"
 
 namespace grassland::vulkan {
+
+struct SwapChainSupportDetails {
+  VkSurfaceCapabilitiesKHR capabilities;
+  std::vector<VkSurfaceFormatKHR> formats;
+  std::vector<VkPresentModeKHR> presentModes;
+};
+
 class SwapChain {
  public:
   SwapChain(Device *device, Surface *surface);
@@ -34,6 +41,7 @@ class SwapChain {
   VkSwapchainKHR swap_chain_{};
   VkFormat format_{};
   VkExtent2D extent_{};
+  uint32_t image_count_{};
   std::vector<VkImage> images_;
   std::vector<VkImageView> image_views_;
 };

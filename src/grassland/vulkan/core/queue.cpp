@@ -4,7 +4,7 @@
 
 namespace grassland::vulkan {
 Queue::Queue(grassland::vulkan::Device *device, uint32_t queue_family_index)
-    : device_(device) {
+    : device_(device), queue_family_index_(queue_family_index) {
   if (device) {
     vkGetDeviceQueue(device->Handle(), queue_family_index, 0, &queue_);
   }

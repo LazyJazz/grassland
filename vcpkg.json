@@ -12,6 +12,7 @@
     "imgui",
     "abseil",
     "gtest",
-    "sfml"
+    "sfml",
+    "vulkan-memory-allocator"
   ]
 }

@@ -170,10 +170,18 @@ Device::Device(Instance *instance,
         this, settings.physical_device.PresentFamilyIndex(settings.surface));
   }
 
-  device_procedures_.Initialize(device_);
+  device_procedures_.Initialize(device_, settings.enable_raytracing);
+
+  // Create vma allocator
+  VmaAllocatorCreateInfo allocator_info{};
+  allocator_info.physicalDevice = settings.physical_device.Handle();
+  allocator_info.device = device_;
+  allocator_info.instance = instance->Handle();
+  vmaCreateAllocator(&allocator_info, &allocator_);
 }
 
 Device::~Device() {
+  vmaDestroyAllocator(allocator_);
   vkDestroyDevice(device_, nullptr);
 }
 
