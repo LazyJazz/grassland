@@ -2,10 +2,10 @@
 #include "grassland/vulkan/core/instance.h"
 
 namespace grassland::vulkan {
-class Device;
 class Queue {
  public:
-  explicit Queue(Device *device = nullptr, uint32_t queue_family_index = 0);
+  explicit Queue(class Device *device = nullptr,
+                 uint32_t queue_family_index = 0);
 
   [[nodiscard]] VkQueue Handle() const;
   [[nodiscard]] class Device *Device() const {
