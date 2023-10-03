@@ -24,6 +24,15 @@ else ()
     endfunction()
 endif ()
 
+function(flatten_glsl_shader input_file output_file depends)
+    add_custom_command(
+            OUTPUT ${output_file}
+            COMMAND ${Python3_EXECUTABLE} ${GRASSLAND_SOURCE_DIR}/scripts/flatten_glsl.py ${input_file} ${output_file}
+            DEPENDS ${input_file} ${depends}
+            COMMENT "Flattening GLSL shader: ${input_file} -> ${output_file}"
+    )
+endfunction()
+
 
 # Find all the shader files under current directory
 file(GLOB_RECURSE SHADER_FILES
@@ -34,14 +43,37 @@ file(GLOB_RECURSE SHADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/*.rgen
     ${CMAKE_CURRENT_SOURCE_DIR}/*.rchit
     ${CMAKE_CURRENT_SOURCE_DIR}/*.rmiss
+)
+
+file(GLOB_RECURSE SHADER_INCLUDE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/*.glsl
 )
+
+# Flatten all the shader files
+foreach(SHADER_FILE ${SHADER_FILES})
+    get_filename_component(FILE_NAME ${SHADER_FILE} NAME)
+    set(FLATTENED_SHADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME})
+    flatten_glsl_shader(${SHADER_FILE} ${FLATTENED_SHADER_FILE} ${SHADER_INCLUDE_FILES})
+    list(APPEND FLATTENED_SHADER_FILES ${FLATTENED_SHADER_FILE})
+endforeach()
+
+# Make the flattened shaders a target
+add_custom_target(
+    grassland_vulkan_flattened_shaders ALL
+    DEPENDS ${FLATTENED_SHADER_FILES}
+)
+
+add_dependencies(grassland_vulkan_lib grassland_vulkan_flattened_shaders)
+
 
 # Use the XXD cmake function generate header files in corresponding build directory
 foreach(SHADER_FILE ${SHADER_FILES})
     get_filename_component(FILE_NAME ${SHADER_FILE} NAME)
     set(HEADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}.h)
-    XXD(${SHADER_FILE} ${HEADER_FILE})
+    # Use the corresponding flattened shader file as input
+    get_filename_component(FLATTENED_SHADER_FILE ${SHADER_FILE} NAME)
+    set(FLATTENED_SHADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/${FLATTENED_SHADER_FILE})
+    XXD(${FLATTENED_SHADER_FILE} ${HEADER_FILE})
     list(APPEND HEADER_FILES ${HEADER_FILE})
 endforeach()
 

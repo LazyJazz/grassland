@@ -1,4 +1,6 @@
 #version 450
+#include "another_path.glsl"
+#include "example.glsl"
 
 layout(location = 0) in vec3 position;
 

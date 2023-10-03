@@ -57,6 +57,8 @@ find_package(SFML COMPONENTS system window graphics audio network REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(glslang CONFIG REQUIRED)
 
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
 message("${VCPKG_INCLUDE_DIR}")
 
 find_path(VCPKG_INCLUDE_DIR "glm/glm.hpp")
