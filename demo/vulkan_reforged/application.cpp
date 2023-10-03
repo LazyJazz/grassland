@@ -1,4 +1,6 @@
 #include "application.h"
+
+#include <iostream>
 Application::Application(const std::string &name,
                          int width,
                          int height,
@@ -40,8 +42,16 @@ void Application::OnRender() {
 }
 
 void Application::OnInit() {
-  auto shader = vulkan::built_in_shaders::GetShader("example.vert");
-  printf("%s\n", shader.c_str());
+  // List all the builtin shaders, show the filename and get the compiled spv
+  // code.
+  std::vector<std::string> shader_names =
+      vulkan::built_in_shaders::ListAllBuiltInShaders();
+  for (const auto &shader_name : shader_names) {
+    spdlog::info(
+        "Shader name: {} Spv size: {}", shader_name,
+        vulkan::built_in_shaders::GetShaderCompiledSpv(shader_name).size() *
+            sizeof(uint32_t));
+  }
 }
 
 void Application::OnClose() {

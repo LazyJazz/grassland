@@ -56,6 +56,7 @@ find_package(spdlog REQUIRED)
 find_package(SFML COMPONENTS system window graphics audio network REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(glslang CONFIG REQUIRED)
+find_package(absl CONFIG REQUIRED)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 

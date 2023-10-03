@@ -110,5 +110,25 @@ foreach (RELATIVE_HEADER_FILE ${RELATIVE_HEADER_FILES})
     file(APPEND ${BUILT_IN_SHADERS_INL} "#include \"${RELATIVE_HEADER_FILE}\"\n")
 endforeach ()
 
+# List all the shader info in a map std::map<std::string, std::pair<const char *, unsigned int>>, generate a global variable
+file(APPEND ${BUILT_IN_SHADERS_INL} "\n")
+file(APPEND ${BUILT_IN_SHADERS_INL} "std::map<std::string, std::pair<const char *, unsigned int>> shader_list = {\n")
+foreach (SHADER_FILE ${SHADER_FILES})
+    get_filename_component(FILE_NAME ${SHADER_FILE} NAME)
+    # Get variable name
+    string(REPLACE "." "_" VAR_NAME ${FILE_NAME})
+    # Reintercast the variable name to const char *
+    file(APPEND ${BUILT_IN_SHADERS_INL} "    {\"${FILE_NAME}\", {reinterpret_cast<const char *>(${VAR_NAME}), ${VAR_NAME}_len}},\n")
+endforeach ()
+file(APPEND ${BUILT_IN_SHADERS_INL} "};\n")
+
+
+# Generate a function GetShaderCode in built_in_shaders.inl, input is the file name, output is the shader code, both are string
+file(APPEND ${BUILT_IN_SHADERS_INL} "\n")
+file(APPEND ${BUILT_IN_SHADERS_INL} "std::string GetShaderCode(const std::string& file_name) {\n")
+file(APPEND ${BUILT_IN_SHADERS_INL} "    return std::string(shader_list[file_name].first, shader_list[file_name].second);\n")
+file(APPEND ${BUILT_IN_SHADERS_INL} "}\n")
+
+
 target_sources(grassland_vulkan_lib PRIVATE ${BUILT_IN_SHADERS_INL})
 target_include_directories(grassland_vulkan_lib PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
