@@ -69,10 +69,7 @@ void Application::OnInit() {
   vulkan::UploadBuffer(index_buffer_.get(), indices.data(),
                        indices.size() * sizeof(uint16_t));
 
-  // Output notice: What shader is creating
-
   spdlog::info("Compiling vertex shader: {}", "hello_world.vert");
-
   vertex_shader_ = std::make_unique<vulkan::ShaderModule>(
       core_.get(),
       vulkan::built_in_shaders::GetShaderCompiledSpv("hello_world.vert"));
@@ -81,10 +78,23 @@ void Application::OnInit() {
   fragment_shader_ = std::make_unique<vulkan::ShaderModule>(
       core_.get(),
       vulkan::built_in_shaders::GetShaderCompiledSpv("hello_world.frag"));
+
+  // Create descriptor pool and sets
+  descriptor_pool_ = std::make_unique<vulkan::DescriptorPool>(core_.get());
+  descriptor_set_layout_ = std::make_unique<vulkan::DescriptorSetLayout>(
+      core_.get(), std::vector<VkDescriptorSetLayoutBinding>{});
+  descriptor_sets_.resize(core_->MaxFramesInFlight());
+  for (size_t i = 0; i < core_->MaxFramesInFlight(); i++) {
+    descriptor_sets_[i] = std::make_unique<vulkan::DescriptorSet>(
+        core_.get(), descriptor_pool_.get(), descriptor_set_layout_.get());
+  }
 }
 
 void Application::OnClose() {
   // Release resources in reverse order of creation
+  descriptor_sets_.clear();
+  descriptor_set_layout_.reset();
+  descriptor_pool_.reset();
   vertex_shader_.reset();
   fragment_shader_.reset();
   index_buffer_.reset();
