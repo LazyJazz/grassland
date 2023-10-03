@@ -16,5 +16,11 @@ class Application {
 
   GLFWwindow *window_{};
   std::unique_ptr<vulkan::Core> core_;
+  std::unique_ptr<vulkan::Buffer> vertex_buffer_;
+  std::unique_ptr<vulkan::Buffer> index_buffer_;
+
+  std::unique_ptr<vulkan::ShaderModule> vertex_shader_;
+  std::unique_ptr<vulkan::ShaderModule> fragment_shader_;
+
   bool application_should_close_{};
 };

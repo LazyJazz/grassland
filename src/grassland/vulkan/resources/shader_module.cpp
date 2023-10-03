@@ -169,8 +169,8 @@ ShaderModule::ShaderModule(Core *core, const std::vector<uint32_t> &spirv_code)
     : core_(core) {
   VkShaderModuleCreateInfo create_info{};
   create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  create_info.codeSize = spirv_code.size();
-  create_info.pCode = reinterpret_cast<const uint32_t *>(spirv_code.data());
+  create_info.codeSize = spirv_code.size() * sizeof(uint32_t);
+  create_info.pCode = spirv_code.data();
   if (vkCreateShaderModule(core_->Device()->Handle(), &create_info, nullptr,
                            &shader_module_) != VK_SUCCESS) {
     LAND_ERROR("[Vulkan] failed to create shader module!")
@@ -189,8 +189,20 @@ std::vector<uint32_t> CompileGLSLToSPIRV(const std::string &glsl_code,
                                          VkShaderStageFlagBits shader_stage) {
   glslang::InitializeProcess();
   glslang::TShader shader(VkShaderStageToEShLanguage(shader_stage));
+  shader.setEntryPoint("main");
+
   const char *shader_code = glsl_code.c_str();
   shader.setStrings(&shader_code, 1);
+
+  // Use macro to downgrade vulkan version to 1.1 if on macOS
+#ifdef __APPLE__
+  shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_1);
+  shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
+#else
+  shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
+  shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
+#endif
+
   auto resources = InitResources();
   if (!shader.parse(&resources, 100, false, EShMsgDefault)) {
     // print error message
@@ -210,5 +222,59 @@ std::vector<uint32_t> CompileGLSLToSPIRV(const std::string &glsl_code,
   glslang::FinalizeProcess();
   return spirv_code;
 }
+
+/*
+ * #include <glslang/Public/ShaderLang.h>
+#include <StandAlone/ResourceLimits.h>
+
+#include <vector>
+
+std::vector<uint32_t> compileGLSLToSPIRV(const std::string& glslCode,
+EShLanguage shaderType) {
+  // Initialize GLSLang
+  glslang::InitializeProcess();
+
+  // Create a new shader object
+  glslang::TShader shader(shaderType);
+  const char* shaderStrings[1] = { glslCode.c_str() };
+  shader.setStrings(shaderStrings, 1);
+
+  // Set some default options
+  int clientInputSemanticsVersion = 100; // maps to #define VULKAN 100 in GLSL
+  glslang::EShTargetClientVersion vulkanClientVersion =
+glslang::EShTargetVulkan_1_0; glslang::EShTargetLanguageVersion targetVersion =
+glslang::EShTargetSpv_1_0; shader.setEnvClient(glslang::EShClientVulkan,
+clientInputSemanticsVersion); shader.setEnvTarget(glslang::EShTargetSpv,
+targetVersion);
+
+  // Invert y for Vulkan
+  TBuiltInResource resources;
+  resources = glslang::DefaultTBuiltInResource;
+  EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
+  if (!shader.parse(&resources, 100, false, messages)) {
+    // Output error log
+    printf("%s\n", shader.getInfoLog());
+    printf("%s\n", shader.getInfoDebugLog());
+  }
+
+  // Perform final link of the shader
+  glslang::TProgram program;
+  program.addShader(&shader);
+  if (!program.link(messages)) {
+    // Output error log
+    printf("%s\n", program.getInfoLog());
+    printf("%s\n", program.getInfoDebugLog());
+  }
+
+  // Generate the SPIR-V binary
+  std::vector<uint32_t> spirvBinary;
+  glslang::GlslangToSpv(*program.getIntermediate(shaderType), spirvBinary);
+
+  // Clean up
+  glslang::FinalizeProcess();
+
+  return spirvBinary;
+}
+ */
 
 }  // namespace grassland::vulkan

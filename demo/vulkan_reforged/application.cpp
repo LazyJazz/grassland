@@ -42,17 +42,56 @@ void Application::OnRender() {
 }
 
 void Application::OnInit() {
-  // List all the builtin shaders, show the filename and get the compiled spv
-  // code.
-  std::vector<std::string> shader_names =
-      vulkan::built_in_shaders::ListAllBuiltInShaders();
-  for (const auto &shader_name : shader_names) {
-    spdlog::info(
-        "Shader name: {} Spv size: {}", shader_name,
-        vulkan::built_in_shaders::GetShaderCompiledSpv(shader_name).size() *
-            sizeof(uint32_t));
-  }
+  // Define a hello world triangle
+  struct Vertex {
+    glm::vec3 pos;
+    glm::vec3 color;
+  };
+
+  std::vector<Vertex> vertices = {
+      {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+      {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+      {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+  };
+
+  std::vector<uint16_t> indices = {0, 1, 2};
+
+  vertex_buffer_ = std::make_unique<vulkan::Buffer>(
+      core_.get(), vertices.size() * sizeof(Vertex),
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY);
+  vulkan::UploadBuffer(vertex_buffer_.get(), vertices.data(),
+                       vertices.size() * sizeof(Vertex));
+  index_buffer_ = std::make_unique<vulkan::Buffer>(
+      core_.get(), indices.size() * sizeof(uint16_t),
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY);
+  vulkan::UploadBuffer(index_buffer_.get(), indices.data(),
+                       indices.size() * sizeof(uint16_t));
+
+  // Output notice: What shader is creating
+
+  spdlog::info("Compiling vertex shader: {}", "hello_world.vert");
+
+  vertex_shader_ = std::make_unique<vulkan::ShaderModule>(
+      core_.get(),
+      vulkan::built_in_shaders::GetShaderCompiledSpv("hello_world.vert"));
+
+  spdlog::info("Compiling fragment shader: {}", "hello_world.frag");
+  fragment_shader_ = std::make_unique<vulkan::ShaderModule>(
+      core_.get(),
+      vulkan::built_in_shaders::GetShaderCompiledSpv("hello_world.frag"));
 }
 
 void Application::OnClose() {
+  // Release resources in reverse order of creation
+  vertex_shader_.reset();
+  fragment_shader_.reset();
+  index_buffer_.reset();
+  vertex_buffer_.reset();
+  core_.reset();
+  if (window_) {
+    glfwDestroyWindow(window_);
+    glfwTerminate();
+  }
 }

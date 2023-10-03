@@ -42,9 +42,6 @@ class Image {
   [[nodiscard]] VkSampleCountFlagBits SampleCount() const {
     return sample_count_;
   }
-  [[nodiscard]] VkImageLayout Layout() const {
-    return layout_;
-  }
 
  private:
   class Core *core_{};
@@ -56,8 +53,6 @@ class Image {
   VkImageUsageFlags usage_{};
   VkImageAspectFlags aspect_flags_{};
   VkSampleCountFlagBits sample_count_{};
-  VkImageLayout layout_{};
-  VkImageLayout rest_layout_{};
 
   VmaAllocation allocation_{};
 };

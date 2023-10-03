@@ -13,9 +13,7 @@ Image::Image(class Core *core,
       extent_(extent),
       usage_(usage),
       aspect_flags_(aspect_flags),
-      sample_count_(sample_count),
-      layout_(VK_IMAGE_LAYOUT_UNDEFINED),
-      rest_layout_(VK_IMAGE_LAYOUT_GENERAL) {
+      sample_count_(sample_count) {
   // Create an image with given parameters
   VkImageCreateInfo image_create_info{};
   image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

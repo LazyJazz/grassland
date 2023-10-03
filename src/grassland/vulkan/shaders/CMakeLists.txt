@@ -31,11 +31,16 @@ else ()
     endfunction()
 endif ()
 
-function(flatten_glsl_shader input_file output_file depends)
+
+file(GLOB_RECURSE SHADER_INCLUDE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.glsl
+)
+
+function(flatten_glsl_shader input_file output_file)
     add_custom_command(
             OUTPUT ${output_file}
             COMMAND ${Python3_EXECUTABLE} ${GRASSLAND_SOURCE_DIR}/scripts/flatten_glsl.py ${input_file} ${output_file}
-            DEPENDS ${input_file} ${depends}
+            DEPENDS ${input_file} ${SHADER_INCLUDE_FILES}
             COMMENT "Flattening GLSL shader: ${input_file} -> ${output_file}"
     )
 endfunction()
@@ -50,10 +55,6 @@ file(GLOB_RECURSE SHADER_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/*.rgen
         ${CMAKE_CURRENT_SOURCE_DIR}/*.rchit
         ${CMAKE_CURRENT_SOURCE_DIR}/*.rmiss
-)
-
-file(GLOB_RECURSE SHADER_INCLUDE_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/*.glsl
 )
 
 # Flatten all the shader files

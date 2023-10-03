@@ -1,3 +1,4 @@
+#pragma once
 #include "grassland/file/file.h"
 #include "grassland/vulkan/core/core.h"
 

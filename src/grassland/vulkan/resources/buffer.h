@@ -27,4 +27,14 @@ class Buffer {
   VkDeviceSize size_{};
   VmaAllocation allocation_{};
 };
+
+void CopyBuffer(VkCommandBuffer command_buffer,
+                Buffer *src_buffer,
+                Buffer *dst_buffer,
+                VkDeviceSize size);
+
+void UploadBuffer(Buffer *buffer, void *data, VkDeviceSize size);
+
+void DownloadBuffer(Buffer *buffer, void *data, VkDeviceSize size);
+
 }  // namespace grassland::vulkan

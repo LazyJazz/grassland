@@ -12,7 +12,7 @@ std::vector<uint32_t> GetShaderCompiledSpv(const std::string &name) {
   // Get shader code from built-in-shaders.inl
   std::string shader_code = GetShaderCode(name);
 
-  VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT;
+  VkShaderStageFlagBits shader_stage;
   // Get shader stage from name suffix, abseil::EndsWith is used here
   if (absl::EndsWith(name, ".vert")) {
     shader_stage = VK_SHADER_STAGE_VERTEX_BIT;
