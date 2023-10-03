@@ -1,5 +1,4 @@
-#include "grassland/vulkan/core/device.h"
-#include "grassland/vulkan/resources/image_reference.h"
+#include "grassland/vulkan/core/core.h"
 
 namespace grassland::vulkan {
 class Image {
@@ -7,10 +6,13 @@ class Image {
   Image(Core *core,
         VkFormat format,
         VkExtent2D extent,
-        VkImageUsageFlags usage,
-        VkImageAspectFlags aspect_flags,
-        VkSampleCountFlagBits sample_count,
-        VkImageLayout layout);
+        VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+                                  VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                                  VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                                  VK_IMAGE_USAGE_SAMPLED_BIT |
+                                  VK_IMAGE_USAGE_STORAGE_BIT,
+        VkImageAspectFlags aspect_flags = VK_IMAGE_ASPECT_COLOR_BIT,
+        VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
   ~Image();
 
   [[nodiscard]] VkImage Handle() const {
@@ -51,7 +53,19 @@ class Image {
   VkImageAspectFlags aspect_flags_{};
   VkSampleCountFlagBits sample_count_{};
   VkImageLayout layout_{};
+  VkImageLayout rest_layout_{};
 
   VmaAllocation allocation_{};
 };
+
+void TransitImageLayout(VkCommandBuffer command_buffer,
+                        VkImage image,
+                        VkImageLayout old_layout,
+                        VkImageLayout new_layout,
+                        VkPipelineStageFlags src_stage_flags,
+                        VkPipelineStageFlags dst_stage_flags,
+                        VkAccessFlags src_access_flags,
+                        VkAccessFlags dst_access_flags,
+                        VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT);
+
 }  // namespace grassland::vulkan

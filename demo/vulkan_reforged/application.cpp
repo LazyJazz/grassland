@@ -40,6 +40,8 @@ void Application::OnRender() {
 }
 
 void Application::OnInit() {
+  auto shader = vulkan::built_in_shaders::GetShader("example.vert");
+  printf("%s\n", shader.c_str());
 }
 
 void Application::OnClose() {

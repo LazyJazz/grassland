@@ -13,6 +13,7 @@
     "abseil",
     "gtest",
     "sfml",
-    "vulkan-memory-allocator"
+    "vulkan-memory-allocator",
+    "glslang"
   ]
 }
