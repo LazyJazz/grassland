@@ -3,7 +3,9 @@
 #include "grassland/vulkan/core/device.h"
 
 namespace grassland::vulkan {
-Queue::Queue(grassland::vulkan::Device *device, uint32_t queue_family_index)
+Queue::Queue(struct Device *device,
+             uint32_t queue_family_index,
+             uint32_t queue_index)
     : device_(device), queue_family_index_(queue_family_index) {
   if (device) {
     vkGetDeviceQueue(device->Handle(), queue_family_index, 0, &queue_);

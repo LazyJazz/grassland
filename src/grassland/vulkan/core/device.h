@@ -28,6 +28,7 @@ class Device {
   [[nodiscard]] class PhysicalDevice PhysicalDevice() const;
   [[nodiscard]] Queue GraphicsQueue() const;
   [[nodiscard]] Queue PresentQueue() const;
+  [[nodiscard]] Queue SingleTimeCommandQueue() const;
   [[nodiscard]] uint32_t GraphicsQueueFamilyIndex() const {
     return graphics_queue_.QueueFamilyIndex();
   }
@@ -67,6 +68,7 @@ class Device {
 
   VkDevice device_{};
   Queue graphics_queue_{};
+  Queue single_time_command_queue_{};
   Queue present_queue_{};
   DeviceProcedures device_procedures_{};
   VmaAllocator allocator_{};

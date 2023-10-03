@@ -19,11 +19,11 @@ void SingleTimeCommands(CommandBuffer *command_buffer,
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = command_buffers;
 
-  const auto graphics_queue =
-      command_buffer->CommandPool()->Device()->GraphicsQueue();
+  const auto single_time_command_queue =
+      command_buffer->CommandPool()->Device()->SingleTimeCommandQueue();
 
-  vkQueueSubmit(graphics_queue.Handle(), 1, &submit_info, nullptr);
-  graphics_queue.WaitIdle();
+  vkQueueSubmit(single_time_command_queue.Handle(), 1, &submit_info, nullptr);
+  single_time_command_queue.WaitIdle();
 }
 
 void SingleTimeCommands(CommandPool *command_pool,

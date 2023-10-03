@@ -3,7 +3,7 @@
 namespace grassland::vulkan {
 class Image {
  public:
-  Image(Core *core,
+  Image(class Core *core,
         VkFormat format,
         VkExtent2D extent,
         VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
@@ -14,6 +14,10 @@ class Image {
         VkImageAspectFlags aspect_flags = VK_IMAGE_ASPECT_COLOR_BIT,
         VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
   ~Image();
+
+  [[nodiscard]] class Core *Core() const {
+    return core_;
+  }
 
   [[nodiscard]] VkImage Handle() const {
     return image_;
@@ -43,7 +47,7 @@ class Image {
   }
 
  private:
-  Core *core_{};
+  class Core *core_{};
 
   VkImage image_{};
   VkImageView image_view_{};

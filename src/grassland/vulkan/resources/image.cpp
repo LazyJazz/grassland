@@ -2,7 +2,7 @@
 
 namespace grassland::vulkan {
 
-Image::Image(Core *core,
+Image::Image(class Core *core,
              VkFormat format,
              VkExtent2D extent,
              VkImageUsageFlags usage,

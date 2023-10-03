@@ -1,6 +1,8 @@
 #pragma once
 #include "grassland/vulkan/core/device.h"
 
+#include <map>
+
 namespace grassland::vulkan {
 
 namespace {
@@ -30,15 +32,21 @@ Device::Device(Instance *instance,
                const grassland::vulkan::DeviceSettings &settings)
     : instance_(instance),
       physical_device_(settings.physical_device),
-      device_(VK_NULL_HANDLE) {
+      device_(VK_NULL_HANDLE),
+      graphics_queue_(),
+      single_time_command_queue_(),
+      present_queue_() {
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  std::set<uint32_t> uniqueQueueFamilies = {
-      settings.physical_device.GraphicsFamilyIndex()};
+  std::map<uint32_t, uint32_t> uniqueQueueFamilies = {{
+
+      settings.physical_device.GraphicsFamilyIndex(), 2}};
 
   std::vector<const char *> device_extensions;
   if (settings.surface) {
-    uniqueQueueFamilies.insert(
-        settings.physical_device.PresentFamilyIndex(settings.surface));
+    auto present_family_index =
+        settings.physical_device.PresentFamilyIndex(settings.surface);
+    if (present_family_index != settings.physical_device.GraphicsFamilyIndex())
+      uniqueQueueFamilies[present_family_index] = 1;
     device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
   }
 #ifdef __APPLE__
@@ -112,13 +120,13 @@ Device::Device(Instance *instance,
   }
   spdlog::info("");
 
-  float queuePriority = 1.0f;
-  for (uint32_t queueFamily : uniqueQueueFamilies) {
+  float queuePriority[2] = {1.0f, 1.0f};
+  for (auto queueFamily : uniqueQueueFamilies) {
     VkDeviceQueueCreateInfo queueCreateInfo{};
     queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = queueFamily;
-    queueCreateInfo.queueCount = 1;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
+    queueCreateInfo.queueFamilyIndex = queueFamily.first;
+    queueCreateInfo.queueCount = queueFamily.second;
+    queueCreateInfo.pQueuePriorities = queuePriority;
     queueCreateInfos.push_back(queueCreateInfo);
   }
 
@@ -163,11 +171,14 @@ Device::Device(Instance *instance,
     LAND_ERROR("[Vulkan] failed to create logical device!");
   }
 
-  graphics_queue_ = Queue(this, settings.physical_device.GraphicsFamilyIndex());
+  graphics_queue_ =
+      Queue(this, settings.physical_device.GraphicsFamilyIndex(), 0);
+  single_time_command_queue_ =
+      Queue(this, settings.physical_device.GraphicsFamilyIndex(), 1);
 
   if (settings.surface) {
     present_queue_ = Queue(
-        this, settings.physical_device.PresentFamilyIndex(settings.surface));
+        this, settings.physical_device.PresentFamilyIndex(settings.surface), 0);
   }
 
   device_procedures_.Initialize(device_, settings.enable_raytracing);
@@ -199,6 +210,10 @@ Queue Device::PresentQueue() const {
 
 Queue Device::GraphicsQueue() const {
   return graphics_queue_;
+}
+
+Queue Device::SingleTimeCommandQueue() const {
+  return single_time_command_queue_;
 }
 
 void Device::NameObject(VkImage image, const std::string &name) {
