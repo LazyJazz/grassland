@@ -62,6 +62,8 @@ class Core {
   void BeginFrame();
   void EndFrame();
 
+  void RebuildSwapChain();
+
  private:
   CoreSettings settings_;
   std::unique_ptr<class Instance> instance_;
