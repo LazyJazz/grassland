@@ -62,6 +62,8 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 message("${VCPKG_INCLUDE_DIR}")
 
+include(scripts/pack_shaders.cmake)
+
 find_path(VCPKG_INCLUDE_DIR "glm/glm.hpp")
 message("Vcpkg include path: ${VCPKG_INCLUDE_DIR}")
 list(APPEND GRASSLAND_EXTERNAL_INCLUDE_DIRS ${VCPKG_INCLUDE_DIR})
