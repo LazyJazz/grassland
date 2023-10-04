@@ -36,6 +36,8 @@ class PhysicalDevice {
   [[nodiscard]] uint32_t GraphicsFamilyIndex() const;
   uint32_t PresentFamilyIndex(Surface *surface) const;
 
+  [[nodiscard]] VkSampleCountFlagBits GetMaxUsableSampleCount() const;
+
  private:
   VkPhysicalDevice physical_device_{};
 };

@@ -3,6 +3,12 @@
 
 using namespace grassland;
 
+struct UniformBufferObject {
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 proj;
+};
+
 class Application {
  public:
   Application(const std::string &name, int width, int height, bool headless);
@@ -19,6 +25,9 @@ class Application {
   std::unique_ptr<vulkan::Buffer> vertex_buffer_;
   std::unique_ptr<vulkan::Buffer> index_buffer_;
 
+  std::vector<std::unique_ptr<vulkan::Buffer>> uniform_buffers_;
+  std::unique_ptr<vulkan::Buffer> host_uniform_buffers_;
+
   std::unique_ptr<vulkan::ShaderModule> vertex_shader_;
   std::unique_ptr<vulkan::ShaderModule> fragment_shader_;
 
@@ -32,7 +41,12 @@ class Application {
   std::unique_ptr<vulkan::Pipeline> pipeline_;
 
   std::unique_ptr<vulkan::Image> framebuffer_image_;
+  std::unique_ptr<vulkan::Image> depth_image_;
+  std::unique_ptr<vulkan::Image> msaa_image_;
   std::unique_ptr<vulkan::Framebuffer> framebuffer_;
 
+  VkSampleCountFlagBits msaa_sample_count_{VK_SAMPLE_COUNT_1_BIT};
+
   bool application_should_close_{};
+  std::string name_{};
 };

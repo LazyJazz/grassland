@@ -1,10 +1,13 @@
 #include "application.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 Application::Application(const std::string &name,
                          int width,
                          int height,
-                         bool headless) {
+                         bool headless)
+    : name_(name) {
   if (!headless) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -34,6 +37,55 @@ void Application::Run() {
 }
 
 void Application::OnUpdate() {
+  static glm::mat4 model = glm::mat4(1.0f);
+
+  // Update uniform buffer
+  UniformBufferObject ubo{};
+  ubo.model = model;
+  ubo.view =
+      glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                  glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.proj = glm::perspective(
+      glm::radians(45.0f),
+      static_cast<float>(core_->SwapChain()->Extent().width) /
+          static_cast<float>(core_->SwapChain()->Extent().height),
+      0.1f, 10.0f);
+  ubo.proj[1][1] *= -1;
+
+  // Map to host buffer first, then copy to device buffer
+  void *data = host_uniform_buffers_->Map();
+  memcpy(data, &ubo, sizeof(ubo));
+  host_uniform_buffers_->Unmap();
+  core_->SingleTimeCommands([&](VkCommandBuffer cmd_buffer) {
+    vulkan::CopyBuffer(cmd_buffer, host_uniform_buffers_.get(),
+                       uniform_buffers_[core_->CurrentFrame()].get(),
+                       sizeof(ubo));
+  });
+
+  // Calculate time duration of last frame using static timestamp
+  static auto last_frame_time = std::chrono::high_resolution_clock::now();
+  auto current_frame_time = std::chrono::high_resolution_clock::now();
+  float delta_time = std::chrono::duration<float, std::chrono::seconds::period>(
+                         current_frame_time - last_frame_time)
+                         .count();
+  last_frame_time = current_frame_time;
+
+  // Update model matrix by rotate a little bit according to duration of last
+  // frame
+  model = glm::rotate(model, delta_time * glm::radians(90.0f),
+                      glm::vec3(0.0f, 0.0f, 1.0f));
+
+  // Set FPS on window title
+  static int frame_count = 0;
+  static float time_count = 0.0f;
+  frame_count++;
+  time_count += delta_time;
+  if (time_count >= 1.0f) {
+    glfwSetWindowTitle(window_,
+                       fmt::format("{} FPS: {}", name_, frame_count).c_str());
+    frame_count = 0;
+    time_count = 0.0f;
+  }
 }
 
 void Application::OnRender() {
@@ -48,7 +100,7 @@ void Application::OnRender() {
   render_pass_begin_info.renderArea.offset = {0, 0};
   render_pass_begin_info.renderArea.extent = core_->SwapChain()->Extent();
   std::array<VkClearValue, 1> clear_values{};
-  clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+  clear_values[0].color = {0.6f, 0.7f, 0.8f, 1.0f};
   render_pass_begin_info.clearValueCount =
       static_cast<uint32_t>(clear_values.size());
   render_pass_begin_info.pClearValues = clear_values.data();
@@ -91,7 +143,7 @@ void Application::OnRender() {
   vkCmdSetScissor(command_buffer->Handle(), 0, 1, &scissor);
 
   // Draw
-  vkCmdDrawIndexed(command_buffer->Handle(), 3, 1, 0, 0, 0);
+  vkCmdDrawIndexed(command_buffer->Handle(), 36, 1, 0, 0, 0);
 
   // End render pass
   vkCmdEndRenderPass(command_buffer->Handle());
@@ -137,12 +189,20 @@ void Application::OnInit() {
   };
 
   std::vector<Vertex> vertices = {
-      {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-      {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-      {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+      {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, 0.0f}},
+      {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+      {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
+      {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+      {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+      {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
+      {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+      {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}},
   };
 
-  std::vector<uint16_t> indices = {0, 1, 2};
+  std::vector<uint16_t> indices = {
+      0, 1, 2, 2, 3, 0, 1, 5, 6, 6, 2, 1, 7, 6, 5, 5, 4, 7,
+      4, 0, 3, 3, 7, 4, 4, 5, 1, 1, 0, 4, 3, 2, 6, 6, 7, 3,
+  };
 
   vertex_buffer_ = std::make_unique<vulkan::Buffer>(
       core_.get(), vertices.size() * sizeof(Vertex),
@@ -157,24 +217,61 @@ void Application::OnInit() {
   vulkan::UploadBuffer(index_buffer_.get(), indices.data(),
                        indices.size() * sizeof(uint16_t));
 
-  spdlog::info("Compiling vertex shader: {}", "hello_triangle.vert");
+  // Create uniform buffers
+  uniform_buffers_.resize(core_->MaxFramesInFlight());
+  for (size_t i = 0; i < core_->MaxFramesInFlight(); i++) {
+    uniform_buffers_[i] = std::make_unique<vulkan::Buffer>(
+        core_.get(), sizeof(UniformBufferObject),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VMA_MEMORY_USAGE_GPU_ONLY);
+  }
+
+  // Create host uniform buffers
+  host_uniform_buffers_ = std::make_unique<vulkan::Buffer>(
+      core_.get(), sizeof(UniformBufferObject),
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VMA_MEMORY_USAGE_CPU_ONLY);
+
+  spdlog::info("Compiling vertex shader: {}", "hello_cube.vert");
   vertex_shader_ = std::make_unique<vulkan::ShaderModule>(
       core_.get(),
-      vulkan::built_in_shaders::GetShaderCompiledSpv("hello_triangle.vert"));
+      vulkan::built_in_shaders::GetShaderCompiledSpv("hello_cube.vert"));
 
-  spdlog::info("Compiling fragment shader: {}", "hello_triangle.frag");
+  spdlog::info("Compiling fragment shader: {}", "hello_cube.frag");
   fragment_shader_ = std::make_unique<vulkan::ShaderModule>(
       core_.get(),
-      vulkan::built_in_shaders::GetShaderCompiledSpv("hello_triangle.frag"));
+      vulkan::built_in_shaders::GetShaderCompiledSpv("hello_cube.frag"));
 
   // Create descriptor pool and sets
   descriptor_pool_ = std::make_unique<vulkan::DescriptorPool>(core_.get());
   descriptor_set_layout_ = std::make_unique<vulkan::DescriptorSetLayout>(
-      core_.get(), std::vector<VkDescriptorSetLayoutBinding>{});
+      core_.get(),
+      std::vector<VkDescriptorSetLayoutBinding>{VkDescriptorSetLayoutBinding{
+          0,
+          VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          1,
+          VK_SHADER_STAGE_VERTEX_BIT,
+          nullptr,
+      }});
   descriptor_sets_.resize(core_->MaxFramesInFlight());
   for (size_t i = 0; i < core_->MaxFramesInFlight(); i++) {
     descriptor_sets_[i] = std::make_unique<vulkan::DescriptorSet>(
         core_.get(), descriptor_pool_.get(), descriptor_set_layout_.get());
+    // Update descriptor set
+    VkDescriptorBufferInfo buffer_info{};
+    buffer_info.buffer = uniform_buffers_[i]->Handle();
+    buffer_info.offset = 0;
+    buffer_info.range = sizeof(UniformBufferObject);
+    VkWriteDescriptorSet descriptor_write{};
+    descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor_write.dstSet = descriptor_sets_[i]->Handle();
+    descriptor_write.dstBinding = 0;
+    descriptor_write.dstArrayElement = 0;
+    descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptor_write.descriptorCount = 1;
+    descriptor_write.pBufferInfo = &buffer_info;
+    vkUpdateDescriptorSets(core_->Device()->Handle(), 1, &descriptor_write, 0,
+                           nullptr);
   }
 
   // Create render pass, in C++17 we can use std::vector::data() directly
@@ -219,7 +316,7 @@ void Application::OnInit() {
   pipeline_settings.AddInputAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
                                       offsetof(Vertex, color));
   pipeline_settings.SetPrimitiveTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-  pipeline_settings.SetCullMode(VK_CULL_MODE_NONE);
+  pipeline_settings.SetCullMode(VK_CULL_MODE_BACK_BIT);
 
   pipeline_ =
       std::make_unique<vulkan::Pipeline>(core_.get(), pipeline_settings);
@@ -228,6 +325,7 @@ void Application::OnInit() {
       core_.get(), core_->SwapChain()->Format(), core_->SwapChain()->Extent(),
       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
       VK_IMAGE_ASPECT_COLOR_BIT, VK_SAMPLE_COUNT_1_BIT);
+
   framebuffer_ = std::make_unique<vulkan::Framebuffer>(
       core_.get(), core_->SwapChain()->Extent(), render_pass_->Handle(),
       std::vector<VkImageView>{framebuffer_image_->ImageView()});
@@ -246,6 +344,8 @@ void Application::OnClose() {
   descriptor_pool_.reset();
   vertex_shader_.reset();
   fragment_shader_.reset();
+  host_uniform_buffers_.reset();
+  uniform_buffers_.clear();
   index_buffer_.reset();
   vertex_buffer_.reset();
   core_.reset();

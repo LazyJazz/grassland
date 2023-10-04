@@ -35,4 +35,8 @@ class Core *Framebuffer::Core() const {
   return core_;
 }
 
+VkExtent2D Framebuffer::Extent() const {
+  return extent_;
+}
+
 }  // namespace grassland::vulkan
