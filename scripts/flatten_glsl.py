@@ -25,12 +25,18 @@ def flatten_shader(source_path):
 
 
 if __name__ == "__main__":
+    # Show current working directory
+    print("Current working directory: " + os.getcwd())
     if len(sys.argv) != 3:
         print("Usage: python flatten_shader.py <input_file> <output_file>")
         sys.exit(1)
 
     input_file = sys.argv[1]
     output_file = sys.argv[2]
+
+    # Print input and output file
+    print("Input file: " + input_file)
+    print("Output file: " + output_file)
 
     flattened_shader = flatten_shader(input_file)
 
