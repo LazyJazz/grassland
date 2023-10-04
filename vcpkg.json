@@ -11,6 +11,9 @@
     "spdlog",
     "imgui",
     "abseil",
-    "gtest"
+    "gtest",
+    "sfml",
+    "vulkan-memory-allocator",
+    "glslang"
   ]
 }

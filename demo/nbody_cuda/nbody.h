@@ -35,15 +35,17 @@ class NBody {
   glm::vec3 RandomOnSphere();
   glm::vec3 RandomInSphere();
 
-  std::unique_ptr<vulkan::framework::Core> core_;
-  std::unique_ptr<vulkan::framework::RenderNode> render_node_;
-  std::unique_ptr<vulkan::framework::DynamicBuffer<GlobalUniformObject>>
+  std::unique_ptr<vulkan_legacy::framework::Core> core_;
+  std::unique_ptr<vulkan_legacy::framework::RenderNode> render_node_;
+  std::unique_ptr<vulkan_legacy::framework::DynamicBuffer<GlobalUniformObject>>
       global_uniform_object_;
-  std::unique_ptr<vulkan::framework::DynamicBuffer<glm::vec4>>
+  std::unique_ptr<vulkan_legacy::framework::DynamicBuffer<glm::vec4>>
       particle_positions_;
-  std::unique_ptr<vulkan::framework::StaticBuffer<glm::vec2>> vertex_buffer_;
-  std::unique_ptr<vulkan::framework::StaticBuffer<uint32_t>> index_buffer_;
-  std::unique_ptr<vulkan::framework::TextureImage> frame_buffer_;
+  std::unique_ptr<vulkan_legacy::framework::StaticBuffer<glm::vec2>>
+      vertex_buffer_;
+  std::unique_ptr<vulkan_legacy::framework::StaticBuffer<uint32_t>>
+      index_buffer_;
+  std::unique_ptr<vulkan_legacy::framework::TextureImage> frame_buffer_;
   std::vector<glm::vec4> positions_;
   std::vector<glm::vec4> velocities_;
   int n_particles_{4096};

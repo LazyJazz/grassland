@@ -6,29 +6,30 @@ FluidLarge::FluidLarge(const char *title,
                        int width,
                        int height,
                        const PhysicSettings &physic_settings) {
-  vulkan::framework::CoreSettings core_settings;
+  vulkan_legacy::framework::CoreSettings core_settings;
   core_settings.window_width = width;
   core_settings.window_height = height;
   core_settings.window_title = title;
-  core_ = std::make_unique<vulkan::framework::Core>(core_settings);
-  color_frame_ = std::make_unique<vulkan::framework::TextureImage>(
+  core_ = std::make_unique<vulkan_legacy::framework::Core>(core_settings);
+  color_frame_ = std::make_unique<vulkan_legacy::framework::TextureImage>(
       core_.get(), width, height, VK_FORMAT_B8G8R8A8_UNORM);
-  depth_frame_ = std::make_unique<vulkan::framework::TextureImage>(
+  depth_frame_ = std::make_unique<vulkan_legacy::framework::TextureImage>(
       core_.get(), width, height, VK_FORMAT_D32_SFLOAT,
       VK_IMAGE_USAGE_TRANSFER_DST_BIT |
           VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-  stencil_frame_ = std::make_unique<vulkan::framework::TextureImage>(
+  stencil_frame_ = std::make_unique<vulkan_legacy::framework::TextureImage>(
       core_.get(), width, height, VK_FORMAT_R32_UINT);
 
-  global_uniform_buffer_ =
-      std::make_unique<vulkan::framework::StaticBuffer<GlobalUniformObject>>(
-          core_.get(), 1);
+  global_uniform_buffer_ = std::make_unique<
+      vulkan_legacy::framework::StaticBuffer<GlobalUniformObject>>(core_.get(),
+                                                                   1);
   instance_info_buffer_ =
-      std::make_unique<vulkan::framework::StaticBuffer<InstanceInfo>>(
+      std::make_unique<vulkan_legacy::framework::StaticBuffer<InstanceInfo>>(
           core_.get(), physic_settings.num_particle);
   instance_infos_.resize(physic_settings.num_particle);
 
-  render_node_ = std::make_unique<vulkan::framework::RenderNode>(core_.get());
+  render_node_ =
+      std::make_unique<vulkan_legacy::framework::RenderNode>(core_.get());
   render_node_->AddShader("particle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
   render_node_->AddShader("particle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
   render_node_->VertexInput({VK_FORMAT_R32G32_SFLOAT});
@@ -58,10 +59,12 @@ FluidLarge::FluidLarge(const char *title,
       {{-1.0f, -1.0f}}, {{-1.0f, 1.0f}}, {{1.0f, -1.0f}}, {{1.0f, 1.0f}}};
   std::vector<uint32_t> indices = {0, 1, 2, 1, 2, 3};
 
-  vertex_buffer_ = std::make_unique<vulkan::framework::StaticBuffer<Vertex>>(
-      core_.get(), vertices.size());
-  index_buffer_ = std::make_unique<vulkan::framework::StaticBuffer<uint32_t>>(
-      core_.get(), indices.size());
+  vertex_buffer_ =
+      std::make_unique<vulkan_legacy::framework::StaticBuffer<Vertex>>(
+          core_.get(), vertices.size());
+  index_buffer_ =
+      std::make_unique<vulkan_legacy::framework::StaticBuffer<uint32_t>>(
+          core_.get(), indices.size());
   vertex_buffer_->Upload(vertices.data(), vertices.size() * sizeof(Vertex));
   index_buffer_->Upload(indices.data(), indices.size() * sizeof(uint32_t));
 
