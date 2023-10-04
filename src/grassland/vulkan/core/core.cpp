@@ -112,9 +112,7 @@ void Core::BeginFrame() {
         &image_index_, image_available_semaphore, VK_NULL_HANDLE);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
       // Recreate swap chain
-      swap_chain_.reset();
-      swap_chain_ =
-          std::make_unique<class SwapChain>(device_.get(), surface_.get());
+      RebuildSwapChain();
       LAND_INFO("Swap chain out of date");
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
       LAND_ERROR("Failed to acquire swap chain image");
@@ -206,9 +204,7 @@ void Core::EndFrame() {
         vkQueuePresentKHR(device_->PresentQueue().Handle(), &present_info);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
       // Recreate swap chain
-      swap_chain_.reset();
-      swap_chain_ =
-          std::make_unique<class SwapChain>(device_.get(), surface_.get());
+      RebuildSwapChain();
       LAND_INFO("Swap chain out of date");
     } else if (result != VK_SUCCESS) {
       LAND_ERROR("Failed to present swap chain image");
@@ -216,5 +212,11 @@ void Core::EndFrame() {
   }
 
   current_frame_ = (current_frame_ + 1) % settings_.max_frames_in_flight;
+}
+
+void Core::RebuildSwapChain() {
+  swap_chain_.reset();
+  swap_chain_ =
+      std::make_unique<class SwapChain>(device_.get(), surface_.get());
 }
 }  // namespace grassland::vulkan
