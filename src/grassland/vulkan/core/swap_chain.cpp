@@ -146,7 +146,7 @@ void SwapChain::CreateSwapChain() {
   createInfo.oldSwapchain = VK_NULL_HANDLE;
   if (vkCreateSwapchainKHR(device_->Handle(), &createInfo, nullptr,
                            &swap_chain_) != VK_SUCCESS) {
-    LAND_ERROR("Vulkan failed to create swap chain!");
+    LAND_ERROR("[Vulkan] failed to create swap chain!");
   }
 
   extent_ = extent;
@@ -179,7 +179,7 @@ void SwapChain::CreateImageViews() {
     createInfo.subresourceRange.layerCount = 1;
     if (vkCreateImageView(device_->Handle(), &createInfo, nullptr,
                           &image_views_[i]) != VK_SUCCESS) {
-      LAND_ERROR("failed to create image views!");
+      LAND_ERROR("[Vulkan] failed to create image views!");
     }
   }
 }

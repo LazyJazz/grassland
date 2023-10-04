@@ -45,6 +45,7 @@ void RenderPass::ConstructorCommon(
   subpass.pColorAttachments = attachment_references.data();
   subpass.pDepthStencilAttachment =
       &attachment_parameters.GetDepthAttachmentReference();
+
   VkSubpassDependency dependency{};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
   dependency.dstSubpass = 0;

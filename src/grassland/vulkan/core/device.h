@@ -43,6 +43,8 @@ class Device {
     return allocator_;
   }
 
+  void WaitIdle() const;
+
   void NameObject(VkImage image, const std::string &name);
   void NameObject(VkImageView image_view, const std::string &name);
   void NameObject(VkBuffer buffer, const std::string &name);

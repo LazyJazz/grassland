@@ -54,6 +54,7 @@ Device::Device(Instance *instance,
 #endif
   device_extensions.push_back(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
   device_extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+  // device_extensions.push_back(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
 
   VkPhysicalDeviceRayQueryFeaturesKHR physical_device_ray_query_features{};
   VkPhysicalDeviceBufferDeviceAddressFeaturesEXT
@@ -62,11 +63,14 @@ Device::Device(Instance *instance,
       physical_device_ray_tracing_pipeline_features{};
   VkPhysicalDeviceAccelerationStructureFeaturesKHR
       physical_device_acceleration_structure_features{};
+  VkPhysicalDeviceSynchronization2FeaturesKHR
+      physical_device_synchronization2_features{};
+  physical_device_synchronization2_features.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
+  physical_device_synchronization2_features.synchronization2 = VK_TRUE;
   physical_device_ray_query_features.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
   physical_device_ray_query_features.rayQuery = VK_TRUE;
-  physical_device_ray_tracing_pipeline_features.pNext =
-      &physical_device_ray_query_features;
   physical_device_ray_tracing_pipeline_features.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
   physical_device_ray_tracing_pipeline_features.rayTracingPipeline = VK_TRUE;
@@ -74,13 +78,9 @@ Device::Device(Instance *instance,
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
   physical_device_acceleration_structure_features.accelerationStructure =
       VK_TRUE;
-  physical_device_acceleration_structure_features.pNext =
-      &physical_device_ray_tracing_pipeline_features;
   physical_device_buffer_device_address_features.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
   physical_device_buffer_device_address_features.bufferDeviceAddress = VK_TRUE;
-  physical_device_buffer_device_address_features.pNext =
-      &physical_device_acceleration_structure_features;
 
   void *p_extra_device_features = nullptr;
 #define ADD_DEVICE_FEATURE(pointer, feature) \
@@ -92,6 +92,8 @@ Device::Device(Instance *instance,
   device_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
   ADD_DEVICE_FEATURE(p_extra_device_features,
                      physical_device_buffer_device_address_features);
+  //  ADD_DEVICE_FEATURE(p_extra_device_features,
+  //                     physical_device_synchronization2_features);
   if (settings.enable_raytracing) {
     device_extensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
     device_extensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
@@ -214,6 +216,10 @@ Queue Device::GraphicsQueue() const {
 
 Queue Device::SingleTimeCommandQueue() const {
   return single_time_command_queue_;
+}
+
+void Device::WaitIdle() const {
+  vkDeviceWaitIdle(device_);
 }
 
 void Device::NameObject(VkImage image, const std::string &name) {

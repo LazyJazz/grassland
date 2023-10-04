@@ -26,5 +26,13 @@ class Application {
   std::unique_ptr<vulkan::DescriptorPool> descriptor_pool_;
   std::vector<std::unique_ptr<vulkan::DescriptorSet>> descriptor_sets_;
 
+  std::unique_ptr<vulkan::RenderPass> render_pass_;
+  std::unique_ptr<vulkan::PipelineLayout> pipeline_layout_;
+
+  std::unique_ptr<vulkan::Pipeline> pipeline_;
+
+  std::unique_ptr<vulkan::Image> framebuffer_image_;
+  std::unique_ptr<vulkan::Framebuffer> framebuffer_;
+
   bool application_should_close_{};
 };
