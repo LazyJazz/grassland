@@ -20,7 +20,7 @@ struct DescriptorPoolSettings {
   uint32_t num_storage_buffers_dynamic{1024};
   uint32_t num_input_attachments{1024};
   uint32_t num_samplers{1024};
-  uint32_t num_acceleration_structures{1024};
+  uint32_t num_acceleration_structures{0};
 };
 
 class DescriptorPool {
