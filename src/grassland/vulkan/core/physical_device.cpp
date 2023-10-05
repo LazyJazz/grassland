@@ -54,6 +54,17 @@ std::vector<VkExtensionProperties> PhysicalDevice::GetDeviceExtensions() const {
   return extensions;
 }
 
+std::vector<VkQueueFamilyProperties> PhysicalDevice::GetQueueFamilyProperties()
+    const {
+  uint32_t queue_family_count = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(physical_device_,
+                                           &queue_family_count, nullptr);
+  std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      physical_device_, &queue_family_count, queue_families.data());
+  return queue_families;
+}
+
 bool PhysicalDevice::IsExtensionSupported(const char *extension_name) const {
   std::vector<VkExtensionProperties> extensions = GetDeviceExtensions();
   for (const auto &extension : extensions) {
@@ -133,12 +144,8 @@ uint64_t PhysicalDevice::Evaluate() const {
 
 uint32_t PhysicalDevice::GraphicsFamilyIndex() const {
   uint32_t graphics_family_index = 0;
-  uint32_t queue_family_count = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(physical_device_,
-                                           &queue_family_count, nullptr);
-  std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
-  vkGetPhysicalDeviceQueueFamilyProperties(
-      physical_device_, &queue_family_count, queue_families.data());
+  std::vector<VkQueueFamilyProperties> queue_families =
+      GetQueueFamilyProperties();
   for (const auto &queue_family : queue_families) {
     if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
       return graphics_family_index;
@@ -151,12 +158,8 @@ uint32_t PhysicalDevice::GraphicsFamilyIndex() const {
 uint32_t PhysicalDevice::PresentFamilyIndex(
     grassland::vulkan::Surface *surface) const {
   uint32_t present_family_index = 0;
-  uint32_t queue_family_count = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(physical_device_,
-                                           &queue_family_count, nullptr);
-  std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
-  vkGetPhysicalDeviceQueueFamilyProperties(
-      physical_device_, &queue_family_count, queue_families.data());
+  std::vector<VkQueueFamilyProperties> queue_families =
+      GetQueueFamilyProperties();
   for (const auto &queue_family : queue_families) {
     VkBool32 present_support = false;
     vkGetPhysicalDeviceSurfaceSupportKHR(physical_device_, present_family_index,

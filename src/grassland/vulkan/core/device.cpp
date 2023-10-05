@@ -37,9 +37,12 @@ Device::Device(Instance *instance,
       single_time_command_queue_(),
       present_queue_() {
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  std::map<uint32_t, uint32_t> uniqueQueueFamilies = {{
-
-      settings.physical_device.GraphicsFamilyIndex(), 2}};
+  std::map<uint32_t, uint32_t> uniqueQueueFamilies = {
+      {settings.physical_device.GraphicsFamilyIndex(),
+       std::min(2u, settings.physical_device
+                        .GetQueueFamilyProperties()[settings.physical_device
+                                                        .GraphicsFamilyIndex()]
+                        .queueCount)}};
 
   std::vector<const char *> device_extensions;
   if (settings.surface) {
@@ -175,8 +178,9 @@ Device::Device(Instance *instance,
 
   graphics_queue_ =
       Queue(this, settings.physical_device.GraphicsFamilyIndex(), 0);
-  single_time_command_queue_ =
-      Queue(this, settings.physical_device.GraphicsFamilyIndex(), 1);
+  single_time_command_queue_ = Queue(
+      this, settings.physical_device.GraphicsFamilyIndex(),
+      uniqueQueueFamilies[settings.physical_device.GraphicsFamilyIndex()] - 1);
 
   if (settings.surface) {
     present_queue_ = Queue(

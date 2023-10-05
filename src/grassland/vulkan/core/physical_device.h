@@ -27,6 +27,9 @@ class PhysicalDevice {
   [[nodiscard]] uint64_t GetDeviceLocalMemorySize() const;
   [[nodiscard]] std::vector<VkExtensionProperties> GetDeviceExtensions() const;
 
+  [[nodiscard]] std::vector<VkQueueFamilyProperties> GetQueueFamilyProperties()
+      const;
+
   bool IsExtensionSupported(const char *extension_name) const;
   [[nodiscard]] bool SupportGeometryShader() const;
   [[nodiscard]] bool SupportRayTracing() const;
