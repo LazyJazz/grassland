@@ -283,11 +283,11 @@ void triangulation(std::vector<glm::vec2> &triangles,
         Triangle{outline[prev_index], outline[mid_index], outline[next_index]};
     if (result_area > 0) {
       triangles.emplace_back(float(triangle.v0.x) * inv_size,
-                             float(triangle.v0.y) * inv_size + 0.125f);
+                             float(triangle.v0.y) * inv_size);
       triangles.emplace_back(float(triangle.v1.x) * inv_size,
-                             float(triangle.v1.y) * inv_size + 0.125f);
+                             float(triangle.v1.y) * inv_size);
       triangles.emplace_back(float(triangle.v2.x) * inv_size,
-                             float(triangle.v2.y) * inv_size + 0.125f);
+                             float(triangle.v2.y) * inv_size);
     }
     for (int i = mid_index; i < sz - 1; i++) {
       outline[i] = outline[i + 1];
