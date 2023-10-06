@@ -9,14 +9,14 @@ Mesh::Mesh() {
 
 Mesh::Mesh(const std::vector<glm::vec2> &vertices,
            const std::vector<uint32_t> &indices,
-           float advection) {
+           float advance) {
   this->vertices = vertices;
   this->indices = indices;
-  this->advection = advection;
+  this->advance = advance;
 }
 
 Mesh::Mesh(const std::vector<glm::vec2> &triangle_vertices, float advection) {
-  this->advection = advection;
+  this->advance = advection;
 
   class Vec2Eq {
    public:
@@ -57,11 +57,11 @@ const std::vector<uint32_t> &Mesh::GetIndices() const {
   return indices;
 }
 
-float Mesh::GetAdvection() const {
-  return advection;
+float Mesh::GetAdvance() const {
+  return advance;
 }
 
-float &Mesh::GetAdvection() {
-  return advection;
+float &Mesh::GetAdvance() {
+  return advance;
 }
 }  // namespace grassland::font
