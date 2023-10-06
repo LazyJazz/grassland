@@ -459,10 +459,10 @@ Mesh Factory::GetString(const std::wstring &wide_str) {
       mesh.indices.push_back(index + mesh.vertices.size());
     }
     for (auto vertex : char_mesh.vertices) {
-      vertex.x += mesh.advection;
+      vertex.x += mesh.advance;
       mesh.vertices.push_back(vertex);
     }
-    mesh.advection += char_mesh.advection;
+    mesh.advance += char_mesh.advance;
   }
 
   if (mesh.indices.empty()) {
