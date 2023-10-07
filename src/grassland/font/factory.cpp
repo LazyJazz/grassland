@@ -298,22 +298,97 @@ void triangulation(std::vector<glm::vec2> &triangles,
 }  // namespace
 
 namespace grassland::font {
-Factory::Factory(const char *font_file_path) {
+Factory::Factory(const char *font_file_path, const char *font_cache_path) {
   FTCall(FT_Init_FreeType(&library_));
   FTCall(FT_New_Face(library_, font_file_path, 0, &face_));
   FTCall(FT_Set_Pixel_Sizes(face_, 0, size_scale));
+
+  if (font_cache_path) {
+    // Open fstream for both read and write in binary, create if file not
+    // existed, retain file data if existed
+
+    // Record start loading time
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    cache_file_.open(font_cache_path, std::ios::in | std::ios::out |
+                                          std::ios::binary | std::ios::ate);
+
+    if (!cache_file_.is_open()) {
+      // Open in turn mode
+      cache_file_.open(font_cache_path,
+                       std::ios::out | std::ios::binary | std::ios::trunc);
+      if (!cache_file_.is_open()) {
+        LAND_ERROR("Failed to open font cache file.");
+      }
+      return;
+    }
+
+    // Get size of file
+    cache_file_.seekg(0, std::ios::end);
+    size_t file_size = cache_file_.tellg();
+    uint32_t number_loaded_fonts = 0;
+
+    // Print file size
+    LAND_INFO("Font cache file size: {}", file_size);
+
+    if (file_size >= sizeof(uint32_t)) {
+      // Read number of loaded fonts
+      cache_file_.seekg(0, std::ios::beg);
+      cache_file_.read(reinterpret_cast<char *>(&number_loaded_fonts),
+                       sizeof(uint32_t));
+
+      // Load loaded fonts
+      for (uint32_t i = 0; i < number_loaded_fonts; i++) {
+        // Read offset of loaded font
+        size_t char_offset = cache_file_.tellg();
+        cache_offset_.push_back(char_offset);
+
+        uint32_t c32_char = 0;
+        cache_file_.read(reinterpret_cast<char *>(&c32_char), sizeof(uint32_t));
+        Char_T c = c32_char;
+        Mesh char_mesh;
+        // Read advance
+        cache_file_.read(reinterpret_cast<char *>(&char_mesh.advance),
+                         sizeof(float));
+        // Read vertices
+        uint32_t vertices_size = 0;
+        cache_file_.read(reinterpret_cast<char *>(&vertices_size),
+                         sizeof(uint32_t));
+        char_mesh.vertices.resize(vertices_size);
+        cache_file_.read(reinterpret_cast<char *>(char_mesh.vertices.data()),
+                         sizeof(glm::vec2) * vertices_size);
+        // Read indices
+        uint32_t indices_size = 0;
+        cache_file_.read(reinterpret_cast<char *>(&indices_size),
+                         sizeof(uint32_t));
+        char_mesh.indices.resize(indices_size);
+        cache_file_.read(reinterpret_cast<char *>(char_mesh.indices.data()),
+                         sizeof(uint32_t) * indices_size);
+        loaded_fonts_.insert(std::make_pair(c, char_mesh));
+      }
+    }
+
+    // Output duration
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        end_time - start_time);
+    LAND_INFO("Font cache file loaded in {} ms.", duration.count());
+  }
 }
 
 Factory::~Factory() {
   FTCall(FT_Done_Face(face_));
   FTCall(FT_Done_FreeType(library_));
+  if (cache_file_.is_open()) {
+    cache_file_.close();
+  }
 }
 
 const Mesh &Factory::GetChar(Char_T c) {
-  if (!loaded_fonts.count(c)) {
+  if (!loaded_fonts_.count(c)) {
     LoadChar(c);
   }
-  return loaded_fonts.at(c);
+  return loaded_fonts_.at(c);
 }
 
 void Factory::LoadChar(Char_T c) {
@@ -447,8 +522,37 @@ void Factory::LoadChar(Char_T c) {
   for (auto i : out_most_set) {
     triangulation(vertices, outlines.outlines[i]);
   }
-  loaded_fonts.insert(std::make_pair(
+  loaded_fonts_.insert(std::make_pair(
       c, Mesh(vertices, float(face_->glyph->advance.x) * inv_size)));
+
+  if (cache_file_.is_open()) {
+    cache_file_.seekp(0, std::ios::beg);
+    uint32_t loaded_fonts_size = loaded_fonts_.size();
+    cache_file_.write(reinterpret_cast<char *>(&loaded_fonts_size),
+                      sizeof(uint32_t));
+    cache_file_.seekp(0, std::ios::end);
+    size_t char_offset = cache_file_.tellp();
+    cache_offset_.push_back(char_offset);
+    uint32_t c32_char = c;
+    cache_file_.write(reinterpret_cast<char *>(&c32_char), sizeof(uint32_t));
+    auto &char_mesh = loaded_fonts_.at(c);
+    // Advance
+    cache_file_.write(reinterpret_cast<char *>(&char_mesh.advance),
+                      sizeof(float));
+    // Vertices
+    uint32_t vertices_size = char_mesh.vertices.size();
+    cache_file_.write(reinterpret_cast<char *>(&vertices_size),
+                      sizeof(uint32_t));
+    cache_file_.write(reinterpret_cast<char *>(char_mesh.vertices.data()),
+                      sizeof(glm::vec2) * vertices_size);
+    // Indices
+    uint32_t indices_size = char_mesh.indices.size();
+    cache_file_.write(reinterpret_cast<char *>(&indices_size),
+                      sizeof(uint32_t));
+    cache_file_.write(reinterpret_cast<char *>(char_mesh.indices.data()),
+                      sizeof(uint32_t) * indices_size);
+    cache_file_.flush();
+  }
 }
 
 Mesh Factory::GetString(const std::wstring &wide_str) {
