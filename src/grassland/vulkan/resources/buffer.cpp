@@ -61,7 +61,7 @@ void CopyBuffer(VkCommandBuffer command_buffer,
                   &copy_region);
 }
 
-void UploadBuffer(Buffer *buffer, void *data, VkDeviceSize size) {
+void UploadBuffer(Buffer *buffer, const void *data, VkDeviceSize size) {
   Buffer staging_buffer(buffer->Core(), size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                         VMA_MEMORY_USAGE_CPU_ONLY);
   void *staging_data = staging_buffer.Map();

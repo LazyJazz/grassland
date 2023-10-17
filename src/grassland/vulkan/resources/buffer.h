@@ -33,7 +33,7 @@ void CopyBuffer(VkCommandBuffer command_buffer,
                 Buffer *dst_buffer,
                 VkDeviceSize size);
 
-void UploadBuffer(Buffer *buffer, void *data, VkDeviceSize size);
+void UploadBuffer(Buffer *buffer, const void *data, VkDeviceSize size);
 
 void DownloadBuffer(Buffer *buffer, void *data, VkDeviceSize size);
 
