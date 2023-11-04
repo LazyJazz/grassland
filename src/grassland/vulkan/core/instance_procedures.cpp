@@ -17,10 +17,13 @@ FuncTy GetProcedure(VkInstance instance, const char *function_name) {
   function_name = grassland::vulkan::GetProcedure<PFN_##function_name>( \
       instance, #function_name)
 
-void InstanceProcedures::Initialize(VkInstance instance) {
-  GET_PROCEDURE(instance, vkCreateDebugUtilsMessengerEXT);
-  GET_PROCEDURE(instance, vkDestroyDebugUtilsMessengerEXT);
-  GET_PROCEDURE(instance, vkSetDebugUtilsObjectNameEXT);
+void InstanceProcedures::Initialize(VkInstance instance,
+                                    bool enabled_validation_layers) {
+  if (enabled_validation_layers) {
+    GET_PROCEDURE(instance, vkCreateDebugUtilsMessengerEXT);
+    GET_PROCEDURE(instance, vkDestroyDebugUtilsMessengerEXT);
+    GET_PROCEDURE(instance, vkSetDebugUtilsObjectNameEXT);
+  }
 }
 
 }  // namespace grassland::vulkan
