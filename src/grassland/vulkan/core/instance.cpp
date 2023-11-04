@@ -162,7 +162,8 @@ Instance::Instance(InstanceSettings settings) {
     LAND_ERROR("[Vulkan] failed to create instance!");
   }
 
-  instance_procedures_.Initialize(instance_);
+  instance_procedures_.Initialize(instance_,
+                                  settings_.enable_validation_layers);
 
   if (settings.enable_validation_layers) {
     if (instance_procedures_.vkCreateDebugUtilsMessengerEXT(

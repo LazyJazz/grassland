@@ -22,8 +22,8 @@ DeviceProcedures::DeviceProcedures() = default;
 
 void DeviceProcedures::Initialize(VkDevice device,
                                   bool enable_raytracing_extensions) {
-  GET_PROCEDURE(device, vkGetBufferDeviceAddressKHR);
   if (enable_raytracing_extensions) {
+    GET_PROCEDURE(device, vkGetBufferDeviceAddressKHR);
     GET_PROCEDURE(device, vkGetAccelerationStructureBuildSizesKHR);
     GET_PROCEDURE(device, vkCreateAccelerationStructureKHR);
     GET_PROCEDURE(device, vkCmdBuildAccelerationStructuresKHR);

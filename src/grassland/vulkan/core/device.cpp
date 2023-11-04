@@ -92,12 +92,12 @@ Device::Device(Instance *instance,
     pointer = &feature;                      \
   } while (false)
 
-  device_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-  ADD_DEVICE_FEATURE(p_extra_device_features,
-                     physical_device_buffer_device_address_features);
   //  ADD_DEVICE_FEATURE(p_extra_device_features,
   //                     physical_device_synchronization2_features);
   if (settings.enable_raytracing) {
+    device_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+    ADD_DEVICE_FEATURE(p_extra_device_features,
+                       physical_device_buffer_device_address_features);
     device_extensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
     device_extensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
     device_extensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
