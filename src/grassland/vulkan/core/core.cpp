@@ -134,33 +134,6 @@ void Core::BeginFrame() {
 
 void Core::EndFrame() {
   VkCommandBuffer command_buffer = command_buffers_[current_frame_]->Handle();
-
-  if (settings_.window) {
-    // Transit current image layout to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, use
-    // barrier
-    VkImage image = swap_chain_->Images()[image_index_];
-    VkImageView image_view = swap_chain_->ImageViews()[image_index_];
-
-    VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    barrier.srcQueueFamilyIndex = device_->GraphicsQueueFamilyIndex();
-    barrier.dstQueueFamilyIndex = device_->PresentQueueFamilyIndex();
-    barrier.image = image;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-
-    // add barrier to command buffer
-    vkCmdPipelineBarrier(command_buffer,
-                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0,
-                         nullptr, 0, nullptr, 1, &barrier);
-  }
-
   if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
     LAND_ERROR("Failed to record command buffer");
   }
