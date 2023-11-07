@@ -27,6 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: "Echo username"
+        run: echo ${{ github.actor }}
+
+      - name: "Echo user"
+        run: echo $USER
+
       - uses: jidicula/clang-format-action@v4.6.2
         with:
           clang-format-version: '${{ env.CLANG_VERSION }}'
