@@ -36,8 +36,8 @@ jobs:
       - name: "Echo docker help"
         run: docker run --help
 
-      - name: "Echo docker ps -a"
-        run: docker ps -a
+      - name: "Echo groups"
+        run: groups $USER
 
       - uses: jidicula/clang-format-action@v4.6.2
         with:
