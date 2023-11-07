@@ -33,6 +33,9 @@ jobs:
       - name: "Echo user"
         run: echo $USER
 
+      - name: "Echo docker help"
+        run: docker run --help
+
       - uses: jidicula/clang-format-action@v4.6.2
         with:
           clang-format-version: '${{ env.CLANG_VERSION }}'
