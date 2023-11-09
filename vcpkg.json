@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "grassland",
   "version-string": "0.1.0",
   "description": "Grassland",
@@ -14,6 +13,11 @@
     "gtest",
     "sfml",
     "vulkan-memory-allocator",
-    "glslang"
+    "glslang",
+    {
+      "name": "d3dx12",
+      "platform": "windows"
+    },
+    "eigen3"
   ]
 }
