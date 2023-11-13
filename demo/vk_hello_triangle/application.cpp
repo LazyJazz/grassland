@@ -1,6 +1,8 @@
 #include "application.h"
 
 #include <iostream>
+
+#include "../d3d12_hello_triangle/application.h"
 Application::Application(const std::string &name,
                          int width,
                          int height,

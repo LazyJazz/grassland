@@ -116,7 +116,7 @@ Device::Device(Instance *instance,
       settings.physical_device.GetPhysicalDeviceProperties().deviceName);
   spdlog::info(
       "Device vendor: {}",
-      PCIVendorIDToName(
+      util::PCIVendorIDToName(
           settings.physical_device.GetPhysicalDeviceProperties().vendorID));
   spdlog::info("Device extensions:");
   for (auto extension : device_extensions) {
