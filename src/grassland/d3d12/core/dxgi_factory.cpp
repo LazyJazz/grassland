@@ -1,5 +1,7 @@
 #include "grassland/d3d12/core/dxgi_factory.h"
 
+#include "grassland/d3d12/core/adapter.h"
+
 namespace grassland::d3d12 {
 
 DXGIFactory::DXGIFactory(const DXGIFactorySettings &settings) {
@@ -23,6 +25,16 @@ DXGIFactory::DXGIFactory(const DXGIFactorySettings &settings) {
 
 ComPtr<IDXGIFactory4> DXGIFactory::Ptr() const {
   return factory_;
+}
+
+std::vector<class Adapter> DXGIFactory::EnumerateAdapters() const {
+  std::vector<class Adapter> adapters;
+  ComPtr<IDXGIAdapter1> adaptor;
+  for (UINT i = 0; factory_->EnumAdapters1(i, &adaptor) != DXGI_ERROR_NOT_FOUND;
+       ++i) {
+    adapters.emplace_back(adaptor);
+  }
+  return adapters;
 }
 
 DXGIFactory::~DXGIFactory() = default;

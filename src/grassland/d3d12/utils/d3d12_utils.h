@@ -8,6 +8,8 @@
 
 #include <stdexcept>
 
+#include "grassland/util/util.h"
+
 namespace grassland::d3d12 {
 using Microsoft::WRL::ComPtr;
 

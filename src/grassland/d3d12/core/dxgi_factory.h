@@ -13,6 +13,7 @@ class DXGIFactory {
   ~DXGIFactory();
 
   [[nodiscard]] ComPtr<IDXGIFactory4> Ptr() const;
+  [[nodiscard]] std::vector<class Adapter> EnumerateAdapters() const;
 
  private:
   ComPtr<IDXGIFactory4> factory_;
