@@ -36,6 +36,9 @@ Core::Core(const CoreSettings &settings) {
   spdlog::info(
       "Device vendor: {}",
       util::PCIVendorIDToName(device_settings.adapter.GetDesc().VendorId));
+
+  // Create the device
+  device_ = std::make_unique<class Device>(device_settings);
 }
 
 Core::~Core() {
