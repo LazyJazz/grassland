@@ -15,4 +15,5 @@ class Application {
   void OnClose();
   GLFWwindow *window_;
   std::unique_ptr<d3d12::Core> core_;
+  std::string title_;
 };

@@ -56,9 +56,15 @@ void SwapChain::ResizeBuffer(int width, int height, DXGI_FORMAT format) {
   if (format != DXGI_FORMAT_UNKNOWN) {
     settings_.format = format;
   }
-  back_buffers_.clear();
-  swap_chain_->ResizeBuffers(settings_.frame_count, settings_.width,
-                             settings_.height, settings_.format, 0);
+
+  for (auto &back_buffer : back_buffers_) {
+    back_buffer.Reset();
+  }
+
+  ThrowIfFailed(
+      swap_chain_->ResizeBuffers(settings_.frame_count, settings_.width,
+                                 settings_.height, settings_.format, 0),
+      "Failed to resize buffers");
   back_buffers_.resize(settings_.frame_count);
   for (int i = 0; i < settings_.frame_count; ++i) {
     ThrowIfFailed(swap_chain_->GetBuffer(i, IID_PPV_ARGS(&back_buffers_[i])),

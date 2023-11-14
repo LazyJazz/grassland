@@ -21,7 +21,8 @@ constexpr bool kDefaultEnableDebugLayer = true;
 
 inline void ThrowIfFailed(HRESULT hr, const char *message) {
   if (FAILED(hr)) {
-    throw std::runtime_error(message);
+    // Output hr in unsigned hex form
+    LAND_ERROR("{}: 0x{:X}", message, uint32_t(hr));
   }
 }
 

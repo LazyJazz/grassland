@@ -55,17 +55,108 @@ Core::Core(const CoreSettings &settings) : settings_(settings) {
 
   // Create the swap chain
   if (settings_.hwnd) {
+    SwapChainSettings swap_chain_settings(settings_.hwnd);
+    swap_chain_settings.frame_count = settings_.max_frames_in_flight;
     swap_chain_ = std::make_unique<class SwapChain>(*factory_, *command_queue_,
-                                                    settings_.hwnd);
+                                                    swap_chain_settings);
+    image_index_ = swap_chain_->Ptr()->GetCurrentBackBufferIndex();
+  }
+
+  // Create the fence
+  fence_ = std::make_unique<class Fence>(*device_);
+  fence_values_.resize(settings_.max_frames_in_flight);
+  fence_event_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+  if (fence_event_ == nullptr) {
+    ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()),
+                  "Failed to create fence event");
   }
 }
 
 void Core::RebuildSwapChain(int width, int height, DXGI_FORMAT format) {
   if (swap_chain_) {
     swap_chain_->ResizeBuffer(width, height, format);
+    image_index_ = swap_chain_->Ptr()->GetCurrentBackBufferIndex();
   }
 }
 
-Core::~Core() = default;
+void Core::BeginFrame() {
+  // Reset the command allocator
+  ThrowIfFailed(command_allocator_->Ptr()->Reset(),
+                "Failed to reset allocator");
+
+  // Reset the command list
+  ThrowIfFailed(command_list_[current_frame_]->Ptr()->Reset(
+                    command_allocator_->Ptr().Get(), nullptr),
+                "Failed to reset command list");
+
+  // Reset the swap chain
+  if (swap_chain_) {
+    image_index_ = swap_chain_->Ptr()->GetCurrentBackBufferIndex();
+  }
+}
+
+void Core::EndFrame() {
+  // Close the command list
+  command_list_[current_frame_]->Ptr()->Close();
+
+  // Execute the command list
+  ID3D12CommandList *command_lists[] = {
+      command_list_[current_frame_]->Ptr().Get()};
+  command_queue_->Ptr()->ExecuteCommandLists(1, command_lists);
+
+  // Present
+  if (swap_chain_) {
+    swap_chain_->Ptr()->Present(1, 0);
+  }
+
+  MoveToNextFrame();
+
+  current_frame_ = (current_frame_ + 1) % settings_.max_frames_in_flight;
+}
+
+void Core::MoveToNextFrame() {
+  // Schedule a Signal command in the queue.
+  const uint64_t current_fence_value = fence_values_[image_index_];
+  ThrowIfFailed(
+      command_queue_->Ptr()->Signal(fence_->Ptr().Get(), current_fence_value),
+      "Failed to signal fence");
+
+  // Update the frame index.
+  image_index_ = swap_chain_->Ptr()->GetCurrentBackBufferIndex();
+
+  // If the next frame is not ready to be rendered yet, wait until it is ready.
+  if (fence_->Ptr()->GetCompletedValue() < fence_values_[image_index_]) {
+    ThrowIfFailed(fence_->Ptr()->SetEventOnCompletion(
+                      fence_values_[image_index_], fence_event_),
+                  "Failed to set event on completion");
+    WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
+  }
+
+  // Set the fence value for the next frame.
+  fence_values_[image_index_] = current_fence_value + 1;
+}
+
+void Core::WaitForGPU() {
+  // Schedule a Signal command in the queue.
+  ThrowIfFailed(command_queue_->Ptr()->Signal(fence_->Ptr().Get(),
+                                              fence_values_[image_index_]),
+                "Failed to signal fence");
+
+  // Wait until the fence has been processed.
+  ThrowIfFailed(fence_->Ptr()->SetEventOnCompletion(fence_values_[image_index_],
+                                                    fence_event_),
+                "Failed to set event on completion");
+  WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
+
+  // Increment the fence value for the current frame.
+  fence_values_[image_index_]++;
+}
+
+Core::~Core() {
+  // Wait for the GPU to be done with all resources.
+  WaitForGPU();
+
+  CloseHandle(fence_event_);
+}
 
 }  // namespace grassland::d3d12

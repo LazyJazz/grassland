@@ -8,7 +8,7 @@ struct SwapChainSettings {
   HWND hwnd{nullptr};
   int width{0};
   int height{0};
-  int frame_count{3};
+  int frame_count{2};
   DXGI_FORMAT format{DXGI_FORMAT_R8G8B8A8_UNORM};
 
   SwapChainSettings(HWND hwnd = nullptr) : hwnd(hwnd) {
@@ -42,6 +42,10 @@ class SwapChain {
       back_buffers.push_back(back_buffer.Get());
     }
     return back_buffers;
+  }
+
+  ID3D12Resource *BackBuffer(int index) const {
+    return back_buffers_[index].Get();
   }
 
   [[nodiscard]] ComPtr<IDXGISwapChain3> Ptr() const;
