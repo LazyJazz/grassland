@@ -7,7 +7,8 @@ class GraphicsCommandList {
   explicit GraphicsCommandList(
       const Device &device,
       const CommandAllocator &command_allocator,
-      D3D12_COMMAND_LIST_TYPE list_type = D3D12_COMMAND_LIST_TYPE_DIRECT);
+      D3D12_COMMAND_LIST_TYPE list_type = D3D12_COMMAND_LIST_TYPE_DIRECT,
+      bool close = true);
   ~GraphicsCommandList();
 
   [[nodiscard]] ComPtr<ID3D12GraphicsCommandList> Ptr() const;
