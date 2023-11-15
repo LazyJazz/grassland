@@ -44,19 +44,19 @@ void Application::OnInit() {
 
 void Application::OnUpdate() {
   // Output the frame rate
-  static auto last_time = std::chrono::high_resolution_clock::now();
-  static int frame_count = 0;
-  auto now = std::chrono::high_resolution_clock::now();
-  auto delta =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time)
-          .count();
-  if (delta > 1000) {
-    auto fps = frame_count * 1000.0f / delta;
-    std::string title = title_ + " - " + std::to_string(fps) + " fps";
-    glfwSetWindowTitle(window_, title.c_str());
-    frame_count = 0;
-    last_time = now;
-  }
+  //  static auto last_time = std::chrono::high_resolution_clock::now();
+  //  static int frame_count = 0;
+  //  auto now = std::chrono::high_resolution_clock::now();
+  //  auto delta =
+  //      std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time)
+  //          .count();
+  //  if (delta > 1000) {
+  //    auto fps = frame_count * 1000.0f / delta;
+  //    std::string title = title_ + " - " + std::to_string(fps) + " fps";
+  //    glfwSetWindowTitle(window_, title.c_str());
+  //    frame_count = 0;
+  //    last_time = now;
+  //  }
 }
 
 void Application::OnRender() {

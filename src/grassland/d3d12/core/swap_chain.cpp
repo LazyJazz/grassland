@@ -57,9 +57,7 @@ void SwapChain::ResizeBuffer(int width, int height, DXGI_FORMAT format) {
     settings_.format = format;
   }
 
-  for (auto &back_buffer : back_buffers_) {
-    back_buffer.Reset();
-  }
+  back_buffers_.clear();
 
   ThrowIfFailed(
       swap_chain_->ResizeBuffers(settings_.frame_count, settings_.width,

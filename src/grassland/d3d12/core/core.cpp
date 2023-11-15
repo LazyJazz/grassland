@@ -47,8 +47,8 @@ Core::Core(const CoreSettings &settings) : settings_(settings) {
   command_queue_ = std::make_unique<class CommandQueue>(*device_);
 
   // Create the command lists
-  command_list_.resize(settings_.max_frames_in_flight);
-  for (auto &command_list : command_list_) {
+  command_lists_.resize(settings_.max_frames_in_flight);
+  for (auto &command_list : command_lists_) {
     command_list = std::make_unique<class GraphicsCommandList>(
         *device_, *command_allocator_);
   }
@@ -64,7 +64,7 @@ Core::Core(const CoreSettings &settings) : settings_(settings) {
 
   // Create the fence
   fence_ = std::make_unique<class Fence>(*device_);
-  fence_values_.resize(settings_.max_frames_in_flight);
+  fence_value_ = 0;
   fence_event_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);
   if (fence_event_ == nullptr) {
     ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()),
@@ -74,6 +74,12 @@ Core::Core(const CoreSettings &settings) : settings_(settings) {
 
 void Core::RebuildSwapChain(int width, int height, DXGI_FORMAT format) {
   if (swap_chain_) {
+    //    swap_chain_.reset();
+    //    SwapChainSettings swap_chain_settings(settings_.hwnd);
+    //    swap_chain_settings.frame_count = settings_.max_frames_in_flight;
+    //    swap_chain_ = std::make_unique<class SwapChain>(*factory_,
+    //    *command_queue_,
+    //                                                    swap_chain_settings);
     swap_chain_->ResizeBuffer(width, height, format);
     image_index_ = swap_chain_->Ptr()->GetCurrentBackBufferIndex();
   }
@@ -85,7 +91,7 @@ void Core::BeginFrame() {
                 "Failed to reset allocator");
 
   // Reset the command list
-  ThrowIfFailed(command_list_[current_frame_]->Ptr()->Reset(
+  ThrowIfFailed(command_lists_[current_frame_]->Ptr()->Reset(
                     command_allocator_->Ptr().Get(), nullptr),
                 "Failed to reset command list");
 
@@ -97,16 +103,17 @@ void Core::BeginFrame() {
 
 void Core::EndFrame() {
   // Close the command list
-  command_list_[current_frame_]->Ptr()->Close();
+  ThrowIfFailed(command_lists_[current_frame_]->Ptr()->Close(),
+                "Failed to close command list");
 
   // Execute the command list
   ID3D12CommandList *command_lists[] = {
-      command_list_[current_frame_]->Ptr().Get()};
+      command_lists_[current_frame_]->Ptr().Get()};
   command_queue_->Ptr()->ExecuteCommandLists(1, command_lists);
 
   // Present
   if (swap_chain_) {
-    swap_chain_->Ptr()->Present(1, 0);
+    ThrowIfFailed(swap_chain_->Ptr()->Present(1, 0), "Failed to present");
   }
 
   MoveToNextFrame();
@@ -115,41 +122,55 @@ void Core::EndFrame() {
 }
 
 void Core::MoveToNextFrame() {
-  // Schedule a Signal command in the queue.
-  const uint64_t current_fence_value = fence_values_[image_index_];
+  const uint64_t current_fence_value = fence_value_;
   ThrowIfFailed(
       command_queue_->Ptr()->Signal(fence_->Ptr().Get(), current_fence_value),
       "Failed to signal fence");
+  fence_value_++;
 
-  // Update the frame index.
-  image_index_ = swap_chain_->Ptr()->GetCurrentBackBufferIndex();
-
-  // If the next frame is not ready to be rendered yet, wait until it is ready.
-  if (fence_->Ptr()->GetCompletedValue() < fence_values_[image_index_]) {
-    ThrowIfFailed(fence_->Ptr()->SetEventOnCompletion(
-                      fence_values_[image_index_], fence_event_),
-                  "Failed to set event on completion");
+  if (fence_->Ptr()->GetCompletedValue() < current_fence_value) {
+    ThrowIfFailed(
+        fence_->Ptr()->SetEventOnCompletion(current_fence_value, fence_event_),
+        "Failed to set event on completion");
     WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
   }
-
-  // Set the fence value for the next frame.
-  fence_values_[image_index_] = current_fence_value + 1;
+  //  // Schedule a Signal command in the queue.
+  //  const uint64_t current_fence_value = fence_values_[image_index_];
+  //  ThrowIfFailed(
+  //      command_queue_->Ptr()->Signal(fence_->Ptr().Get(),
+  //      current_fence_value), "Failed to signal fence");
+  //
+  //  // Update the frame index.
+  //  image_index_ = swap_chain_->Ptr()->GetCurrentBackBufferIndex();
+  //
+  //  // If the next frame is not ready to be rendered yet, wait until it is
+  //  ready. if (fence_->Ptr()->GetCompletedValue() <
+  //  fence_values_[image_index_]) {
+  //    ThrowIfFailed(fence_->Ptr()->SetEventOnCompletion(
+  //                      fence_values_[image_index_], fence_event_),
+  //                  "Failed to set event on completion");
+  //    WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
+  //  }
+  //
+  //  // Set the fence value for the next frame.
+  //  fence_values_[image_index_] = current_fence_value + 1;
 }
 
 void Core::WaitForGPU() {
-  // Schedule a Signal command in the queue.
-  ThrowIfFailed(command_queue_->Ptr()->Signal(fence_->Ptr().Get(),
-                                              fence_values_[image_index_]),
-                "Failed to signal fence");
-
-  // Wait until the fence has been processed.
-  ThrowIfFailed(fence_->Ptr()->SetEventOnCompletion(fence_values_[image_index_],
-                                                    fence_event_),
-                "Failed to set event on completion");
-  WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
-
-  // Increment the fence value for the current frame.
-  fence_values_[image_index_]++;
+  MoveToNextFrame();
+  //  // Schedule a Signal command in the queue.
+  //  ThrowIfFailed(command_queue_->Ptr()->Signal(fence_->Ptr().Get(),
+  //                                              fence_values_[image_index_]),
+  //                "Failed to signal fence");
+  //
+  //  // Wait until the fence has been processed.
+  //  ThrowIfFailed(fence_->Ptr()->SetEventOnCompletion(fence_values_[image_index_],
+  //                                                    fence_event_),
+  //                "Failed to set event on completion");
+  //  WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
+  //
+  //  // Increment the fence value for the current frame.
+  //  fence_values_[image_index_]++;
 }
 
 Core::~Core() {

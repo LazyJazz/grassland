@@ -37,10 +37,10 @@ class Core {
     return command_queue_.get();
   }
   class GraphicsCommandList *CommandList() {
-    return command_list_[current_frame_].get();
+    return command_lists_[current_frame_].get();
   }
   class GraphicsCommandList *CommandList(int index) {
-    return command_list_[index].get();
+    return command_lists_[index].get();
   }
   class SwapChain *SwapChain() {
     return swap_chain_.get();
@@ -72,11 +72,11 @@ class Core {
   std::unique_ptr<class Device> device_;
   std::unique_ptr<class CommandAllocator> command_allocator_;
   std::unique_ptr<class CommandQueue> command_queue_;
-  std::vector<std::unique_ptr<class GraphicsCommandList>> command_list_;
+  std::vector<std::unique_ptr<class GraphicsCommandList>> command_lists_;
   std::unique_ptr<class SwapChain> swap_chain_;
 
   std::unique_ptr<class Fence> fence_;
-  std::vector<uint64_t> fence_values_;
+  uint64_t fence_value_;
   HANDLE fence_event_{};
 
   uint32_t current_frame_{0};
