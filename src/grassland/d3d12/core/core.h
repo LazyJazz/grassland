@@ -31,13 +31,13 @@ class Core {
     return device_.get();
   }
   class CommandAllocator *CommandAllocator() {
-    return command_allocator_.get();
+    return command_allocators_[image_index_].get();
   }
   class CommandQueue *CommandQueue() {
     return command_queue_.get();
   }
   class GraphicsCommandList *CommandList() {
-    return command_lists_[current_frame_].get();
+    return command_lists_[image_index_].get();
   }
   class GraphicsCommandList *CommandList(int index) {
     return command_lists_[index].get();
@@ -47,10 +47,6 @@ class Core {
   }
   int MaxFramesInFlight() const {
     return settings_.max_frames_in_flight;
-  }
-  // Get the current frame index
-  uint32_t CurrentFrame() const {
-    return current_frame_;
   }
   // Get current image index
   uint32_t ImageIndex() const {
@@ -70,16 +66,15 @@ class Core {
  private:
   std::unique_ptr<DXGIFactory> factory_;
   std::unique_ptr<class Device> device_;
-  std::unique_ptr<class CommandAllocator> command_allocator_;
   std::unique_ptr<class CommandQueue> command_queue_;
+  std::vector<std::unique_ptr<class CommandAllocator>> command_allocators_;
   std::vector<std::unique_ptr<class GraphicsCommandList>> command_lists_;
   std::unique_ptr<class SwapChain> swap_chain_;
 
   std::unique_ptr<class Fence> fence_;
-  uint64_t fence_value_;
+  std::vector<uint64_t> fence_values_;
   HANDLE fence_event_{};
 
-  uint32_t current_frame_{0};
   uint32_t image_index_{0};
 
   CoreSettings settings_;

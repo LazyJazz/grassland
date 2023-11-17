@@ -76,6 +76,8 @@ void SwapChain::ResizeBuffer(int width, int height, DXGI_FORMAT format) {
     settings_.width = desc.BufferDesc.Width;
     settings_.height = desc.BufferDesc.Height;
   }
+
+  LAND_INFO("Window rebuilt: {} {}", settings_.width, settings_.height);
 }
 
 }  // namespace grassland::d3d12

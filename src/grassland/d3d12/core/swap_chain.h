@@ -35,7 +35,7 @@ class SwapChain {
     return settings_.frame_count;
   }
 
-  std::vector<ID3D12Resource *> BackBuffers() const {
+  [[nodiscard]] std::vector<ID3D12Resource *> BackBuffers() const {
     std::vector<ID3D12Resource *> back_buffers;
     back_buffers.reserve(back_buffers_.size());
     for (auto &back_buffer : back_buffers_) {
@@ -44,7 +44,7 @@ class SwapChain {
     return back_buffers;
   }
 
-  ID3D12Resource *BackBuffer(int index) const {
+  [[nodiscard]] ID3D12Resource *BackBuffer(int index) const {
     return back_buffers_[index].Get();
   }
 
