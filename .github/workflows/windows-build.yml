@@ -10,11 +10,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
-
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
 jobs:
   build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -33,12 +28,22 @@ jobs:
       - name: Install packages
         run: ${{github.workspace}}\external\vcpkg\vcpkg install
 
-      - name: Configure CMake & Build MSVC
+      - name: Configure CMake & Build (MSVC-Debug)
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: ${{github.workspace}}/.github/test/windows-cmake-msvc.bat ${{github.workspace}} ${{env.BUILD_TYPE}}
+        run: ${{github.workspace}}/.github/test/windows-cmake-msvc.bat ${{github.workspace}} Debug
 
-      - name: Configure CMake & Build Clang
+      - name: Configure CMake & Build (MSVC-Release)
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: ${{github.workspace}}/.github/test/windows-cmake-clang.bat ${{github.workspace}} ${{env.BUILD_TYPE}}
+        run: ${{github.workspace}}/.github/test/windows-cmake-msvc.bat ${{github.workspace}} Release
+
+      - name: Configure CMake & Build (Clang-Debug)
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: ${{github.workspace}}/.github/test/windows-cmake-clang.bat ${{github.workspace}} Debug
+
+      - name: Configure CMake & Build (Clang-Release)
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: ${{github.workspace}}/.github/test/windows-cmake-clang.bat ${{github.workspace}} Release

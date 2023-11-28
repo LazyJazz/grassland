@@ -10,11 +10,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
-
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
 jobs:
   build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -27,29 +22,38 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Print Env
+        run: env
+
       - name: Install vcpkg
         run: external/vcpkg/bootstrap-vcpkg.sh
 
       - name: Install packages
         run: external/vcpkg/vcpkg install
 
-      - name: Configure CMake Clang
-        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: cmake -G "Ninja" -B ${{github.workspace}}/build-clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14
+      - name: Configure CMake Clang Debug
+        run: cmake -G "Ninja" -B ${{github.workspace}}/build-clang-dbg -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14
 
-      - name: Build Clang
-        # Build your program with the given configuration
-        run: cmake --build ${{github.workspace}}/build-clang --config ${{env.BUILD_TYPE}} -j
+      - name: Build Clang Debug
+        run: cmake --build ${{github.workspace}}/build-clang-dbg -j
 
-      - name: Configure CMake GCC
-        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: cmake -G "Ninja" -B ${{github.workspace}}/build-gcc -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11
+      - name: Configure CMake Clang Release
+        run: cmake -G "Ninja" -B ${{github.workspace}}/build-clang-rel -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14
 
-      - name: Build GCC
-        # Build your program with the given configuration
-        run: cmake --build ${{github.workspace}}/build-gcc --config ${{env.BUILD_TYPE}} -j
+      - name: Build Clang Release
+        run: cmake --build ${{github.workspace}}/build-clang-rel -j
+
+      - name: Configure CMake GCC Debug
+        run: cmake -G "Ninja" -B ${{github.workspace}}/build-gcc-dbg -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11
+
+      - name: Build GCC Debug
+        run: cmake --build ${{github.workspace}}/build-gcc-dbg -j
+
+      - name: Configure CMake GCC Release
+        run: cmake -G "Ninja" -B ${{github.workspace}}/build-gcc-rel -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11
+
+      - name: Build GCC Release
+        run: cmake --build ${{github.workspace}}/build-gcc-rel -j
 #
 #    - name: Test
 #      working-directory: ${{github.workspace}}/build
