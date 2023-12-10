@@ -12,4 +12,4 @@ foreach(grassland_lib ${GRASSLAND_LIBS})
     message("Using sublib ${grassland_lib}.")
 endforeach()
 
-target_link_libraries(grassland PRIVATE ${GRASSLAND_LIBS})
+target_link_libraries(grassland PRIVATE ${GRASSLAND_LIBS} Eigen3::Eigen)
