@@ -10,8 +10,9 @@ struct StaticBuffer {
                size_t length = 1,
                VkBufferUsageFlags usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) {
-    buffer_ = std::make_unique<Buffer>(core_, sizeof(Type) * length, usage,
-                                       VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    buffer_ = std::make_unique<class Buffer>(
+        core_, static_cast<VkDeviceSize>(sizeof(Type) * length), usage,
+        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
   }
 
   void UploadContents(const Type *contents,

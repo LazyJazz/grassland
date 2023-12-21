@@ -13,11 +13,12 @@ struct DynamicBuffer {
     buffers_.reserve(length);
     for (size_t i = 0; i < core_->MaxFramesInFlight(); i++) {
       buffers_.emplace_back(std::make_unique<class Buffer>(
-          core_, sizeof(Type) * length, usage, VMA_MEMORY_USAGE_GPU_ONLY));
+          core_, static_cast<VkDeviceSize>(sizeof(Type) * length), usage,
+          VMA_MEMORY_USAGE_GPU_ONLY));
     }
     staging_buffer_ = std::make_unique<class Buffer>(
-        core_, sizeof(Type) * length, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_CPU_ONLY);
+        core_, static_cast<VkDeviceSize>(sizeof(Type) * length),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
   }
 
   Type &operator[](size_t index) {
