@@ -4,7 +4,8 @@ namespace grassland::vulkan {
 Buffer::Buffer(struct Core *core,
                VkDeviceSize size,
                VkBufferUsageFlags usage,
-               VmaMemoryUsage memory_usage)
+               VmaMemoryUsage memory_usage,
+               VmaAllocationCreateFlags flags)
     : core_(core), size_(size) {
   // Create buffer with VMA
   VkBufferCreateInfo buffer_info{};
@@ -15,6 +16,7 @@ Buffer::Buffer(struct Core *core,
 
   VmaAllocationCreateInfo alloc_info{};
   alloc_info.usage = memory_usage;
+  alloc_info.flags = flags;
 
   if (vmaCreateBuffer(core_->Device()->Allocator(), &buffer_info, &alloc_info,
                       &buffer_, &allocation_, nullptr) != VK_SUCCESS) {
@@ -63,7 +65,7 @@ void CopyBuffer(VkCommandBuffer command_buffer,
 
 void UploadBuffer(Buffer *buffer, const void *data, VkDeviceSize size) {
   Buffer staging_buffer(buffer->Core(), size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                        VMA_MEMORY_USAGE_CPU_ONLY);
+                        VMA_MEMORY_USAGE_CPU_ONLY, 0);
   void *staging_data = staging_buffer.Map();
   memcpy(staging_data, data, size);
   staging_buffer.Unmap();
@@ -75,7 +77,7 @@ void UploadBuffer(Buffer *buffer, const void *data, VkDeviceSize size) {
 
 void DownloadBuffer(Buffer *buffer, void *data, VkDeviceSize size) {
   Buffer staging_buffer(buffer->Core(), size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                        VMA_MEMORY_USAGE_CPU_ONLY);
+                        VMA_MEMORY_USAGE_CPU_ONLY, 0);
   buffer->Core()->SingleTimeCommands([&](VkCommandBuffer cmd_buffer) {
     CopyBuffer(cmd_buffer, buffer, &staging_buffer, size);
   });
