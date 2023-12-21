@@ -4,10 +4,11 @@
 namespace grassland::vulkan {
 class Buffer {
  public:
-  Buffer(class Core *core,
+  Buffer(struct Core *core,
          VkDeviceSize size,
          VkBufferUsageFlags usage,
-         VmaMemoryUsage memory_usage);
+         VmaMemoryUsage memory_usage,
+         VmaAllocationCreateFlags flags = 0);
   ~Buffer();
 
   [[nodiscard]] class Core *Core() const;
