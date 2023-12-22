@@ -6,17 +6,29 @@ namespace grassland::vulkan {
 template <class Type = uint8_t>
 struct StaticBuffer {
  public:
+  StaticBuffer() = default;
+
   StaticBuffer(class Core *core_,
                size_t length = 1,
                VkBufferUsageFlags usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) {
-    buffer_ = std::make_unique<class Buffer>(
-        core_, static_cast<VkDeviceSize>(sizeof(Type) * length), usage,
-        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    Init(core_, length, usage);
+  }
+
+  void Init(class Core *core_,
+            size_t length = 1,
+            VkBufferUsageFlags usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) {
+    if (!buffer_) {
+      length_ = length;
+      buffer_ = std::make_unique<class Buffer>(
+          core_, static_cast<VkDeviceSize>(sizeof(Type) * length), usage,
+          VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    }
   }
 
   void UploadContents(const Type *contents,
-                      size_t length,
+                      size_t length = 1,
                       size_t offset = 0) const {
     UploadData(reinterpret_cast<const uint8_t *>(contents),
                sizeof(Type) * length, sizeof(Type) * offset);
@@ -41,7 +53,7 @@ struct StaticBuffer {
   }
 
   void DownloadContents(Type *contents,
-                        size_t length,
+                        size_t length = 1,
                         size_t offset = 0) const {
     DownloadData(reinterpret_cast<uint8_t *>(contents), sizeof(Type) * length,
                  sizeof(Type) * offset);
@@ -69,7 +81,16 @@ struct StaticBuffer {
     return buffer_.get();
   }
 
+  size_t Length() const {
+    return length_;
+  }
+
+  VkDeviceSize Size() const {
+    return buffer_->Size();
+  }
+
  private:
   std::unique_ptr<class Buffer> buffer_{};
+  size_t length_;
 };
 }  // namespace grassland::vulkan
