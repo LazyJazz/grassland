@@ -1,10 +1,11 @@
 #pragma once
 
 #include "grassland/vulkan/resources/buffer.h"
+#include "grassland/vulkan/resources/dynamic_object.h"
 
 namespace grassland::vulkan {
 template <class Type = uint8_t>
-struct DynamicBuffer {
+struct DynamicBuffer : public BufferObject, public DynamicObject {
  public:
   DynamicBuffer() = default;
 
@@ -25,7 +26,8 @@ struct DynamicBuffer {
       versions_.resize(core_->MaxFramesInFlight(), 0);
       for (size_t i = 0; i < core_->MaxFramesInFlight(); i++) {
         buffers_.emplace_back(std::make_unique<class Buffer>(
-            core_, static_cast<VkDeviceSize>(sizeof(Type) * length), usage,
+            core_, static_cast<VkDeviceSize>(sizeof(Type) * length),
+            usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             VMA_MEMORY_USAGE_GPU_ONLY));
       }
       staging_buffer_ = std::make_unique<class Buffer>(
@@ -34,29 +36,29 @@ struct DynamicBuffer {
     }
   }
 
-  bool SyncData(VkCommandBuffer cmd_buffer, uint32_t image_index) {
+  bool SyncData(VkCommandBuffer cmd_buffer, uint32_t frame_index) override {
     DeactiveMap();
-    if (staging_version_ != versions_[image_index]) {
+    if (staging_version_ != versions_[frame_index]) {
       VkBufferCopy copy_region{};
       copy_region.size = sizeof(Type) * length_;
       vkCmdCopyBuffer(cmd_buffer, staging_buffer_->Handle(),
-                      buffers_[image_index]->Handle(), 1, &copy_region);
-      versions_[image_index] = staging_version_;
+                      buffers_[frame_index]->Handle(), 1, &copy_region);
+      versions_[frame_index] = staging_version_;
       return true;
     }
     return false;
   }
 
   bool SyncData(std::function<void(VkCommandBuffer)> &function,
-                uint32_t image_index) {
+                uint32_t frame_index) {
     DeactiveMap();
-    if (staging_version_ != versions_[image_index]) {
+    if (staging_version_ != versions_[frame_index]) {
       function = [&](VkCommandBuffer cmd_buffer) {
         VkBufferCopy copy_region{};
         copy_region.size = sizeof(Type) * length_;
         vkCmdCopyBuffer(cmd_buffer, staging_buffer_->Handle(),
-                        buffers_[image_index]->Handle(), 1, &copy_region);
-        versions_[image_index] = staging_version_;
+                        buffers_[frame_index]->Handle(), 1, &copy_region);
+        versions_[frame_index] = staging_version_;
       };
       return true;
     }
@@ -89,16 +91,16 @@ struct DynamicBuffer {
     return mapped_data_;
   }
 
-  class Buffer *Buffer(size_t index) {
-    return buffers_[index].get();
-  }
-
   size_t Length() const {
     return length_;
   }
 
   VkDeviceSize Size() const {
     return staging_buffer_->Size();
+  }
+
+  Buffer *GetBuffer(int frame_index) const override {
+    return buffers_[frame_index].get();
   }
 
  private:

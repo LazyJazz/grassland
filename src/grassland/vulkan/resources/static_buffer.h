@@ -4,7 +4,7 @@
 
 namespace grassland::vulkan {
 template <class Type = uint8_t>
-struct StaticBuffer {
+struct StaticBuffer : public BufferObject {
  public:
   StaticBuffer() = default;
 
@@ -22,7 +22,8 @@ struct StaticBuffer {
     if (!buffer_) {
       length_ = length;
       buffer_ = std::make_unique<class Buffer>(
-          core_, static_cast<VkDeviceSize>(sizeof(Type) * length), usage,
+          core_, static_cast<VkDeviceSize>(sizeof(Type) * length),
+          usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
           VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
     }
   }
@@ -77,7 +78,7 @@ struct StaticBuffer {
     staging_buffer.Unmap();
   }
 
-  [[nodiscard]] class Buffer *Buffer() const {
+  [[nodiscard]] Buffer *GetBuffer(int frame_index) const override {
     return buffer_.get();
   }
 

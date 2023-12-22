@@ -38,4 +38,9 @@ void UploadBuffer(Buffer *buffer, const void *data, VkDeviceSize size);
 
 void DownloadBuffer(Buffer *buffer, void *data, VkDeviceSize size);
 
+class BufferObject {
+ public:
+  virtual Buffer *GetBuffer(int frame_index) const = 0;
+};
+
 }  // namespace grassland::vulkan
