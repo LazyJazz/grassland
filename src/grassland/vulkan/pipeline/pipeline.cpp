@@ -72,7 +72,7 @@ Pipeline::Pipeline(struct Core *core, PipelineSettings settings)
       settings_.depth_stencil_state_create_info.has_value()
           ? &settings_.depth_stencil_state_create_info.value()
           : nullptr;
-  pipeline_create_info.subpass = 0;
+  pipeline_create_info.subpass = settings_.subpass;
   pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
 
   if (vkCreateGraphicsPipelines(core_->Device()->Handle(), VK_NULL_HANDLE, 1,
@@ -95,8 +95,11 @@ struct Core *Pipeline::Core() const {
 }
 
 PipelineSettings::PipelineSettings(RenderPass *render_pass,
-                                   PipelineLayout *pipeline_layout)
-    : render_pass(render_pass), pipeline_layout(pipeline_layout) {
+                                   PipelineLayout *pipeline_layout,
+                                   int subpass)
+    : render_pass(render_pass),
+      pipeline_layout(pipeline_layout),
+      subpass(subpass) {
   input_assembly_state_create_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   input_assembly_state_create_info.topology =
@@ -122,8 +125,10 @@ PipelineSettings::PipelineSettings(RenderPass *render_pass,
   rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
   rasterization_state_create_info.depthBiasEnable = VK_FALSE;
 
+  auto &subpass_settings = render_pass->SubpassSettings()[subpass];
+
   if (render_pass) {
-    if (render_pass->DepthAttachmentReference().has_value()) {
+    if (subpass_settings.DepthAttachmentReference().has_value()) {
       depth_stencil_state_create_info = VkPipelineDepthStencilStateCreateInfo{
           VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
           nullptr,
@@ -140,11 +145,11 @@ PipelineSettings::PipelineSettings(RenderPass *render_pass,
       };
     }
 
-    if (!render_pass->ColorAttachmentReferences().empty()) {
+    if (!subpass_settings.ColorAttachmentReferences().empty()) {
       pipeline_color_blend_attachment_states.resize(
-          render_pass->ColorAttachmentReferences().size());
-      for (size_t i = 0; i < render_pass->ColorAttachmentReferences().size();
-           i++) {
+          subpass_settings.ColorAttachmentReferences().size());
+      for (size_t i = 0;
+           i < subpass_settings.ColorAttachmentReferences().size(); i++) {
         pipeline_color_blend_attachment_states[i].blendEnable = VK_FALSE;
         pipeline_color_blend_attachment_states[i].srcColorBlendFactor =
             VK_BLEND_FACTOR_ONE;
@@ -164,7 +169,7 @@ PipelineSettings::PipelineSettings(RenderPass *render_pass,
       }
     }
 
-    if (!render_pass->ResolveAttachmentReferences().empty()) {
+    if (!subpass_settings.ResolveAttachmentReferences().empty()) {
       multisample_state_create_info.alphaToCoverageEnable = VK_TRUE;
       multisample_state_create_info.alphaToOneEnable = VK_TRUE;
     }
@@ -217,6 +222,10 @@ void PipelineSettings::SetMultiSampleState(VkSampleCountFlagBits sample_count) {
 
 void PipelineSettings::SetCullMode(VkCullModeFlags cull_mode) {
   rasterization_state_create_info.cullMode = cull_mode;
+}
+
+void PipelineSettings::SetSubpass(int subpass) {
+  this->subpass = subpass;
 }
 
 }  // namespace grassland::vulkan

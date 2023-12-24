@@ -16,14 +16,22 @@ Core::Core(const CoreSettings &settings) : settings_(settings) {
   instance_->EnumeratePhysicalDevices(physical_devices);
   PhysicalDevice *physical_device = nullptr;
   uint64_t device_score = 0;
-  for (auto &device : physical_devices) {
-    if (settings.enable_ray_tracing && !device.SupportRayTracing()) {
-      continue;
+  if (settings.device_index != -1) {
+    physical_device = &physical_devices[settings.device_index];
+    device_score = physical_device->Evaluate();
+    if (settings.enable_ray_tracing && !physical_device->SupportRayTracing()) {
+      LAND_ERROR("Device does not support ray tracing");
     }
-    uint64_t score = device.Evaluate();
-    if (score > device_score) {
-      physical_device = &device;
-      device_score = score;
+  } else {
+    for (auto &device : physical_devices) {
+      if (settings.enable_ray_tracing && !device.SupportRayTracing()) {
+        continue;
+      }
+      uint64_t score = device.Evaluate();
+      if (score > device_score) {
+        physical_device = &device;
+        device_score = score;
+      }
     }
   }
 

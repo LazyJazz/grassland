@@ -8,6 +8,30 @@
 namespace grassland::vulkan {
 
 struct PipelineSettings {
+  explicit PipelineSettings(RenderPass *render_pass = nullptr,
+                            PipelineLayout *pipeline_layout = nullptr,
+                            int subpass = 0);
+
+  void AddShaderStage(ShaderModule *shader_module, VkShaderStageFlagBits stage);
+
+  void AddInputBinding(
+      uint32_t binding,
+      uint32_t stride,
+      VkVertexInputRate input_rate = VK_VERTEX_INPUT_RATE_VERTEX);
+
+  void AddInputAttribute(uint32_t binding,
+                         uint32_t location,
+                         VkFormat format,
+                         uint32_t offset);
+
+  void SetPrimitiveTopology(VkPrimitiveTopology topology);
+
+  void SetMultiSampleState(VkSampleCountFlagBits sample_count);
+
+  void SetCullMode(VkCullModeFlags cull_mode = VK_CULL_MODE_BACK_BIT);
+
+  void SetSubpass(int subpass);
+
   // Render pass
   RenderPass *render_pass;
 
@@ -40,21 +64,7 @@ struct PipelineSettings {
   // Rasterization state
   VkPipelineRasterizationStateCreateInfo rasterization_state_create_info{};
 
-  explicit PipelineSettings(RenderPass *render_pass = nullptr,
-                            PipelineLayout *pipeline_layout = nullptr);
-  void AddShaderStage(ShaderModule *shader_module, VkShaderStageFlagBits stage);
-  void AddInputBinding(
-      uint32_t binding,
-      uint32_t stride,
-      VkVertexInputRate input_rate = VK_VERTEX_INPUT_RATE_VERTEX);
-  void AddInputAttribute(uint32_t binding,
-                         uint32_t location,
-                         VkFormat format,
-                         uint32_t offset);
-
-  void SetPrimitiveTopology(VkPrimitiveTopology topology);
-  void SetMultiSampleState(VkSampleCountFlagBits sample_count);
-  void SetCullMode(VkCullModeFlags cull_mode = VK_CULL_MODE_BACK_BIT);
+  int subpass{};
 };
 
 class Pipeline {

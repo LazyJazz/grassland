@@ -16,6 +16,10 @@ struct DynamicBuffer : public BufferObject, public DynamicObject {
     Init(core_, length, usage);
   }
 
+  ~DynamicBuffer() {
+    DeactiveMap();
+  }
+
   void Init(class Core *core_,
             size_t length = 1,
             VkBufferUsageFlags usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
