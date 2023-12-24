@@ -12,7 +12,8 @@ class Image {
                                   VK_IMAGE_USAGE_SAMPLED_BIT |
                                   VK_IMAGE_USAGE_STORAGE_BIT,
         VkImageAspectFlags aspect_flags = VK_IMAGE_ASPECT_COLOR_BIT,
-        VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
+        VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
+        VmaMemoryUsage mem_usage = VMA_MEMORY_USAGE_GPU_ONLY);
   ~Image();
 
   [[nodiscard]] class Core *Core() const {

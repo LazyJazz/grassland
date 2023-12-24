@@ -7,7 +7,8 @@ Image::Image(class Core *core,
              VkExtent2D extent,
              VkImageUsageFlags usage,
              VkImageAspectFlags aspect_flags,
-             VkSampleCountFlagBits sample_count)
+             VkSampleCountFlagBits sample_count,
+             VmaMemoryUsage mem_usage)
     : core_(core),
       format_(format),
       extent_(extent),
@@ -33,10 +34,13 @@ Image::Image(class Core *core,
   // Create image from image create info by VMA library
 
   VmaAllocationCreateInfo allocationInfo = {};
-  allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  allocationInfo.usage = mem_usage;
 
-  vmaCreateImage(core_->Device()->Allocator(), &image_create_info,
-                 &allocationInfo, &image_, &allocation_, nullptr);
+  if (vmaCreateImage(core_->Device()->Allocator(), &image_create_info,
+                     &allocationInfo, &image_, &allocation_,
+                     nullptr) != VK_SUCCESS) {
+    LAND_ERROR("[Vulkan] failed to create image!");
+  }
 
   // Create Image View
   VkImageViewCreateInfo image_view_create_info{};
