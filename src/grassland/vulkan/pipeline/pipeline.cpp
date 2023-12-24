@@ -122,7 +122,7 @@ PipelineSettings::PipelineSettings(RenderPass *render_pass,
   rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_FILL;
   rasterization_state_create_info.lineWidth = 1.0f;
   rasterization_state_create_info.cullMode = VK_CULL_MODE_NONE;
-  rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  rasterization_state_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterization_state_create_info.depthBiasEnable = VK_FALSE;
 
   auto &subpass_settings = render_pass->SubpassSettings()[subpass];
@@ -226,6 +226,13 @@ void PipelineSettings::SetCullMode(VkCullModeFlags cull_mode) {
 
 void PipelineSettings::SetSubpass(int subpass) {
   this->subpass = subpass;
+}
+
+void PipelineSettings::SetBlendState(
+    int color_attachment_index,
+    VkPipelineColorBlendAttachmentState blend_attachment_state) {
+  pipeline_color_blend_attachment_states[color_attachment_index] =
+      blend_attachment_state;
 }
 
 }  // namespace grassland::vulkan

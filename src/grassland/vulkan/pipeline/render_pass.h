@@ -65,7 +65,7 @@ class RenderPass {
   RenderPass(
       class Core *core,
       const std::vector<VkAttachmentDescription> &attachment_descriptions,
-      const std::vector<SubpassSettings> &subpass_settings,
+      const std::vector<struct SubpassSettings> &subpass_settings,
       const std::vector<VkSubpassDependency> &dependencies);
   ~RenderPass();
 
@@ -76,7 +76,7 @@ class RenderPass {
     return attachment_descriptions_;
   }
 
-  const std::vector<SubpassSettings> &SubpassSettings() const {
+  const std::vector<struct SubpassSettings> &SubpassSettings() const {
     return subpass_settings_;
   }
 

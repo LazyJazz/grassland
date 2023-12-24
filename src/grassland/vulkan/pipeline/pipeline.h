@@ -32,6 +32,20 @@ struct PipelineSettings {
 
   void SetSubpass(int subpass);
 
+  void SetBlendState(
+      int color_attachment_index,
+      VkPipelineColorBlendAttachmentState blend_attachment_state = {
+          VK_FALSE,
+          VK_BLEND_FACTOR_ONE,
+          VK_BLEND_FACTOR_ZERO,
+          VK_BLEND_OP_ADD,
+          VK_BLEND_FACTOR_ONE,
+          VK_BLEND_FACTOR_ZERO,
+          VK_BLEND_OP_ADD,
+          VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+              VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+      });
+
   // Render pass
   RenderPass *render_pass;
 
@@ -74,6 +88,10 @@ class Pipeline {
 
   [[nodiscard]] VkPipeline Handle() const;
   [[nodiscard]] class Core *Core() const;
+
+  [[nodiscard]] const PipelineSettings &Settings() const {
+    return settings_;
+  }
 
  private:
   class Core *core_{};
