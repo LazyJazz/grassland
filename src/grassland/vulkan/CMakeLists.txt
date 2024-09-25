@@ -7,8 +7,8 @@ list(APPEND GRASSLAND_LIBS ${CURRENT_LIB_NAME})
 set(GRASSLAND_LIBS ${GRASSLAND_LIBS} PARENT_SCOPE)
 
 add_library(${CURRENT_LIB_NAME} ${source_files})
-target_include_directories(${CURRENT_LIB_NAME} PRIVATE ${GRASSLAND_INCLUDE_DIR} ${GRASSLAND_EXTERNAL_INCLUDE_DIRS})
-target_link_libraries(${CURRENT_LIB_NAME} PRIVATE ${Vulkan_LIBRARIES} grassland_util_lib grassland_file_lib grassland_imgui_lib glfw)
-target_link_libraries(${CURRENT_LIB_NAME} PRIVATE glslang::SPIRV glslang::OGLCompiler glslang::OSDependent)
+target_include_directories(${CURRENT_LIB_NAME} PUBLIC ${GRASSLAND_INCLUDE_DIR} ${GRASSLAND_EXTERNAL_INCLUDE_DIRS})
+target_link_libraries(${CURRENT_LIB_NAME} PUBLIC ${Vulkan_LIBRARIES} grassland_util_lib grassland_file_lib grassland_imgui_lib glfw)
+target_link_libraries(${CURRENT_LIB_NAME} PUBLIC glslang::glslang glslang::glslang-default-resource-limits glslang::SPIRV glslang::SPVRemapper Vulkan::Vulkan GPUOpen::VulkanMemoryAllocator)
 
 add_subdirectory(shaders)

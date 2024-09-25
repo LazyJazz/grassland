@@ -4,6 +4,12 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/external/vcpkg/scripts/buil
 
 project(grassland)
 
+# Add /utf-8 flag for MSVC
+if (MSVC)
+    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
+    add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:--compiler-options=/utf-8>")
+endif()
+
 if (CMAKE_TOOLCHAIN_FILE)
     message("Using vcpkg: ${CMAKE_TOOLCHAIN_FILE}")
 else ()
