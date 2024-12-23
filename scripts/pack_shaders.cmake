@@ -153,7 +153,7 @@ function(PACK_SHADER_CODE TARGET_NAME)
     file(APPEND ${BUILT_IN_SHADERS_INL} "}\n")
 
 
-    target_sources(${TARGET_NAME} PRIVATE ${BUILT_IN_SHADERS_INL})
-    target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_sources(${TARGET_NAME} PUBLIC ${BUILT_IN_SHADERS_INL})
+    target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 endfunction()
